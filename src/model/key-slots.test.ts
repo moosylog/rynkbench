@@ -55,3 +55,12 @@ describe("key slots", () => {
     expect(withProfile({ Single: A } as KeyAction, 4)).toEqual({ Single: A });
   });
 });
+
+describe("bindings the slots leave alone", () => {
+  it("keeps a LayerModTap as it is until a slot is filled", () => {
+    const layerModTap = { LayerModTap: [1, "LShift", "A"] } as unknown as KeyAction;
+    expect(slotsOf(layerModTap)).toEqual({ kind: "other" });
+    expect(withoutSlot(layerModTap, "hold")).toBe(layerModTap);
+    expect(withProfile(layerModTap, 2)).toBe(layerModTap);
+  });
+});

@@ -1,7 +1,7 @@
 // A key's actions as GLIDE's key editor shows them: slots. On Tap is what the
 // key does when pressed; On Hold, when held, makes it an RMK tap-hold (with a
-// timing profile). A key bound to a morse pattern, or set to fall through to
-// the layer below, has no slots of its own here. Pure: a binding in, slots
+// timing profile). A key bound to a morse pattern, set to fall through to the
+// layer below, or bound some other way (LayerModTap) has no slots here. Pure: a binding in, slots
 // out, and back.
 
 import type { Action, KeyAction } from "../vendor/rynk-wasm/rynk_wasm";
@@ -21,7 +21,9 @@ export type KeySlots =
       tapOnly: boolean;
     }
   | { kind: "transparent" }
-  | { kind: "morse"; index: number };
+  | { kind: "morse"; index: number }
+  /** A binding the slots cannot show yet (RMK's LayerModTap); kept as it is. */
+  | { kind: "other" };
 
 export function slotsOf(action: KeyAction): KeySlots {
   if (action === "No") return { kind: "slots", tap: "No", hold: null, profile: DEFAULT_TAP_HOLD_PROFILE, tapOnly: false };
@@ -36,7 +38,8 @@ export function slotsOf(action: KeyAction): KeySlots {
     const [tap, hold, profile] = action.TapHold;
     return { kind: "slots", tap, hold, profile, tapOnly: false };
   }
-  return { kind: "morse", index: action.Morse };
+  if ("Morse" in action) return { kind: "morse", index: action.Morse };
+  return { kind: "other" };
 }
 
 /** The binding for a set of slots. A hold makes a tap-hold; without one the
@@ -47,7 +50,7 @@ export function bindingOf(slots: Extract<KeySlots, { kind: "slots" }>): KeyActio
   return slots.tapOnly ? { Tap: slots.tap } : { Single: slots.tap };
 }
 
-/** Empty slots, for a key that has none of its own (transparent or morse). */
+/** Empty slots, for a key that has none of its own. */
 export function emptySlots(): Extract<KeySlots, { kind: "slots" }> {
   return { kind: "slots", tap: "No", hold: null, profile: DEFAULT_TAP_HOLD_PROFILE, tapOnly: false };
 }

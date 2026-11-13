@@ -491,7 +491,9 @@ export function KeyEditor() {
           <p className="text-body leading-relaxed text-mute">
             {slots.kind === "transparent"
               ? "Same as the layer below. Pick an action to give this key its own."
-              : `${keyActionDescription(action)}. Edit it under Behaviors → Morse, or pick an action to replace it.`}
+              : slots.kind === "morse"
+                ? `${keyActionDescription(action)}. Edit it under Behaviors → Morse, or pick an action to replace it.`
+                : `${keyActionDescription(action)}. Edit it under Every action, or pick an action to replace it.`}
           </p>
         )}
 
