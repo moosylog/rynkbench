@@ -9,8 +9,7 @@ import { BoardWell, KeyboardCanvas, type KeyDecor } from "../KeyboardCanvas";
 import { Button } from "../kit";
 import { WarningIcon } from "../icons";
 import { keyAddressLabel } from "../key-address";
-import { keyActionDescription, keyActionGlyph } from "../labels";
-import { layerName } from "../layer-names";
+import { keyActionDescription } from "../labels";
 import { useWorkbench } from "../state";
 import type { ComboFocus } from "./useComboFocus";
 
@@ -23,11 +22,11 @@ function FocusPill({ focus }: { focus: ComboFocus }) {
   return (
     <div
       data-testid="combo-focus"
-      className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl border border-accent/50 bg-panel px-3 py-1.5 text-body"
+      className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-2xl border border-line-strong bg-panel/95 py-1.5 pr-1.5 pl-4 text-body shadow-lg backdrop-blur"
     >
       <span className="size-2 shrink-0 rounded-full bg-accent" aria-hidden />
-      <span className="font-semibold text-ink">Focus Mode: click keys to add or remove them</span>
-      <span className="tnum text-mute" aria-live="polite">
+      <span className="font-semibold text-ink">Focus Mode: click keys to toggle</span>
+      <span className="tnum rounded-md border border-line-strong px-2 py-0.5 text-mute" aria-live="polite">
         {focus.keys} of {focus.maxKeys} keys
       </span>
       {focus.needs && (
@@ -40,7 +39,7 @@ function FocusPill({ focus }: { focus: ComboFocus }) {
           <WarningIcon size={12} /> Same keys as {focus.twins.map((i) => `C${i}`).join(", ")}
         </span>
       )}
-      <span className="ml-auto flex gap-2">
+      <span className="flex gap-2">
         {focus.needs && (
           <Button variant="ghost" onClick={focus.discard}>
             Discard combo
@@ -69,17 +68,13 @@ export function ComboFocusCanvas({ focus }: { focus: ComboFocus }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [done]);
 
+  // As in GLIDE: the keys go blank, so the combo's own keys, filled in the
+  // accent colour, are what stands out.
   const decorFor = (key: KeyView): KeyDecor => {
     const action = actionAt(key);
-    const glyph = keyActionGlyph(action, state.morse);
-    if (!glyph.text && key.label) {
-      glyph.text = key.label;
-      glyph.dim = true;
-    }
     const inCombo = comboHasKey(focus.combo, key, action);
     return {
-      glyph,
-      inSelection: inCombo,
+      fill: inCombo ? "var(--color-accent-fill)" : undefined,
       ariaLabel: `${keyAddressLabel(key)}: ${keyActionDescription(action)}. ${
         inCombo ? "In the combo; press Enter to take it out." : "Press Enter to add it to the combo."
       }`,
@@ -88,15 +83,8 @@ export function ComboFocusCanvas({ focus }: { focus: ComboFocus }) {
   };
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col gap-3 max-lg:min-h-[380px]">
-      <div className="flex flex-wrap items-baseline gap-x-3 px-1">
-        <h2 className="text-title font-bold text-ink">Combo C{focus.index}</h2>
-        <span className="text-small text-faint">
-          Keys shown on {layerName(state.layerMetadata, focus.layer)}
-        </span>
-      </div>
-      <FocusPill focus={focus} />
-      <BoardWell model={bundle.model}>
+    <div className="relative flex min-h-0 flex-1 flex-col max-lg:min-h-[380px]">
+      <BoardWell model={bundle.model} flush top={<FocusPill focus={focus} />}>
         <KeyboardCanvas
           model={bundle.model}
           className="h-full w-full"

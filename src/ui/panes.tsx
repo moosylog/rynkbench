@@ -82,7 +82,8 @@ export function ResizeHandle({
       style={{ touchAction: "none" }}
       className={cx(
         "group z-20 flex shrink-0 items-center justify-center outline-none",
-        horizontal ? "w-3 self-stretch cursor-col-resize" : "h-3 w-full cursor-row-resize",
+        // Over the pane border, as in GLIDE, rather than a strip of its own.
+        horizontal ? "relative -mx-1.5 w-3 self-stretch cursor-col-resize" : "relative -my-1.5 h-3 w-full cursor-row-resize",
       )}
     >
       <span

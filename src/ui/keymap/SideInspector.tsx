@@ -162,25 +162,10 @@ function PointingInspector({ id }: { id: number }) {
 
 export function KeymapInspector() {
   const { state, dispatch } = useWorkbench();
-  // Keys and combos are edited below the keyboard (KeyEditor, ComboEditor), not here.
-  if (state.selection?.type === "key" || state.selection?.type === "combo") return null;
-
-  if (!state.selection) {
-    return (
-      <div className="flex flex-col gap-4">
-        <div className="flex min-h-52 flex-col items-center justify-center gap-3 px-6 text-center">
-          <div className="flex size-12 items-center justify-center rounded-xl border border-line bg-raised text-faint">
-            <span className="font-mono text-title">⌨</span>
-          </div>
-          <div className="text-ui font-medium text-mute">Trackpads and encoders</div>
-          <div className="text-body leading-relaxed text-faint">
-            Click a trackpad or encoder to edit it. Keys are edited below the keyboard.
-          </div>
-        </div>
-        <LayerPointing />
-      </div>
-    );
-  }
+  // Only a trackpad or an encoder opens this panel, as GLIDE's touchpad window;
+  // keys and combos are edited below the keyboard (KeyEditor, ComboEditor).
+  const selection = state.selection;
+  if (selection?.type !== "encoder" && selection?.type !== "pointing") return null;
 
   return (
     <div className="flex flex-col">
@@ -194,12 +179,8 @@ export function KeymapInspector() {
           Clear selection
         </button>
       </div>
-      {state.selection.type === "encoder" ? (
-        <EncoderInspector id={state.selection.id} />
-      ) : (
-        <PointingInspector id={state.selection.id} />
-      )}
-      {state.selection.type !== "pointing" && <LayerPointing />}
+      {selection.type === "encoder" ? <EncoderInspector id={selection.id} /> : <PointingInspector id={selection.id} />}
+      {selection.type !== "pointing" && <LayerPointing />}
     </div>
   );
 }

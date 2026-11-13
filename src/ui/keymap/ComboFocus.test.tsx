@@ -50,7 +50,7 @@ function render(node: ReactNode, combos: ComboDefinition[], open: number | null)
 describe("combos in Focus Mode", () => {
   it("marks the combo's keys and says what it still needs", () => {
     const html = render(<Focus />, [combo(1)], 0);
-    expect(html).toContain("Focus Mode: click keys to add or remove them");
+    expect(html).toContain("Focus Mode: click keys to toggle");
     expect(html).toContain(`1 of ${bundle.caps.max_combo_keys} keys`);
     expect(html).toContain("Needs at least 2 keys");
     expect(html).toContain("Discard combo");

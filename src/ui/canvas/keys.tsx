@@ -12,6 +12,7 @@ import { keyHoverTitle } from "../key-address";
 import { same } from "../../model/deep-equal";
 
 import type { KeyDecor } from "./decor";
+import { legendLayout } from "./legend";
 import { CORNER, CAP_INSET, CAP_GRADIENT, CAP_RELIEF, CAP_SHADOW } from "./geometry";
 
 export function CapDefs() {
@@ -68,12 +69,6 @@ export function KeyRects({
       ))}
     </>
   );
-}
-
-/** Fit label size to the available cap width — labels must never clip. */
-export function fitText(text: string, capWidth: number, max: number): number {
-  const len = Math.max(1, [...text].length);
-  return Math.min(max, ((capWidth - 0.16) / len) * 1.5);
 }
 
 /** KeyDecor is a flat bag of values; comparing every key of both objects keeps
@@ -322,8 +317,7 @@ function KeyLabelImpl({ view, decor }: { view: KeyView; decor: KeyDecor }) {
   if (!glyph?.text) return null;
 
   const deg = shape.r;
-  const primarySize = fitText(glyph.text, shape.rect.w, glyph.sub ? 0.26 : 0.3);
-  const subSize = glyph.sub ? fitText(glyph.sub, shape.rect.w, 0.185) : 0;
+  const legend = legendLayout(glyph.text, shape.rect.w, glyph.sub);
   const cxc = shape.rect.x;
   const cyc = shape.rect.y;
 
@@ -341,8 +335,8 @@ function KeyLabelImpl({ view, decor }: { view: KeyView; decor: KeyDecor }) {
       >
         <text
           x={cxc}
-          y={glyph.sub ? cyc - 0.07 : cyc}
-          fontSize={primarySize}
+          y={cyc - (legend.lines.length - 1) * legend.size * 0.55 - (glyph.sub ? legend.subSize * 0.7 : 0)}
+          fontSize={legend.size}
           textAnchor="middle"
           dominantBaseline="central"
           fill={glyph.dim ? "var(--color-cap-ink-dim)" : "var(--color-cap-ink)"}
@@ -351,15 +345,20 @@ function KeyLabelImpl({ view, decor }: { view: KeyView; decor: KeyDecor }) {
           paintOrder={decor.fill ? "stroke fill" : undefined}
           strokeLinejoin="round"
           fontFamily="var(--font-sans)"
-          fontWeight={500}
+          fontWeight={700}
         >
-          {glyph.text}
+          {legend.lines.map((line, i) => (
+            <tspan key={i} x={cxc} dy={i === 0 ? 0 : legend.size * 1.1}>
+              {line}
+            </tspan>
+          ))}
         </text>
         {glyph.sub && (
           <text
             x={cxc}
-            y={cyc + 0.22}
-            fontSize={subSize}
+            y={cyc + (legend.lines.length - 1) * legend.size * 0.55 + legend.size * 0.5 + legend.subSize * 0.4}
+            fontSize={legend.subSize}
+            fontWeight={600}
             textAnchor="middle"
             dominantBaseline="central"
             fill="var(--color-mute)"

@@ -22,7 +22,6 @@ import { ComboEditor } from "./keymap/ComboEditor";
 import { ComboFocusCanvas } from "./keymap/ComboFocusCanvas";
 import { useComboFocus } from "./keymap/useComboFocus";
 import { KeyEditor } from "./keymap/KeyEditor";
-import { useCapabilities } from "./use-capabilities";
 import { LightingMode } from "./lighting/LightingMode";
 import { EffectsMode } from "./effects/EffectsMode";
 import { LiveMode } from "./live/LiveMode";
@@ -83,13 +82,12 @@ function SectionTabs({
 
 /** The keymap, as GLIDE lays it out: the keyboard, the key editor below it.
  *  A combo open in Focus Mode swaps both for its canvas and its editor.
- *  Trackpads, encoders and the layer's pointing settings keep a side panel. */
+ *  A trackpad or an encoder opens a side panel with its settings. */
 function KeymapScreen() {
   const { state } = useWorkbench();
-  const capabilities = useCapabilities();
   const combo = useComboFocus();
   const selected = state.selection?.type;
-  const side = selected === "encoder" || selected === "pointing" || (!selected && capabilities.has("pointing"));
+  const side = selected === "encoder" || selected === "pointing";
   const editorPane = usePaneSize(SETTING_KEYS.keyEditorHeight, 310, 180, 640);
   return (
     <>
@@ -192,7 +190,7 @@ export function Workbench({
   const area = currentArea ?? areas[0];
   // The phone's side-panel drawer, and the side panel's width elsewhere.
   const [drawer, setDrawer] = useState(false);
-  const sidePane = usePaneSize(SETTING_KEYS.sidePanelWidth, 256, 200, 420);
+  const sidePane = usePaneSize(SETTING_KEYS.sidePanelWidth, 300, 220, 440);
   // Each area remembers the section last shown in it.
   const lastSection = useRef<Partial<Record<AreaId, SectionId>>>({});
   useEffect(() => {
@@ -357,7 +355,13 @@ export function Workbench({
               current={section}
               onSection={(mode) => dispatch({ type: "mode", mode })}
             />
-            <main className="flex min-h-0 flex-1 gap-4 p-4 max-lg:flex-col max-lg:overflow-y-auto max-sm:p-2">
+            <main
+              className={cx(
+                "flex min-h-0 flex-1 max-lg:flex-col max-lg:overflow-y-auto",
+                // The keymap is GLIDE's main screen: canvas and editor edge to edge.
+                section === "keymap" ? "" : "gap-4 p-4 max-sm:p-2",
+              )}
+            >
               <SectionView section={section} />
             </main>
           </div>

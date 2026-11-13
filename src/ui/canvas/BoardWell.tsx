@@ -23,15 +23,23 @@ const ZOOM_STEP = 0.1;
  * grid. The board fits 95% of it and refits whenever the pane changes size;
  * the zoom control (−, the percentage that returns to the fit, +) and Ctrl/⌘
  * with the scroll wheel zoom on top of the fit, and dragging the empty canvas
- * moves a zoomed board.
+ * moves a zoomed board. `top` floats at the top centre (GLIDE's hint pill),
+ * `tools` sit left of the zoom control; `flush` drops the frame for a canvas
+ * that is the whole pane.
  */
 export function BoardWell({
   model,
   className,
+  flush = false,
+  top,
+  tools,
   children,
 }: {
   model: KeyboardModel;
   className?: string;
+  flush?: boolean;
+  top?: ReactNode;
+  tools?: ReactNode;
   children: ReactNode;
 }) {
   const vb = boardViewBox(model);
@@ -69,7 +77,11 @@ export function BoardWell({
   return (
     <div
       ref={wellRef}
-      className={cx("canvas-well relative min-h-0 w-full flex-1 overflow-hidden rounded-xl border border-line", className)}
+      className={cx(
+        "canvas-well relative min-h-0 w-full flex-1 overflow-hidden",
+        !flush && "rounded-xl border border-line",
+        className,
+      )}
       style={{ containerType: "size", cursor: zoom > 1 ? "grab" : undefined }}
       onPointerDown={(event) => {
         // Only the empty canvas pans; keys, rings and labels keep their own pointer handling.
@@ -95,37 +107,45 @@ export function BoardWell({
       >
         <div className="pointer-events-auto h-full w-full">{children}</div>
       </div>
-      <div className="absolute right-3 bottom-3 z-10 flex h-9 items-center rounded-xl border border-line-strong bg-raised px-1 shadow-2xl">
-        <button
-          type="button"
-          aria-label="Zoom out"
-          title="Zoom out"
-          onClick={() => zoomBy(-ZOOM_STEP)}
-          className="flex h-full cursor-pointer items-center px-2.5 text-mute transition-transform hover:-translate-y-px hover:text-ink"
-        >
-          −
-        </button>
-        <button
-          type="button"
-          title="Fit the keyboard to the space"
-          aria-label={`Zoom ${Math.round(zoom * 100)} percent; fit to the space`}
-          onClick={() => {
-            setZoom(1);
-            setPan({ x: 0, y: 0 });
-          }}
-          className="w-12 cursor-pointer text-center font-mono text-small font-semibold text-ink"
-        >
-          {Math.round(zoom * 100)}%
-        </button>
-        <button
-          type="button"
-          aria-label="Zoom in"
-          title="Zoom in"
-          onClick={() => zoomBy(ZOOM_STEP)}
-          className="flex h-full cursor-pointer items-center px-2.5 text-mute transition-transform hover:-translate-y-px hover:text-ink"
-        >
-          +
-        </button>
+      {top && (
+        <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex justify-center">
+          <div className="pointer-events-auto max-w-full">{top}</div>
+        </div>
+      )}
+      <div className="absolute right-3 bottom-3 z-10 flex items-end gap-2">
+        {tools}
+        <div className="flex h-9 items-center rounded-xl border border-line-strong bg-raised px-1 shadow-2xl">
+          <button
+            type="button"
+            aria-label="Zoom out"
+            title="Zoom out"
+            onClick={() => zoomBy(-ZOOM_STEP)}
+            className="flex h-full cursor-pointer items-center px-2.5 text-mute transition-transform hover:-translate-y-px hover:text-ink"
+          >
+            −
+          </button>
+          <button
+            type="button"
+            title="Fit the keyboard to the space"
+            aria-label={`Zoom ${Math.round(zoom * 100)} percent; fit to the space`}
+            onClick={() => {
+              setZoom(1);
+              setPan({ x: 0, y: 0 });
+            }}
+            className="w-12 cursor-pointer text-center font-mono text-small font-semibold text-ink"
+          >
+            {Math.round(zoom * 100)}%
+          </button>
+          <button
+            type="button"
+            aria-label="Zoom in"
+            title="Zoom in"
+            onClick={() => zoomBy(ZOOM_STEP)}
+            className="flex h-full cursor-pointer items-center px-2.5 text-mute transition-transform hover:-translate-y-px hover:text-ink"
+          >
+            +
+          </button>
+        </div>
       </div>
     </div>
   );

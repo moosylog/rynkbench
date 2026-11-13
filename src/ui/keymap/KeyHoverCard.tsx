@@ -31,7 +31,7 @@ export function KeyHoverCard({ keyView }: { keyView: KeyView }) {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute bottom-3 left-3 z-10 flex max-w-[46rem] flex-wrap items-center gap-x-4 gap-y-1 rounded-xl border border-line-strong bg-raised px-3 py-1.5 shadow-2xl max-sm:hidden"
+      className="pointer-events-none flex min-h-9 max-w-[32rem] flex-wrap items-center gap-x-4 gap-y-1 rounded-xl border border-line-strong bg-raised px-3 py-1.5 shadow-2xl max-sm:hidden"
     >
       <span className="font-mono text-small font-semibold text-mute">{keyAddressLabel(keyView)}</span>
       {slots.kind === "slots" && (slots.hold !== null || slots.doubleTap !== null) ? (

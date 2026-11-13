@@ -19,7 +19,7 @@ function Frame({ height, className, children }: { height: number; className: str
   return (
     <section
       style={{ "--editor-h": `${height}px` } as CSSProperties}
-      className={cx("flex h-(--editor-h) shrink-0 rounded-2xl border border-line bg-panel max-lg:h-auto", className)}
+      className={cx("flex h-(--editor-h) shrink-0 border-t border-line bg-panel max-lg:h-auto", className)}
     >
       {children}
     </section>

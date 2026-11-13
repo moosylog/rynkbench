@@ -23,9 +23,11 @@ import {
 
 import { effectAnim, effectColor } from "../lighting/decor";
 import { targetPreviewEffects } from "../lighting/preview";
-import { layerName } from "../layer-names";
 import { RowMenu, type MenuEntry } from "../RowMenu";
 import { KeyHoverCard } from "./KeyHoverCard";
+import { CanvasPill } from "./CanvasPill";
+import { cx } from "../kit";
+import { LightingIcon } from "../icons";
 import { useKeyClipboard } from "./useKeyClipboard";
 import {
   activePointingDevices,
@@ -34,23 +36,6 @@ import {
 } from "../../model/pointing";
 
 import { useCapabilities } from "../use-capabilities";
-
-/** Which layer the canvas shows; picking and changing layers is the side panel's job. */
-function LayerHeading() {
-  const { state } = useWorkbench();
-  const shown = layerName(state.layerMetadata, state.uiLayer);
-  return (
-    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-1">
-      <h2 className="text-title font-bold text-ink">{shown}</h2>
-      {state.uiLayer === state.defaultLayer && <span className="text-small text-faint">Default layer</span>}
-      {state.uiLayer !== state.currentLayer && (
-        <span className="whitespace-nowrap text-small text-faint">
-          {layerName(state.layerMetadata, state.currentLayer)} is active on the keyboard
-        </span>
-      )}
-    </div>
-  );
-}
 
 export function KeymapCenter() {
   const { bundle, state, dispatch, io } = useWorkbench();
@@ -275,6 +260,14 @@ export function KeymapCenter() {
     };
   };
 
+  /** What a drag or keyboard move under way will do, for the canvas pill. */
+  const moveStatus = (): string | null => {
+    const at = (key: { row: number; col: number }) => keyActionDescription(layer?.[key.row * cols + key.col] ?? "No");
+    if (drag?.destination) return `Release to move ${at(drag.source)} here, replacing ${at(drag.destination)}`;
+    if (keyboardMove?.destination) return `Press Space to move here, replacing ${at(keyboardMove.destination)}`;
+    return null;
+  };
+
   // The key's quick menu, as in GLIDE: what it is, then copy, paste and clear.
   const keyMenuItems = (key: KeyView): MenuEntry[] => {
     const bound = layer?.[key.row * cols + key.col] ?? "No";
@@ -294,45 +287,31 @@ export function KeymapCenter() {
   };
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col gap-3 max-lg:min-h-[380px]">
-      <LayerHeading />
-      <div className="flex min-h-5 items-center justify-between gap-4 px-1 text-small text-faint">
-        <span className="flex items-center gap-3">
-          {layerLightingAvailable && (
-            <label className="flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap">
-              <input
-                type="checkbox"
-                checked={showLighting}
-                onChange={(event) => setShowLighting(event.target.checked)}
-                className="accent-(--color-accent)"
-              />
-              Show layer lighting
-            </label>
-          )}
-          <span>Click a key to edit · Right-click for options · Drag to move · Ctrl/⌘ C and V to copy and paste</span>
-        </span>
-        <span
-          className="max-w-[46%] truncate text-right text-mute"
-          aria-live="polite"
-        >
-          {drag?.destination
-            ? `Release to move ${keyActionDescription(
-                layer?.[drag.source.row * cols + drag.source.col] ?? "No",
-              )} to r${drag.destination.row} c${drag.destination.col} and replace ${keyActionDescription(
-                layer?.[drag.destination.row * cols + drag.destination.col] ??
-                  "No",
-              )}.`
-            : keyboardMove?.destination
-              ? `Press Space to move to r${keyboardMove.destination.row} c${keyboardMove.destination.col} and replace ${keyActionDescription(
-                  layer?.[
-                    keyboardMove.destination.row * cols +
-                      keyboardMove.destination.col
-                  ] ?? "No",
-                )}.`
-              : manipulationMessage}
-        </span>
-      </div>
-      <BoardWell model={bundle.model}>
+    <div className="relative flex min-h-0 flex-1 flex-col max-lg:min-h-[380px]">
+      <BoardWell
+        model={bundle.model}
+        flush
+        top={<CanvasPill message={moveStatus() ?? manipulationMessage} />}
+        tools={
+          <>
+            {hovered && !drag && <KeyHoverCard keyView={hovered} />}
+                  {layerLightingAvailable && (
+              <button
+                type="button"
+                aria-pressed={showLighting}
+                title={showLighting ? "Hide the layer's lighting" : "Show the layer's lighting"}
+                onClick={() => setShowLighting(!showLighting)}
+                className={cx(
+                  "flex size-9 cursor-pointer items-center justify-center rounded-xl border bg-raised shadow-2xl transition-colors",
+                  showLighting ? "border-accent text-accent" : "border-line-strong text-mute hover:text-ink",
+                )}
+              >
+                <LightingIcon size={15} />
+              </button>
+            )}
+          </>
+        }
+      >
         <KeyboardCanvas
           model={bundle.model}
           className="h-full w-full"
@@ -439,7 +418,6 @@ export function KeymapCenter() {
           }}
         />
       </BoardWell>
-      {hovered && !drag && <KeyHoverCard keyView={hovered} />}
       {keyMenu && (
         <RowMenu
           x={keyMenu.x}
