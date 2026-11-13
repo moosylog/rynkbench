@@ -1,7 +1,7 @@
 // The curated system and lighting actions, with plain-language hints: shared
 // by the key editor's Pick Key and the full action editor.
 
-import type { KeyboardAction, LightAction } from "../../vendor/rynk-wasm/rynk_wasm";
+import type { KeyboardAction, LightAction } from "../../model/action-types";
 
 /** System control actions, curated with plain-language hints. */
 export const SYSTEM_ACTIONS: Array<{

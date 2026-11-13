@@ -5,7 +5,7 @@
 // editor, for macros, morse patterns and the rest).
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import type { Action, KeyAction, ModifierCombination } from "../../vendor/rynk-wasm/rynk_wasm";
+import type { Action, KeyAction, ModifierCombination } from "../../model/action-types";
 import { keyActionGlyph, keyActionDescription, actionDescription, modifierSymbols, anyModifier } from "../labels";
 import { keyAddressLabel, matrixKeyLabel } from "../key-address";
 import { keyPendingId, useWorkbench } from "../state";

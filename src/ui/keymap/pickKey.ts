@@ -5,7 +5,7 @@
 // character (a lilac one needs Shift or AltGr); the tile still binds the key
 // as pressed. Searching also finds layers. No React.
 
-import type { Action, HidKeyCode } from "../../vendor/rynk-wasm/rynk_wasm";
+import type { Action, HidKeyCode } from "../../model/action-types";
 import { characterFor, type KeyboardLocale } from "../locale";
 import { hidLabel } from "../labels";
 import { noModifiers } from "../../model/slots";
