@@ -4,14 +4,14 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { cx } from "../kit";
-import { CloseIcon } from "../icons";
+import { CloseIcon, KeymapIcon, LightingIcon, MenuIcon, SettingsIcon } from "../icons";
 import type { EditorTab } from "./editorTabs";
 
-const TAB_LABEL: Record<EditorTab, string> = {
-  pick: "Pick Key",
-  layer: "Switch Layer",
-  lighting: "Lighting",
-  all: "Every action",
+const TABS: Record<EditorTab, { label: string; Icon: (props: { size?: number }) => ReactNode }> = {
+  pick: { label: "Pick Key", Icon: KeymapIcon },
+  layer: { label: "Switch Layer", Icon: MenuIcon },
+  lighting: { label: "Lighting", Icon: LightingIcon },
+  all: { label: "Every action", Icon: SettingsIcon },
 };
 
 /** The panel's frame at its resizable height (a column on narrow screens). */
@@ -60,23 +60,27 @@ export function EditorPanel({
       <div
         role="tablist"
         aria-orientation="vertical"
-        className="flex w-[132px] shrink-0 flex-col gap-1 border-r border-line p-2 max-lg:w-full max-lg:flex-row max-lg:overflow-x-auto max-lg:border-r-0 max-lg:border-b"
+        className="flex w-[96px] shrink-0 flex-col gap-1.5 border-r border-line p-2 max-lg:w-full max-lg:flex-row max-lg:overflow-x-auto max-lg:border-r-0 max-lg:border-b"
       >
-        {tabs.map((id) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            aria-selected={tab === id}
-            onClick={() => onTab(id)}
-            className={cx(
-              "shrink-0 cursor-pointer rounded-lg px-3 py-2 text-left text-body font-semibold transition-colors",
-              tab === id ? "bg-raised text-accent" : "text-mute hover:bg-hover hover:text-ink",
-            )}
-          >
-            {TAB_LABEL[id]}
-          </button>
-        ))}
+        {tabs.map((id) => {
+          const { label, Icon } = TABS[id];
+          return (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={tab === id}
+              onClick={() => onTab(id)}
+              className={cx(
+                "flex shrink-0 cursor-pointer flex-col items-center gap-1 rounded-xl px-1.5 py-2.5 text-center text-small leading-tight font-semibold transition-colors",
+                tab === id ? "bg-accent-fill text-on-accent shadow-lg" : "text-mute hover:bg-hover hover:text-ink",
+              )}
+            >
+              <Icon size={18} />
+              {label}
+            </button>
+          );
+        })}
       </div>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-4 max-lg:max-h-[420px]">{children}</div>
     </Frame>
@@ -103,7 +107,7 @@ export function EditorHeading({
         {glyph || "·"}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="truncate text-ui font-semibold text-ink">{title}</div>
+        <div className="truncate text-title font-semibold text-ink">{title}</div>
         <div className="text-small text-faint">{detail}</div>
       </div>
       <button

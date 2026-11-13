@@ -6,9 +6,9 @@ import type { Action } from "../../model/action-types";
 import type { Slot, SlotsOf } from "../../model/key-slots";
 import { DEFAULT_TAP_HOLD_PROFILE } from "../../model/morse";
 import type { ConnectedBundle } from "../../model/workbench-state";
-import { actionDescription } from "../labels";
-import { cx, SectionLabel } from "../kit";
-import { CloseIcon, PlusIcon } from "../icons";
+import { actionDescription, actionLabel } from "../labels";
+import { cx } from "../kit";
+import { PlusIcon, TrashIcon } from "../icons";
 import { morseProfileSummary } from "../morse-profile";
 
 const SLOT_NAME: Record<Slot, string> = { tap: "On Tap", hold: "On Hold", doubleTap: "On Double Tap" };
@@ -25,6 +25,8 @@ const PICK_HINT: Record<Slot, string> = {
   doubleTap: "Pick what the key does when pressed twice →",
 };
 
+/** A slot as GLIDE draws it: one row, its name on the left, what it does on the
+ *  right, and a bin. The whole row picks it as the slot the tabs fill. */
 function SlotRow({
   slot,
   value,
@@ -40,32 +42,32 @@ function SlotRow({
 }) {
   const empty = value === "No";
   return (
-    <div className="flex flex-col gap-1">
-      <SectionLabel>{SLOT_NAME[slot]}</SectionLabel>
-      <div className="flex items-center gap-1.5">
-        <button
-          type="button"
-          onClick={onSelect}
-          aria-pressed={active}
-          className={cx(
-            "flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-left transition-colors",
-            active ? "border-accent bg-accent-dim/25" : "border-line bg-raised hover:border-line-strong",
-          )}
-        >
-          <span className={cx("truncate text-body font-semibold", empty ? "text-faint" : "text-ink")}>
-            {empty ? "Pick an action →" : actionDescription(value)}
-          </span>
-        </button>
-        <button
-          type="button"
-          onClick={onClear}
-          aria-label={`Clear ${SLOT_NAME[slot]}`}
-          title={CLEAR_HINT[slot]}
-          className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-faint hover:bg-hover hover:text-ink"
-        >
-          <CloseIcon size={11} />
-        </button>
-      </div>
+    <div
+      className={cx(
+        "flex items-center gap-2 rounded-xl border pr-1.5 transition-colors",
+        active ? "border-accent bg-accent-dim/25" : "border-line bg-raised hover:border-line-strong",
+      )}
+    >
+      <button
+        type="button"
+        onClick={onSelect}
+        aria-pressed={active}
+        className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 py-2.5 pl-4 text-left"
+      >
+        <span className="shrink-0 text-ui font-semibold text-ink">{SLOT_NAME[slot]}:</span>
+        <span className={cx("ml-auto truncate text-body font-semibold", empty ? "text-faint" : "font-mono text-ink")}>
+          {empty ? "Pick an action →" : actionLabel(value) || actionDescription(value)}
+        </span>
+      </button>
+      <button
+        type="button"
+        onClick={onClear}
+        aria-label={`Clear ${SLOT_NAME[slot]}`}
+        title={CLEAR_HINT[slot]}
+        className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md border border-line text-danger hover:bg-danger-dim/40"
+      >
+        <TrashIcon size={12} />
+      </button>
     </div>
   );
 }
@@ -133,11 +135,11 @@ export function SlotList({
               onClick={() => onSelect(slot)}
               aria-pressed={active === slot}
               className={cx(
-                "flex cursor-pointer items-center gap-1.5 rounded-full border border-dashed px-3 py-1 text-small font-semibold transition-colors",
-                active === slot ? "border-accent text-accent" : "border-line-strong text-mute hover:text-ink",
+                "flex cursor-pointer items-center gap-1 rounded-full border border-dashed px-3 py-1 text-body font-semibold transition-colors",
+                active === slot ? "border-accent text-accent" : "border-line-strong text-ink hover:border-mute",
               )}
             >
-              <PlusIcon size={10} /> {SLOT_NAME[slot]}
+              <PlusIcon size={10} className="text-accent" /> {SLOT_NAME[slot]}
             </button>
           ))}
         </div>

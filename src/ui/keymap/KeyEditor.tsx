@@ -7,7 +7,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Action, KeyAction } from "../../model/action-types";
 import { keyActionGlyph, keyActionDescription } from "../labels";
-import { keyAddressLabel, matrixKeyLabel } from "../key-address";
+import { keyAddressLabel, keyPlaceName } from "../key-address";
 import { keyPendingId, useWorkbench } from "../state";
 import { useCapabilities } from "../use-capabilities";
 import { layerName } from "../layer-names";
@@ -91,8 +91,8 @@ export function KeyEditor({ height = 310 }: { height?: number }) {
     <>
       <EditorHeading
         glyph={glyph.text}
-        title={keyAddressLabel(addressable)}
-        detail={`${layerName(state.layerMetadata, layer)} · matrix ${matrixKeyLabel(addressable)}`}
+        title={keyPlaceName(addressable)}
+        detail={`Key ${keyAddressLabel(addressable)} · ${layerName(state.layerMetadata, layer)}`}
         onDone={() => dispatch({ type: "select", selection: null })}
         doneLabel="Done with this key"
       />

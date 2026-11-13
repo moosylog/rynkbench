@@ -54,8 +54,9 @@ describe("key editor", () => {
 
   it("shows a plain key's On Tap and offers an On Hold", () => {
     const html = editor(A);
-    expect(html).toContain("On Tap");
-    expect(html).toContain("Key · A");
+    expect(html).toContain("Left hand · row 1, column 1");
+    expect(html).toContain("On Tap:");
+    expect(html).toMatch(/On Tap:<\/span><span[^>]*>A<\/span>/);
     expect(html).toContain("On Hold");
     expect(html).not.toContain("Hold timing");
   });
@@ -75,7 +76,7 @@ describe("key editor", () => {
   it("shows a key bound to a morse entry of tap and tap-tap as its slots", () => {
     const html = editor({ Morse: 0 } as KeyAction, { morse: [DOUBLE_TAP], morseSlots: 4 });
     expect(html).toContain("Clear On Double Tap");
-    expect(html).toContain("Key · B");
+    expect(html).toMatch(/On Double Tap:<\/span><span[^>]*>B<\/span>/);
     expect(html).not.toContain("Behaviors → Morse");
   });
 

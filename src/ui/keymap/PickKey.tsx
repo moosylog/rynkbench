@@ -55,7 +55,7 @@ function TileButton({ tile, onPick }: { tile: Tile; onPick: (tile: Tile) => void
       onClick={() => onPick(tile)}
       title={tile.lilac ? `${tile.label} (needs Shift or AltGr)` : tile.label}
       className={cx(
-        "flex h-9 min-w-9 cursor-pointer items-center justify-center rounded-lg border px-2.5 text-body font-semibold transition-all duration-150 hover:-translate-y-px hover:border-line-strong hover:bg-hover hover:shadow-md",
+        "flex h-12 min-w-12 cursor-pointer items-center justify-center rounded-lg border px-3 text-ui font-semibold transition-all duration-150 hover:-translate-y-px hover:border-line-strong hover:bg-hover hover:shadow-md",
         tile.lilac ? "border-accent-deep/40 bg-accent-dim/30 text-ink" : "border-line bg-raised text-ink",
       )}
     >
@@ -77,7 +77,7 @@ function GroupTiles({ group, onPick }: { group: TileGroup; onPick: (tile: Tile) 
       {clusters.map(([cluster, tiles], index) => (
         <div key={index} className="flex flex-col gap-1.5">
           {cluster && <span className="text-caption text-faint">{cluster}</span>}
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-2">
             {tiles.map((tile) => (
               <TileButton key={tile.id} tile={tile} onPick={onPick} />
             ))}
@@ -103,7 +103,16 @@ export function PickKey({ onPick, disabled }: { onPick: (action: Action | "Trans
   const [armed, setArmed] = useState<Set<string>>(new Set());
   const [showMore, setShowMore] = useState(false);
   const [lit, setLit] = useState<string | null>(null);
+  // The group at the top of the list: its chip is filled, as in GLIDE.
+  const [inView, setInView] = useState<string | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
+  const followScroll = () => {
+    const list = scroller.current;
+    if (!list) return;
+    const sections = [...list.querySelectorAll<HTMLElement>("[data-group]")];
+    const top = sections.filter((section) => section.offsetTop - 8 <= list.scrollTop).at(-1) ?? sections[0];
+    setInView(top?.dataset.group ?? null);
+  };
 
   const layers = (state.layerMetadata ?? [])
     .map((metadata, index) => ({ index, occupied: metadata.occupied, name: layerName(state.layerMetadata, index) }))
@@ -129,14 +138,14 @@ export function PickKey({ onPick, disabled }: { onPick: (action: Action | "Trans
   return (
     <div className={cx("flex min-h-0 flex-1 flex-col gap-2.5", disabled && "pointer-events-none opacity-40")}>
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex rounded-lg border border-line bg-raised p-0.5" title="Which side's modifiers">
+        <div className="flex flex-col rounded-lg border border-line bg-raised p-0.5" title="Which side's modifiers">
           {(["left", "right"] as const).map((value) => (
             <button
               key={value}
               type="button"
               onClick={() => setSide(value)}
               className={cx(
-                "cursor-pointer rounded-md px-2 py-1 text-small font-semibold uppercase",
+                "cursor-pointer rounded-md px-2 py-0.5 text-small font-semibold uppercase",
                 side === value ? "bg-hover text-ink" : "text-faint hover:text-mute",
               )}
             >
@@ -159,7 +168,7 @@ export function PickKey({ onPick, disabled }: { onPick: (action: Action | "Trans
                 setArmed(next);
               }}
               className={cx(
-                "flex size-8 cursor-pointer items-center justify-center rounded-lg border text-ui transition-colors",
+                "flex size-11 cursor-pointer items-center justify-center rounded-lg border text-title font-semibold transition-colors",
                 on ? "border-accent bg-accent-dim/40 text-accent" : "border-line bg-raised text-mute hover:text-ink",
               )}
             >
@@ -179,7 +188,7 @@ export function PickKey({ onPick, disabled }: { onPick: (action: Action | "Trans
             }}
             placeholder="Search keys, symbols, layers…"
             aria-label="Search keys"
-            className="w-full rounded-lg border border-line bg-raised px-3 py-1.5 text-body text-ink placeholder:text-faint focus:border-accent focus:outline-none"
+            className="h-11 w-full rounded-xl border border-line bg-raised px-4 text-ui text-ink placeholder:text-faint focus:border-accent focus:outline-none"
           />
           {query.trim() && first && (
             <span className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-caption text-faint">
@@ -202,14 +211,20 @@ export function PickKey({ onPick, disabled }: { onPick: (action: Action | "Trans
                 key={group.id}
                 type="button"
                 onClick={() => jump(group.id)}
-                className="shrink-0 cursor-pointer rounded-full border border-line px-2.5 py-0.5 text-small font-semibold text-mute transition-colors hover:border-line-strong hover:text-ink"
+                aria-current={(inView ?? groups.main[0]?.id) === group.id ? "true" : undefined}
+                className={cx(
+                  "shrink-0 cursor-pointer rounded-full border px-3 py-1 text-body font-semibold transition-colors",
+                  (inView ?? groups.main[0]?.id) === group.id
+                    ? "border-accent bg-accent-fill text-on-accent"
+                    : "border-line text-mute hover:border-line-strong hover:text-ink",
+                )}
               >
                 {group.chip}
               </button>
             ))}
         </div>
       )}
-      <div ref={scroller} className="relative min-h-0 flex-1 overflow-y-auto pr-1">
+      <div ref={scroller} onScroll={followScroll} className="relative min-h-0 flex-1 overflow-y-auto pr-1">
         {found.length === 0 && (
           <p className="py-6 text-center text-body text-faint">Nothing matches “{query}”.</p>
         )}
