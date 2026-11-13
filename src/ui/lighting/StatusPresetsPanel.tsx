@@ -32,7 +32,7 @@ import { layersInMask } from "./wakeLayers";
 import { hasConnectionEffectsConditions, hasLayerIndicatorConditions } from "../../session/lighting-features";
 
 const selectClass =
-  "mt-1 w-full rounded-md border border-line bg-raised px-2 py-1.5 text-[12px] text-ink";
+  "mt-1 w-full rounded-md border border-line bg-raised px-2 py-1.5 text-body text-ink";
 
 function keyAt(keys: KeyView[], row: number, col: number): KeyView | undefined {
   return keys.find((key) => key.row === row && key.col === col);
@@ -204,16 +204,16 @@ export function StatusPresetsPanel({
   return (
     <div>
       <SectionLabel>Status setup</SectionLabel>
-      <p className="mt-1 text-[11.5px] leading-relaxed text-faint">
+      <p className="mt-1 text-small leading-relaxed text-faint">
         Bind connection actions and install their ordered status-light rules together. Presets
         replace matching rules on the chosen keys, so running them again is safe.
       </p>
-      <p className="mt-1 text-[11px] leading-relaxed text-faint">
+      <p className="mt-1 text-small leading-relaxed text-faint">
         For a lighting toggle key, select the key in Keymap and pick a preset on its Lighting
         tab.
       </p>
 
-      <label className="mt-2 block text-[11px] text-faint">
+      <label className="mt-2 block text-small text-faint">
         Status layer
         <select
           value={layer}
@@ -228,19 +228,19 @@ export function StatusPresetsPanel({
           ))}
         </select>
       </label>
-      <p className="mt-1 text-[10.5px] leading-relaxed text-faint">
+      <p className="mt-1 text-caption leading-relaxed text-faint">
         Every rule installed below lights only while this layer is active.
       </p>
 
       {glove80Available && predicatesSupported && (
         <div className="mt-2 rounded-lg border border-accent-deep/40 bg-accent-dim/15 p-3">
-          <div className="text-[12.5px] font-medium text-ink">Glove80 Magic status cluster</div>
-          <p className="mt-1 text-[11px] leading-relaxed text-faint">
+          <div className="text-body font-medium text-ink">Glove80 Magic status cluster</div>
+          <p className="mt-1 text-small leading-relaxed text-faint">
             On {nameOf(layer)}: a battery bar per half, Bluetooth slots 1–3 on the lower left
             thumb arc, and USB on the upper thumb key. Green is active, blue selected/idle,
             blinking white advertising, red bonded-idle, and gray empty.
           </p>
-          <label className="mt-2 block text-[11px] text-faint">
+          <label className="mt-2 block text-small text-faint">
             Battery bars
             <select
               value={layout}
@@ -267,14 +267,14 @@ export function StatusPresetsPanel({
 
       {stockMagicAvailable && magicSupported && <StockMagicLayerPanel layer={layer} />}
       {stockMagicAvailable && !magicSupported && (
-        <p className="mt-2 text-[11px] leading-relaxed text-warn">
+        <p className="mt-2 text-small leading-relaxed text-warn">
           Update firmware to install the stock Magic layer with layer and lock indicators.
         </p>
       )}
 
       <div className="mt-3 rounded-lg border border-line-soft bg-well p-3">
-        <div className="text-[12.5px] font-medium text-ink">Connection key</div>
-        <p className="mt-1 text-[11px] leading-relaxed text-faint">
+        <div className="text-body font-medium text-ink">Connection key</div>
+        <p className="mt-1 text-small leading-relaxed text-faint">
           Pick one lit key, then bind its action and status indicator together.
         </p>
         <KeyChoice
@@ -289,7 +289,7 @@ export function StatusPresetsPanel({
           onPick={onPick}
         />
         <div className="mt-2 grid grid-cols-2 gap-2">
-          <label className="text-[11px] text-faint">
+          <label className="text-small text-faint">
             Action
             <select
               value={kind}
@@ -301,7 +301,7 @@ export function StatusPresetsPanel({
             </select>
           </label>
           {kind === "ble" ? (
-            <label className="text-[11px] text-faint">
+            <label className="text-small text-faint">
               Profile
               <select
                 value={slot}
@@ -327,8 +327,8 @@ export function StatusPresetsPanel({
       </div>
 
       <div className="mt-2 rounded-lg border border-line-soft bg-well p-3">
-        <div className="text-[12.5px] font-medium text-ink">Battery bar</div>
-        <p className="mt-1 text-[11px] leading-relaxed text-faint">
+        <div className="text-body font-medium text-ink">Battery bar</div>
+        <p className="mt-1 text-small leading-relaxed text-faint">
           Pick {MIN_BAR_SEGMENTS}–{MAX_BAR_SEGMENTS} keys in a column or a row. Along the fill
           direction each lights at a rising level; charging turns the lit segments blue.
         </p>
@@ -347,7 +347,7 @@ export function StatusPresetsPanel({
           onPick={onPick}
         />
         <div className="mt-2 grid grid-cols-2 gap-2">
-          <label className="text-[11px] text-faint">
+          <label className="text-small text-faint">
             Battery node
             <select
               value={node}
@@ -359,7 +359,7 @@ export function StatusPresetsPanel({
               ))}
             </select>
           </label>
-          <label className="text-[11px] text-faint">
+          <label className="text-small text-faint">
             Fill direction
             <select
               value={order}
@@ -376,7 +376,7 @@ export function StatusPresetsPanel({
               ))}
             </select>
           </label>
-          <label className="col-span-2 text-[11px] text-faint">
+          <label className="col-span-2 text-small text-faint">
             Style
             <select
               value={style}
@@ -402,12 +402,12 @@ export function StatusPresetsPanel({
       </div>
 
       {!predicatesSupported && (
-        <p className="mt-2 text-[11px] leading-relaxed text-warn">
+        <p className="mt-2 text-small leading-relaxed text-warn">
           This firmware can store battery rules but not connection predicates; update it before
           installing Bluetooth or USB status keys.
         </p>
       )}
-      {message && <p className="mt-2 text-[11px] leading-relaxed text-mute">{message}</p>}
+      {message && <p className="mt-2 text-small leading-relaxed text-mute">{message}</p>}
     </div>
   );
 }

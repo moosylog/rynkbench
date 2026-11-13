@@ -68,12 +68,12 @@ export function ActionSlotButton({
         active ? "border-accent bg-accent-dim/30" : "border-line bg-raised hover:border-line-strong",
       )}
     >
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-faint">
+      <span className="text-caption font-semibold uppercase tracking-wider text-faint">
         {label}
       </span>
       <span
         className={cx(
-          "max-w-full truncate font-mono text-[13px]",
+          "max-w-full truncate font-mono text-ui",
           glyph.text ? "text-ink" : "text-faint",
         )}
       >
@@ -121,7 +121,7 @@ function TogglePill({
       type="button"
       onClick={onToggle}
       className={cx(
-        "cursor-pointer rounded-full border px-2 py-0.5 text-[11px] font-medium transition-colors duration-120",
+        "cursor-pointer rounded-full border px-2 py-0.5 text-small font-medium transition-colors duration-120",
         on
           ? "border-accent bg-accent-dim/40 text-accent"
           : "border-line text-faint hover:border-line-strong hover:text-mute",
@@ -146,7 +146,7 @@ export function StateBitsEditor({
         onChange={(modifiers) => onChange({ ...value, modifiers })}
       />
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="mr-1 text-[10.5px] font-semibold uppercase tracking-wider text-faint">
+        <span className="mr-1 text-caption font-semibold uppercase tracking-wider text-faint">
           Lock LEDs
         </span>
         {LED_FIELDS.map((f) => (
@@ -161,7 +161,7 @@ export function StateBitsEditor({
         ))}
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="mr-1 text-[10.5px] font-semibold uppercase tracking-wider text-faint">
+        <span className="mr-1 text-caption font-semibold uppercase tracking-wider text-faint">
           Mouse
         </span>
         {MOUSE_FIELDS.map((f) => (

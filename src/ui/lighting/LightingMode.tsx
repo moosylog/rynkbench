@@ -283,30 +283,30 @@ export function LightingMode() {
           <SectionLabel>
             {isLayerTarget ? `${layerName(state.layerMetadata, target)} scene` : "Overlay"}
           </SectionLabel>
-          <span className="tnum text-[12px] text-faint">
+          <span className="tnum text-body text-faint">
             {visibleCount} lit
             {isLayerTarget && compiledCount > 0 ? ` · ${compiledCount} firmware defaults` : ""}
             {` · ${stagedCount} staged`}
             {selectedKey ? ` · ${keyAddressLabel(selectedKey)} selected` : ""}
           </span>
           {isLayerTarget && scenes && (
-            <span className="tnum text-[11.5px] text-faint">
+            <span className="tnum text-small text-faint">
               · {state.scenes.length}/{scenes.slots} cells used
             </span>
           )}
           {!isLayerTarget && !bundle.overlayReadSupported && (
-            <span className="text-[11.5px] text-warn">overlay readback unsupported — started empty</span>
+            <span className="text-small text-warn">overlay readback unsupported — started empty</span>
           )}
           <div className="flex-1" />
           {state.lightingState && (
-            <span className="tnum text-[11.5px] text-faint">
+            <span className="tnum text-small text-faint">
               output {state.lightingState.output_enabled ? "on" : "off"} · brightness{" "}
               {state.lightingState.output_brightness}
             </span>
           )}
         </div>
         {pick && (
-          <div className="flex items-center gap-3 rounded-lg border border-accent-deep/60 bg-accent-dim/20 px-3 py-2 text-[12.5px] text-ink">
+          <div className="flex items-center gap-3 rounded-lg border border-accent-deep/60 bg-accent-dim/20 px-3 py-2 text-body text-ink">
             <MarqueeIcon size={14} />
             <span className="flex-1">
               {pick.single
@@ -396,11 +396,11 @@ export function LightingMode() {
               }}
             />
             {pick ? (
-              <p className="mt-1.5 text-[11.5px] leading-relaxed text-accent">
+              <p className="mt-1.5 text-small leading-relaxed text-accent">
                 Choosing keys for the {pick.label} — the board selects until you press Done.
               </p>
             ) : brush.mode === "select" && (
-              <p className="mt-1.5 text-[11.5px] leading-relaxed text-faint">
+              <p className="mt-1.5 text-small leading-relaxed text-faint">
                 Drag across keys to select them, then paint or erase the whole selection at once.
               </p>
             )}
@@ -423,7 +423,7 @@ export function LightingMode() {
               {/* Scene cells have no TTL — only the transient overlay expires. */}
               {!isLayerTarget && (
                 <div>
-                  <label className="flex cursor-pointer items-center justify-between text-[12.5px] text-mute">
+                  <label className="flex cursor-pointer items-center justify-between text-body text-mute">
                     <span>Auto-expire (TTL)</span>
                     <input
                       type="checkbox"
@@ -501,8 +501,8 @@ export function LightingMode() {
                           : "border-line bg-raised text-mute hover:border-line-strong hover:text-ink",
                       )}
                     >
-                      <span className="text-[12.5px]">{zone.name}</span>
-                      <span className="tnum text-[11px] text-faint">{members.length} keys</span>
+                      <span className="text-body">{zone.name}</span>
+                      <span className="tnum text-small text-faint">{members.length} keys</span>
                     </button>
                   );
                 })}
@@ -513,7 +513,7 @@ export function LightingMode() {
           {state.lightingSelection.length > 0 && (
             <div>
               <SectionLabel>Selection</SectionLabel>
-              <p className="mt-1 text-[11.5px] text-faint">
+              <p className="mt-1 text-small text-faint">
                 {state.lightingSelection.length} key
                 {state.lightingSelection.length === 1 ? "" : "s"} selected
               </p>
@@ -567,7 +567,7 @@ export function LightingMode() {
           {state.lightingExtension && (
             <div className="border-t border-line-soft pt-4">
               <SectionLabel>Firmware effect extension</SectionLabel>
-              <p className="mt-1 text-[11.5px] leading-relaxed text-faint">
+              <p className="mt-1 text-small leading-relaxed text-faint">
                 {bundle.extensionEffectNames[state.lightingExtension.state.effect] ??
                   `Effect ${state.lightingExtension.state.effect}`}{" "}
                 is running.

@@ -18,22 +18,28 @@ export interface Term {
   friendly: string;
 }
 
-// The mode rail is narrow, so a friendly mode name stays short.
+// Area names sit in the narrow rail, so they stay short in both voices.
 export const TERMS = {
-  "mode.keymap": { technical: "Keymap", friendly: "Layout" },
-  "mode.lighting": { technical: "Lighting", friendly: "Lighting" },
-  "mode.effects": { technical: "Effects", friendly: "Effects" },
-  "mode.live": { technical: "Live", friendly: "Live view" },
-  "mode.profiles": { technical: "Profiles", friendly: "Tap timing" },
-  "mode.advanced": { technical: "Advanced", friendly: "Advanced" },
-  "mode.device": { technical: "Device", friendly: "Keyboard" },
-  "tab.combos": { technical: "Combos", friendly: "Combos" },
-  "tab.morse": { technical: "Morse", friendly: "Tap patterns" },
-  "tab.macros": { technical: "Macros", friendly: "Macros" },
-  "tab.forks": { technical: "Forks", friendly: "Conditional keys" },
-  "tab.behavior": { technical: "Behavior", friendly: "Behavior" },
-  "tab.transforms": { technical: "Transforms", friendly: "Quick changes" },
-  "tab.usage": { technical: "Usage", friendly: "What\u2019s used" },
+  "area.layout": { technical: "Keymap", friendly: "Layout" },
+  "area.behaviors": { technical: "Behaviors", friendly: "Behaviors" },
+  "area.lighting": { technical: "Lighting", friendly: "Lighting" },
+  "area.device": { technical: "Device", friendly: "Keyboard" },
+  "area.library": { technical: "Library", friendly: "Library" },
+  "area.insights": { technical: "Insights", friendly: "Insights" },
+  "section.keymap": { technical: "Keymap", friendly: "Keys" },
+  "section.combos": { technical: "Combos", friendly: "Combos" },
+  "section.morse": { technical: "Morse", friendly: "Tap patterns" },
+  "section.macros": { technical: "Macros", friendly: "Macros" },
+  "section.forks": { technical: "Forks", friendly: "Conditional keys" },
+  "section.profiles": { technical: "Profiles", friendly: "Tap timing" },
+  "section.behavior": { technical: "Behavior", friendly: "Behavior" },
+  "section.transforms": { technical: "Transforms", friendly: "Quick changes" },
+  "section.lighting": { technical: "Lighting", friendly: "Colors" },
+  "section.effects": { technical: "Effects", friendly: "Effects" },
+  "section.device": { technical: "Device", friendly: "Keyboard" },
+  "section.library": { technical: "Files", friendly: "Files" },
+  "section.usage": { technical: "Usage", friendly: "What\u2019s used" },
+  "section.live": { technical: "Live", friendly: "Live view" },
 } as const satisfies Record<string, Term>;
 
 export type TermId = keyof typeof TERMS;

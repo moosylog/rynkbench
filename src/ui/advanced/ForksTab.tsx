@@ -65,16 +65,16 @@ export function ForksTab({ nav }: { nav: ReactNode }) {
         {nav}
         <CenterScroll>
           <div className="flex items-center justify-between px-1">
-            <span className="text-[12.5px] text-faint">
+            <span className="text-body text-faint">
               A fork overrides a key: when its match condition holds, the trigger produces the
               positive output instead of the negative one — Shift+Dot typing Semicolon, say.
             </span>
-            <span className="tnum shrink-0 text-[11px] text-faint">
+            <span className="tnum shrink-0 text-small text-faint">
               {state.forks.filter((f) => !forkIsEmpty(f)).length} / {caps.max_forks} slots
             </span>
           </div>
           {entries.length === 0 && (
-            <div className="rounded-xl border border-line-soft bg-panel px-4 py-8 text-center text-[12.5px] text-faint">
+            <div className="rounded-xl border border-line-soft bg-panel px-4 py-8 text-center text-body text-faint">
               No forks configured yet.
             </div>
           )}
@@ -83,10 +83,10 @@ export function ForksTab({ nav }: { nav: ReactNode }) {
             return (
               <SlotCard key={index} selected={index === sel} onClick={() => open(index)}>
                 <div className="flex items-center gap-3">
-                  <span className="rounded-md border border-cap-edge bg-cap px-1.5 py-0.5 font-mono text-[12px] text-cap-ink">
+                  <span className="rounded-md border border-cap-edge bg-cap px-1.5 py-0.5 font-mono text-body text-cap-ink">
                     {keyActionGlyph(shown.trigger).text || "·"}
                   </span>
-                  <span className="min-w-0 flex-1 truncate font-mono text-[12.5px] text-mute">
+                  <span className="min-w-0 flex-1 truncate font-mono text-body text-mute">
                     <span className="text-ink">
                       {keyActionGlyph(shown.negative_output).text || "·"}
                     </span>
@@ -115,11 +115,11 @@ export function ForksTab({ nav }: { nav: ReactNode }) {
       <InspectorShell>
         {!editing ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
-            <div className="flex size-12 items-center justify-center rounded-xl border border-line bg-raised font-mono text-[15px] text-faint">
+            <div className="flex size-12 items-center justify-center rounded-xl border border-line bg-raised font-mono text-title text-faint">
               ⑂
             </div>
-            <div className="text-[13.5px] font-medium text-mute">Select a fork to edit it</div>
-            <div className="text-[12px] leading-relaxed text-faint">
+            <div className="text-ui font-medium text-mute">Select a fork to edit it</div>
+            <div className="text-body leading-relaxed text-faint">
               Trigger, two outputs, and the modifier/lock/mouse state that flips between them.
             </div>
           </div>
@@ -170,7 +170,7 @@ export function ForksTab({ nav }: { nav: ReactNode }) {
                 />
               </div>
               {!anyStateBits(draft.match_any) && (
-                <div className="mt-1.5 text-[11.5px] text-warn">
+                <div className="mt-1.5 text-small text-warn">
                   Nothing selected — the positive output will never fire.
                 </div>
               )}
@@ -178,7 +178,7 @@ export function ForksTab({ nav }: { nav: ReactNode }) {
 
             <button
               type="button"
-              className="cursor-pointer text-left text-[11.5px] text-faint underline underline-offset-2 transition-colors duration-120 hover:text-mute"
+              className="cursor-pointer text-left text-small text-faint underline underline-offset-2 transition-colors duration-120 hover:text-mute"
               onClick={() => setAdvanced((v) => !v)}
             >
               {advanced ? "Hide advanced matching" : "Advanced matching…"}
@@ -187,7 +187,7 @@ export function ForksTab({ nav }: { nav: ReactNode }) {
               <div className="flex flex-col gap-3">
                 <div>
                   <SectionLabel>Suppress when any of</SectionLabel>
-                  <div className="mt-1 text-[11px] text-faint">
+                  <div className="mt-1 text-small text-faint">
                     If any of these are active the fork is skipped entirely.
                   </div>
                   <div className="mt-2">
@@ -199,7 +199,7 @@ export function ForksTab({ nav }: { nav: ReactNode }) {
                 </div>
                 <div>
                   <SectionLabel>Keep modifiers</SectionLabel>
-                  <div className="mt-1 text-[11px] text-faint">
+                  <div className="mt-1 text-small text-faint">
                     Matched modifiers are normally swallowed; keep these held through the output.
                   </div>
                   <div className="mt-2">
@@ -209,13 +209,13 @@ export function ForksTab({ nav }: { nav: ReactNode }) {
                     />
                   </div>
                   {anyModifier(draft.kept_modifiers) && (
-                    <div className="mt-1 text-[11.5px] text-accent">
+                    <div className="mt-1 text-small text-accent">
                       Keeping {modifierSymbols(draft.kept_modifiers)}
                     </div>
                   )}
                 </div>
                 {!draft.bindable && (
-                  <div className="text-[11.5px] text-warn">
+                  <div className="text-small text-warn">
                     The firmware marks this fork non-rebindable; writes may be rejected.
                   </div>
                 )}

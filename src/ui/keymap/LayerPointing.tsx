@@ -48,7 +48,7 @@ function bounded(value: number, min: number, max: number): number {
 
 function Toggle({ label, value, onChange }: { label: string; value: boolean; onChange: (value: boolean) => void }) {
   return (
-    <label className="flex cursor-pointer items-center justify-between gap-3 text-[12px] text-mute">
+    <label className="flex cursor-pointer items-center justify-between gap-3 text-body text-mute">
       <span>{label}</span>
       <input
         type="checkbox"
@@ -86,7 +86,7 @@ function CursorFields({ value, onChange }: { value: CursorConfig; onChange: (val
 function ButtonMask({ label, value, onChange }: { label: string; value: number; onChange: (value: number) => void }) {
   return (
     <div>
-      <div className="mb-1.5 text-[11px] font-medium text-mute">{label}</div>
+      <div className="mb-1.5 text-small font-medium text-mute">{label}</div>
       <div className="flex flex-wrap gap-1">
         {Array.from({ length: 8 }, (_, index) => {
           const bit = 1 << index;
@@ -97,7 +97,7 @@ function ButtonMask({ label, value, onChange }: { label: string; value: number; 
               type="button"
               onClick={() => onChange(active ? value & ~bit : value | bit)}
               className={cx(
-                "cursor-pointer rounded-full border px-2 py-0.5 text-[10.5px] font-medium",
+                "cursor-pointer rounded-full border px-2 py-0.5 text-caption font-medium",
                 active
                   ? "border-accent bg-accent-dim/40 text-accent"
                   : "border-line text-faint hover:border-line-strong hover:text-mute",
@@ -123,7 +123,7 @@ function CaretKeyField({ label, value, onChange }: { label: string; value: HidKe
         type="button"
         aria-expanded={open}
         onClick={() => setOpen(!open)}
-        className="flex w-full cursor-pointer items-center justify-between rounded-md border border-line bg-well px-2 py-1 text-[11.5px] text-mute hover:border-line-strong"
+        className="flex w-full cursor-pointer items-center justify-between rounded-md border border-line bg-well px-2 py-1 text-small text-mute hover:border-line-strong"
       >
         <span>{label}</span>
         <span className="font-mono text-ink">{value}</span>
@@ -347,24 +347,24 @@ export function LayerPointing({ selectedDeviceId }: { selectedDeviceId?: number 
         <span className="flex items-center gap-2">
           <ChevronRightIcon size={11} className={cx("text-faint transition-transform duration-120", open && "rotate-90")} />
           <SectionLabel>Pointing</SectionLabel>
-          {staged && <span className="text-[11px] text-accent">staged</span>}
+          {staged && <span className="text-small text-accent">staged</span>}
         </span>
-        <span className="tnum text-[11px] text-faint">{draft.override_count}/{POINTING_OVERRIDE_CAPACITY} overrides</span>
+        <span className="tnum text-small text-faint">{draft.override_count}/{POINTING_OVERRIDE_CAPACITY} overrides</span>
       </button>
 
       {open && (
         <div className="mt-3 flex flex-col gap-4">
-          <p className="text-[11.5px] leading-relaxed text-faint">
+          <p className="text-small leading-relaxed text-faint">
             Base modes apply everywhere. {name} overrides replace them while this layer is on top.
           </p>
 
           <div>
             <div className="mb-2 flex items-center justify-between">
               <SectionLabel>Device defaults</SectionLabel>
-              <span className="text-[10.5px] text-faint">{devices.length}/{POINTING_DEVICE_CAPACITY}</span>
+              <span className="text-caption text-faint">{devices.length}/{POINTING_DEVICE_CAPACITY}</span>
             </div>
             <div className="flex flex-col gap-2">
-              {devices.length === 0 && <div className="rounded-lg border border-dashed border-line px-3 py-3 text-center text-[11.5px] text-faint">No pointing devices configured.</div>}
+              {devices.length === 0 && <div className="rounded-lg border border-dashed border-line px-3 py-3 text-center text-small text-faint">No pointing devices configured.</div>}
               {devices.map((device) => (
                 <div
                   key={device.device_id}
@@ -377,7 +377,7 @@ export function LayerPointing({ selectedDeviceId }: { selectedDeviceId?: number 
                   )}
                 >
                   <div className="mb-2 flex items-center justify-between">
-                    <span className="text-[12px] font-medium text-ink">{deviceLabel(device.device_id)}</span>
+                    <span className="text-body font-medium text-ink">{deviceLabel(device.device_id)}</span>
                     <button
                       type="button"
                       title={`Remove device ${device.device_id} and all of its overrides`}
@@ -406,10 +406,10 @@ export function LayerPointing({ selectedDeviceId }: { selectedDeviceId?: number 
           <div>
             <div className="mb-2 flex items-center justify-between">
               <SectionLabel>{name} overrides</SectionLabel>
-              <span className="text-[10.5px] text-faint">{overrides.length} on layer</span>
+              <span className="text-caption text-faint">{overrides.length} on layer</span>
             </div>
             <div className="flex flex-col gap-2">
-              {overrides.length === 0 && <div className="rounded-lg border border-dashed border-line px-3 py-3 text-center text-[11.5px] text-faint">This layer uses every device's base mode.</div>}
+              {overrides.length === 0 && <div className="rounded-lg border border-dashed border-line px-3 py-3 text-center text-small text-faint">This layer uses every device's base mode.</div>}
               {overrides.map((entry) => (
                 <div
                   key={entry.device_id}
@@ -422,7 +422,7 @@ export function LayerPointing({ selectedDeviceId }: { selectedDeviceId?: number 
                   )}
                 >
                   <div className="mb-2 flex items-center justify-between">
-                    <span className="text-[12px] font-medium text-ink">{deviceLabel(entry.device_id)}</span>
+                    <span className="text-body font-medium text-ink">{deviceLabel(entry.device_id)}</span>
                     <button type="button" title="Remove this layer override" className="cursor-pointer text-faint hover:text-danger" onClick={() => edit(() => removePointingOverride(draft, state.uiLayer, entry.device_id))}>
                       <TrashIcon size={12} />
                     </button>
@@ -437,7 +437,7 @@ export function LayerPointing({ selectedDeviceId }: { selectedDeviceId?: number 
                 value={effectiveOverrideDevice}
                 onChange={(event) => setOverrideDeviceId(event.target.value)}
                 disabled={availableDevices.length === 0}
-                className="min-w-0 flex-1 rounded-lg border border-line bg-well px-2 py-1.5 text-[12px] text-ink disabled:opacity-40"
+                className="min-w-0 flex-1 rounded-lg border border-line bg-well px-2 py-1.5 text-body text-ink disabled:opacity-40"
               >
                 {availableDevices.map((device) => <option key={device.device_id} value={device.device_id}>{deviceLabel(device.device_id)} · {pointingModeKind(device.mode)}</option>)}
               </select>
@@ -448,7 +448,7 @@ export function LayerPointing({ selectedDeviceId }: { selectedDeviceId?: number 
           </div>
 
           {(localError || state.pointingError) && (
-            <div className="flex items-start gap-2 rounded-lg border border-danger/40 bg-danger-dim/20 px-2.5 py-2 text-[11.5px] text-danger">
+            <div className="flex items-start gap-2 rounded-lg border border-danger/40 bg-danger-dim/20 px-2.5 py-2 text-small text-danger">
               <WarningIcon size={13} className="mt-0.5 shrink-0" />
               <span className="min-w-0 flex-1">{localError ?? state.pointingError}</span>
             </div>

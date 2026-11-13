@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ALL_SECTIONS } from "./areas";
 import { DEFAULT_WORDING, TERMS, normalizeWording, termFor, type TermId } from "./terms";
 
 describe("terms", () => {
@@ -9,31 +10,34 @@ describe("terms", () => {
     }
   });
 
-  it("keeps today's wording as the technical voice and the default", () => {
+  it("keeps the RMK and Rynk words as the technical voice and the default", () => {
     expect(DEFAULT_WORDING).toBe("technical");
-    const today: Record<string, string> = {
-      "mode.keymap": "Keymap",
-      "mode.lighting": "Lighting",
-      "mode.effects": "Effects",
-      "mode.live": "Live",
-      "mode.profiles": "Profiles",
-      "mode.advanced": "Advanced",
-      "mode.device": "Device",
-      "tab.combos": "Combos",
-      "tab.morse": "Morse",
-      "tab.macros": "Macros",
-      "tab.forks": "Forks",
-      "tab.behavior": "Behavior",
-      "tab.transforms": "Transforms",
-      "tab.usage": "Usage",
+    const technical: Record<string, string> = {
+      "section.keymap": "Keymap",
+      "section.combos": "Combos",
+      "section.morse": "Morse",
+      "section.macros": "Macros",
+      "section.forks": "Forks",
+      "section.profiles": "Profiles",
+      "section.behavior": "Behavior",
+      "section.transforms": "Transforms",
+      "section.usage": "Usage",
+      "section.live": "Live",
+      "section.effects": "Effects",
     };
-    expect(Object.keys(TERMS).sort()).toEqual(Object.keys(today).sort());
-    for (const [id, label] of Object.entries(today)) expect(termFor(id as TermId, "technical")).toBe(label);
+    for (const [id, label] of Object.entries(technical)) expect(termFor(id as TermId, "technical")).toBe(label);
   });
 
-  it("keeps friendly mode names short enough for the narrow mode rail", () => {
+  it("names every section of src/ui/areas.ts", () => {
+    for (const section of ALL_SECTIONS) expect(TERMS).toHaveProperty(`section.${section}`);
+  });
+
+  it("keeps area names short enough for the narrow rail", () => {
     for (const [id, term] of Object.entries(TERMS)) {
-      if (id.startsWith("mode.")) expect(term.friendly.length, id).toBeLessThanOrEqual(10);
+      if (id.startsWith("area.")) {
+        expect(term.technical.length, id).toBeLessThanOrEqual(10);
+        expect(term.friendly.length, id).toBeLessThanOrEqual(10);
+      }
     }
   });
 

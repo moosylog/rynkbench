@@ -62,7 +62,7 @@ function Keycap({
       title={title}
       onClick={onClick}
       className={cx(
-        "flex h-8 min-w-8 cursor-pointer items-center justify-center rounded-md border px-1.5 font-mono text-[12px]",
+        "flex h-8 min-w-8 cursor-pointer items-center justify-center rounded-md border px-1.5 font-mono text-body",
         "transition-all duration-120 active:translate-y-px",
         wide && "px-2.5",
         active
@@ -107,8 +107,8 @@ export function ModGrid({
               : "border-line bg-raised text-mute hover:border-line-strong",
           )}
         >
-          <span className="text-[14px] leading-none">{f.sym}</span>
-          <span className="mt-0.5 text-[9.5px] uppercase tracking-wide">{f.label}</span>
+          <span className="text-ui leading-none">{f.sym}</span>
+          <span className="mt-0.5 text-caption uppercase tracking-wide">{f.label}</span>
         </button>
       ))}
     </div>
@@ -153,7 +153,7 @@ export function KeycodeBrowser({
         )}
       >
         {groups.length === 0 && (
-          <div className="py-6 text-center text-[12.5px] text-faint">
+          <div className="py-6 text-center text-body text-faint">
             No keycodes match “{query}”.
           </div>
         )}
@@ -208,7 +208,7 @@ function LayerPicker({
             type="button"
             onClick={() => setKind(k.id)}
             className={cx(
-              "cursor-pointer rounded-full border px-2.5 py-1 text-[11.5px] font-medium transition-colors duration-120",
+              "cursor-pointer rounded-full border px-2.5 py-1 text-small font-medium transition-colors duration-120",
               kind === k.id
                 ? "border-accent bg-accent-dim/40 text-accent"
                 : "border-line text-mute hover:border-line-strong hover:text-ink",
@@ -218,7 +218,7 @@ function LayerPicker({
           </button>
         ))}
       </div>
-      <div className="text-[11.5px] text-faint">{hint}</div>
+      <div className="text-small text-faint">{hint}</div>
       <div className="flex flex-wrap gap-1.5">
         {Array.from({ length: numLayers }, (_, n) => (
           <Keycap key={n} wide onClick={() => onPick({ [kind]: n } as unknown as Action)}>
@@ -251,7 +251,7 @@ export function SlotPicker({
             type="button"
             onClick={() => setTab(t)}
             className={cx(
-              "cursor-pointer rounded-md px-2 py-1 text-[11.5px] font-medium capitalize transition-colors duration-120",
+              "cursor-pointer rounded-md px-2 py-1 text-small font-medium capitalize transition-colors duration-120",
               tab === t ? "bg-raised text-ink" : "text-faint hover:text-mute",
             )}
           >
@@ -262,10 +262,10 @@ export function SlotPicker({
       {tab === "keys" && (
         <div className="flex flex-col gap-2.5">
           <div>
-            <div className="mb-1.5 text-[11px] text-faint">With modifiers</div>
+            <div className="mb-1.5 text-small text-faint">With modifiers</div>
             <ModGrid mods={mods} onChange={setMods} />
             {anyModifier(mods) && (
-              <div className="mt-1.5 text-[11px] text-accent">
+              <div className="mt-1.5 text-small text-accent">
                 Next key uses {modifierSymbols(mods)} + key
               </div>
             )}
@@ -325,10 +325,10 @@ function TapHoldEditor({
           : "border-line bg-raised hover:border-line-strong",
       )}
     >
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-faint">
+      <span className="text-caption font-semibold uppercase tracking-wider text-faint">
         {which}
       </span>
-      <span className={cx("font-mono text-[13px]", value === "No" ? "text-faint" : "text-ink")}>
+      <span className={cx("font-mono text-ui", value === "No" ? "text-faint" : "text-ink")}>
         {actionLabel(value) || "unset"}
       </span>
     </button>
@@ -336,7 +336,7 @@ function TapHoldEditor({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="text-[11.5px] text-faint">
+      <div className="text-small text-faint">
         One action on tap, another on hold. Pick a slot, then choose its action.
       </div>
       <div className="flex gap-2">
@@ -347,12 +347,12 @@ function TapHoldEditor({
         numLayers={numLayers}
         onPick={(a) => (slot === "tap" ? setTap(a) : setHold(a))}
       />
-      <label className="flex items-center justify-between gap-3 text-[12.5px] text-mute">
+      <label className="flex items-center justify-between gap-3 text-body text-mute">
         Timing profile
         <select
           value={profile}
           onChange={(event) => setProfile(Number(event.target.value))}
-          className="max-w-72 rounded-md border border-line bg-raised px-2 py-1.5 text-[12px] text-ink"
+          className="max-w-72 rounded-md border border-line bg-raised px-2 py-1.5 text-body text-ink"
         >
           <option value={DEFAULT_TAP_HOLD_PROFILE}>Board default</option>
           {profile !== DEFAULT_TAP_HOLD_PROFILE &&
@@ -366,7 +366,7 @@ function TapHoldEditor({
           ))}
         </select>
       </label>
-      <div className="text-[11.5px] leading-relaxed text-faint">
+      <div className="text-small leading-relaxed text-faint">
         Profiles are durable runtime configuration. Edit them under Advanced → Profiles;
         TOML export represents this binding inline as MT, LT, or TH with a shared profile.
       </div>
@@ -459,11 +459,11 @@ function PickList<T extends string>({
           )}
         >
           <div
-            className={cx("text-[13px] font-medium", item.danger ? "text-danger" : "text-ink")}
+            className={cx("text-ui font-medium", item.danger ? "text-danger" : "text-ink")}
           >
             {item.label}
           </div>
-          <div className="text-[11.5px] text-faint">{item.hint}</div>
+          <div className="text-small text-faint">{item.hint}</div>
         </button>
       ))}
     </div>
@@ -475,7 +475,7 @@ function MacroPickerTab({ onCommit }: { onCommit: (action: KeyAction) => void })
   const macros = useMemo(() => decodeMacros(state.macroOps), [state.macroOps]);
   if (macros.length === 0) {
     return (
-      <div className="py-6 text-center text-[12.5px] leading-relaxed text-faint">
+      <div className="py-6 text-center text-body leading-relaxed text-faint">
         No macros defined yet.
         <br />
         Create them in Advanced → Macros.
@@ -491,10 +491,10 @@ function MacroPickerTab({ onCommit }: { onCommit: (action: KeyAction) => void })
           onClick={() => onCommit({ Single: { TriggerMacro: n } })}
           className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-line bg-raised px-3 py-2 text-left transition-colors duration-120 hover:border-line-strong"
         >
-          <span className="rounded-md border border-cap-edge bg-cap px-1.5 py-0.5 font-mono text-[11.5px] text-cap-ink">
+          <span className="rounded-md border border-cap-edge bg-cap px-1.5 py-0.5 font-mono text-small text-cap-ink">
             M{n}
           </span>
-          <span className="min-w-0 flex-1 truncate text-[12.5px] text-mute">
+          <span className="min-w-0 flex-1 truncate text-body text-mute">
             {macroPreview(macro)}
           </span>
         </button>
@@ -510,11 +510,11 @@ function MorsePickerTab({ onCommit }: { onCommit: (action: KeyAction) => void })
     .filter(({ morse }) => morse.actions.length > 0);
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
-      <div className="text-[11.5px] leading-relaxed text-faint">
+      <div className="text-small leading-relaxed text-faint">
         Bind a morse (tap-dance) slot to this key. Edit patterns in Advanced → Morse.
       </div>
       {configured.length === 0 ? (
-        <div className="py-4 text-center text-[12.5px] text-faint">
+        <div className="py-4 text-center text-body text-faint">
           No morse slots configured yet.
         </div>
       ) : (
@@ -526,13 +526,13 @@ function MorsePickerTab({ onCommit }: { onCommit: (action: KeyAction) => void })
               onClick={() => onCommit({ Morse: n })}
               className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-line bg-raised px-3 py-2 text-left transition-colors duration-120 hover:border-line-strong"
             >
-              <span className="rounded-md border border-cap-edge bg-cap px-1.5 py-0.5 font-mono text-[11.5px] text-cap-ink">
+              <span className="rounded-md border border-cap-edge bg-cap px-1.5 py-0.5 font-mono text-small text-cap-ink">
                 Mo{n}
               </span>
-              <span className="tnum text-[12.5px] text-mute">
+              <span className="tnum text-body text-mute">
                 {morse.actions.length} pattern{morse.actions.length === 1 ? "" : "s"}
               </span>
-              <span className="min-w-0 flex-1 truncate text-right font-mono text-[11px] text-faint">
+              <span className="min-w-0 flex-1 truncate text-right font-mono text-small text-faint">
                 {morse.actions
                   .slice(0, 3)
                   .map(([p]) => morsePatternGlyph(p))
@@ -633,7 +633,7 @@ export function ActionEditor({
               <ModGrid mods={keyMods} onChange={setKeyMods} />
             </div>
             {anyModifier(keyMods) && (
-              <div className="mt-1.5 text-[11.5px] text-accent">
+              <div className="mt-1.5 text-small text-accent">
                 Next key binds as {modifierSymbols(keyMods)} + key
               </div>
             )}
@@ -650,11 +650,11 @@ export function ActionEditor({
 
       {tab === "mods" && (
         <div className="flex flex-col gap-3">
-          <div className="text-[11.5px] text-faint">
+          <div className="text-small text-faint">
             Bind a modifier combination to this key.
           </div>
           <ModGrid mods={keyMods} onChange={setKeyMods} />
-          <label className="flex cursor-pointer items-center gap-2 text-[12.5px] text-mute">
+          <label className="flex cursor-pointer items-center gap-2 text-body text-mute">
             <input
               type="checkbox"
               checked={oneShot}
@@ -688,16 +688,16 @@ export function ActionEditor({
             onClick={() => onCommit("Transparent")}
             className="cursor-pointer rounded-lg border border-line bg-raised px-3 py-2.5 text-left transition-colors duration-120 hover:border-line-strong"
           >
-            <div className="text-[13px] font-medium text-ink">▽ Transparent</div>
-            <div className="text-[11.5px] text-faint">Falls through to the layer below</div>
+            <div className="text-ui font-medium text-ink">▽ Transparent</div>
+            <div className="text-small text-faint">Falls through to the layer below</div>
           </button>
           <button
             type="button"
             onClick={() => onCommit("No")}
             className="cursor-pointer rounded-lg border border-line bg-raised px-3 py-2.5 text-left transition-colors duration-120 hover:border-line-strong"
           >
-            <div className="text-[13px] font-medium text-ink">∅ No action</div>
-            <div className="text-[11.5px] text-faint">Key does nothing on this layer</div>
+            <div className="text-ui font-medium text-ink">∅ No action</div>
+            <div className="text-small text-faint">Key does nothing on this layer</div>
           </button>
         </div>
       )}
@@ -737,8 +737,8 @@ export function ActionEditor({
                     onClick={() => onCommit({ Single: { User: item.action } })}
                     className="cursor-pointer rounded-lg border border-accent-deep/40 bg-accent-dim/15 px-3 py-2 text-left transition-colors duration-120 hover:border-accent-deep"
                   >
-                    <div className="text-[13px] font-medium text-accent">{item.label}</div>
-                    <div className="text-[11.5px] text-faint">{item.hint}</div>
+                    <div className="text-ui font-medium text-accent">{item.label}</div>
+                    <div className="text-small text-faint">{item.hint}</div>
                   </button>
                 ))}
               </div>

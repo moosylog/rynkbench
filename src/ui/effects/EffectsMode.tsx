@@ -56,12 +56,12 @@ function NameSelect({
   onChange: (index: number) => void;
 }) {
   return (
-    <label className="flex items-center justify-between gap-3 text-[12.5px] text-mute">
+    <label className="flex items-center justify-between gap-3 text-body text-mute">
       {label}
       <select
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="min-w-0 max-w-[60%] rounded-lg border border-line bg-well px-2 py-1 text-[12.5px] text-ink"
+        className="min-w-0 max-w-[60%] rounded-lg border border-line bg-well px-2 py-1 text-body text-ink"
       >
         {names.map((name, index) => (
           <option key={index} value={index}>
@@ -100,12 +100,12 @@ function EffectCard({
       )}
       aria-pressed={selected}
     >
-      <span className="truncate text-[12.5px] font-medium">{name}</span>
+      <span className="truncate text-body font-medium">{name}</span>
       <span className="flex min-h-4 items-center gap-1.5">
         {assigned.includes("base") && <Chip tone="accent">base</Chip>}
         {assigned.includes("overlay") && <Chip tone="neutral">overlay</Chip>}
         <span className="flex-1" />
-        {index !== null && <span className="tnum text-[10.5px] text-faint">#{index}</span>}
+        {index !== null && <span className="tnum text-caption text-faint">#{index}</span>}
       </span>
     </button>
   );
@@ -186,7 +186,7 @@ export function EffectsMode() {
 
   if (!extension || !draft) {
     return (
-      <div className="flex flex-1 items-center justify-center text-[12.5px] text-faint">
+      <div className="flex flex-1 items-center justify-center text-body text-faint">
         This firmware has no effect extension.
       </div>
     );
@@ -258,12 +258,12 @@ export function EffectsMode() {
       <div className="flex min-h-0 flex-1 flex-col gap-3 max-lg:min-h-[380px]">
         <div className="flex flex-wrap items-center gap-3 px-1">
           <SectionLabel>Effects</SectionLabel>
-          <span className="tnum text-[12px] text-faint">
+          <span className="tnum text-body text-faint">
             {effects.length} from firmware
             {filter.trim() !== "" && ` · ${visible.length} shown`}
           </span>
           {outputOff && (
-            <span className="text-[11.5px] text-warn">lighting output is off</span>
+            <span className="text-small text-warn">lighting output is off</span>
           )}
         </div>
 
@@ -294,14 +294,14 @@ export function EffectsMode() {
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               placeholder="Filter effects"
-              className="text-[12px]"
+              className="text-body"
             />
           </div>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl border border-line-soft bg-well p-3">
           {effects.length === 0 ? (
-            <p className="text-[12.5px] text-faint">
+            <p className="text-body text-faint">
               This firmware advertises no effect names.
             </p>
           ) : (
@@ -335,9 +335,9 @@ export function EffectsMode() {
           <div>
             <div className="flex items-center justify-between">
               <SectionLabel>Firmware effect extension</SectionLabel>
-              {dirty && <span className="text-[10.5px] text-warn">unapplied</span>}
+              {dirty && <span className="text-caption text-warn">unapplied</span>}
             </div>
-            <p className="mt-1 text-[11.5px] leading-relaxed text-faint">
+            <p className="mt-1 text-small leading-relaxed text-faint">
               Names and control behavior are supplied by the connected firmware.
             </p>
           </div>
@@ -380,7 +380,7 @@ export function EffectsMode() {
                 </div>
                 <Button
                   variant="ghost"
-                  className="px-1.5 py-0 text-[10.5px]"
+                  className="px-1.5 py-0 text-caption"
                   disabled={block.items.every(
                     (param, index) => block.values[index] === param.default,
                   )}

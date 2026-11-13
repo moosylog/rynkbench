@@ -52,7 +52,7 @@ function Notes({ notes }: { notes: ImportNote[] }) {
         <SectionLabel>{label}</SectionLabel>
         <ul className="mt-1 flex flex-col gap-1">
           {items.map((note, index) => (
-            <li key={index} className="text-[11.5px] leading-relaxed">
+            <li key={index} className="text-small leading-relaxed">
               {note.location && (
                 <span className="font-mono text-faint">{note.location} · </span>
               )}
@@ -74,16 +74,20 @@ function Notes({ notes }: { notes: ImportNote[] }) {
 export function TransferReportPanel({
   report,
   onDismiss,
+  inline = false,
 }: {
   report: TransferReport;
   onDismiss: () => void;
+  /** In the page flow (the Library) rather than floating under the top bar. */
+  inline?: boolean;
 }) {
   const tone = TONE[report.outcome];
 
   return (
     <div
       className={cx(
-        "absolute right-4 top-full z-20 mt-2 max-h-[60vh] w-[32rem] overflow-y-auto rounded-xl border bg-panel p-4 shadow-lg",
+        "overflow-y-auto rounded-xl border bg-panel p-4",
+        inline ? "w-full" : "absolute right-4 top-full z-20 mt-2 max-h-[60vh] w-[32rem] shadow-lg",
         tone.border,
       )}
       role={report.outcome === "error" ? "alert" : "status"}
@@ -92,7 +96,7 @@ export function TransferReportPanel({
         {report.outcome !== "ok" && (
           <WarningIcon size={14} className={cx("mt-0.5 shrink-0", tone.text)} />
         )}
-        <div className={cx("flex-1 text-[12.5px] leading-relaxed", tone.text)}>
+        <div className={cx("flex-1 text-body leading-relaxed", tone.text)}>
           {report.headline}
         </div>
         <Button variant="ghost" onClick={onDismiss} title="Dismiss">
@@ -103,7 +107,7 @@ export function TransferReportPanel({
       {report.detail && (
         // `whitespace-pre-wrap` rather than `truncate`: the message is the
         // diagnostic, and its line breaks separate one bad binding from the next.
-        <pre className="mt-2 whitespace-pre-wrap break-words font-mono text-[11.5px] leading-relaxed text-mute">
+        <pre className="mt-2 whitespace-pre-wrap break-words font-mono text-small leading-relaxed text-mute">
           {report.detail}
         </pre>
       )}

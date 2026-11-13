@@ -1,8 +1,8 @@
-// Document import/export orchestration for the top bar: the staged-edit guard,
+// Document import/export orchestration (the Library, and the top bar's name): the staged-edit guard,
 // the history suspension around a bulk write, the retained source text an
 // export reuses as its template, and the phrasing of the result report.
 
-import { useRef, useState } from "react";
+import { createContext, useContext, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { FORMAT_EXTENSION, FORMAT_LABEL } from "../config/document";
 import type { ConfigFormat, ExtensionCatalog } from "../config/document";
@@ -221,4 +221,14 @@ export function useDocumentTransfer(): DocumentTransfer {
     importFile,
     exportFile,
   };
+}
+
+/** One transfer per workbench, shared by the top bar (the workspace name) and
+ *  the Library (the actions and their report). Provided by the workbench. */
+export const DocumentTransferContext = createContext<DocumentTransfer | null>(null);
+
+export function useSharedDocumentTransfer(): DocumentTransfer {
+  const transfer = useContext(DocumentTransferContext);
+  if (!transfer) throw new Error("useSharedDocumentTransfer outside the workbench");
+  return transfer;
 }

@@ -70,17 +70,17 @@ function ProviderCard({
         <div className={cx("flex items-center gap-4", !available && "opacity-45")}>
           <ProviderGlyph kind={provider.kind} />
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 text-[14.5px] font-semibold text-ink">
+            <div className="flex items-center gap-2 text-title font-semibold text-ink">
               {provider.title}
               {provider.kind === "mock" && (
-                <span className="rounded-full border border-line px-2 py-px text-[10px] font-medium uppercase tracking-wider text-faint">
+                <span className="rounded-full border border-line px-2 py-px text-caption font-medium uppercase tracking-wider text-faint">
                   simulated
                 </span>
               )}
             </div>
-            <div className="mt-0.5 text-[12.5px] leading-snug text-mute">{provider.description}</div>
+            <div className="mt-0.5 text-body leading-snug text-mute">{provider.description}</div>
             {!available && (
-              <div className="mt-1 text-[12px] text-faint">
+              <div className="mt-1 text-body text-faint">
                 Not available in this browser or context
               </div>
             )}
@@ -91,11 +91,11 @@ function ProviderCard({
         </div>
       </button>
       {connecting && (
-        <div className="mt-1.5 px-1 text-[12px] text-accent">Opening session…</div>
+        <div className="mt-1.5 px-1 text-body text-accent">Opening session…</div>
       )}
       {selecting && attempt.targets && (
         <div className="mt-2 rounded-xl border border-line-soft bg-panel p-2">
-          <div className="px-2 pb-1.5 text-[11.5px] text-mute">Choose a keyboard</div>
+          <div className="px-2 pb-1.5 text-small text-mute">Choose a keyboard</div>
           <div className="flex flex-col gap-1">
             {attempt.targets.map((target) => (
               <button
@@ -104,15 +104,15 @@ function ProviderCard({
                 onClick={() => onConnect(target.id)}
                 className="cursor-pointer rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-raised"
               >
-                <div className="text-[12.5px] font-medium text-ink">{target.label}</div>
-                {target.detail && <div className="text-[11px] text-faint">{target.detail}</div>}
+                <div className="text-body font-medium text-ink">{target.label}</div>
+                {target.detail && <div className="text-small text-faint">{target.detail}</div>}
               </button>
             ))}
           </div>
         </div>
       )}
       {error && (
-        <div className="mt-1.5 flex items-center gap-2 px-1 text-[12px] text-danger">
+        <div className="mt-1.5 flex items-center gap-2 px-1 text-body text-danger">
           <WarningIcon size={14} />
           <span className="min-w-0 flex-1 truncate" title={error}>
             {error}
@@ -179,16 +179,16 @@ export function ConnectScreen({
           <div className="mb-5 flex size-16 items-center justify-center rounded-2xl border border-line bg-panel shadow-[0_16px_40px_-18px_rgb(0_0_0/0.7)]">
             <Wordmark size={38} />
           </div>
-          <h1 className="text-[30px] font-semibold leading-none tracking-[-0.02em] text-ink">
+          <h1 className="text-display font-semibold leading-none tracking-[-0.02em] text-ink">
             Rynkbench
           </h1>
-          <p className="mt-2.5 text-[13.5px] text-mute">
+          <p className="mt-2.5 text-ui text-mute">
             Configure a keyboard or edit its files directly
           </p>
         </div>
 
         {notice && (
-          <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-warn/30 bg-panel px-4 py-2.5 text-[12.5px] text-warn">
+          <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-warn/30 bg-panel px-4 py-2.5 text-body text-warn">
             <WarningIcon size={15} />
             {notice}
           </div>
@@ -207,8 +207,8 @@ export function ConnectScreen({
               <FileConfigIcon size={19} />
             </div>
             <div>
-              <div className="text-[14px] font-semibold text-ink">Board configuration templates</div>
-              <div className="mt-0.5 text-[12px] leading-snug text-mute">
+              <div className="text-ui font-semibold text-ink">Board configuration templates</div>
+              <div className="mt-0.5 text-body leading-snug text-mute">
                 Edit locally using an available board template. Currently supports Glove80 TOML and MoErgo JSON.
               </div>
             </div>
@@ -218,7 +218,7 @@ export function ConnectScreen({
               type="button"
               disabled={busy}
               onClick={() => fileInput.current?.click()}
-              className="cursor-pointer rounded-lg border border-line bg-raised px-3 py-2 text-[12.5px] font-medium text-ink transition-colors hover:border-line-strong disabled:cursor-not-allowed disabled:opacity-40"
+              className="cursor-pointer rounded-lg border border-line bg-raised px-3 py-2 text-body font-medium text-ink transition-colors hover:border-line-strong disabled:cursor-not-allowed disabled:opacity-40"
             >
               {offlineBusy ? "Opening…" : "Open file"}
             </button>
@@ -226,14 +226,14 @@ export function ConnectScreen({
               type="button"
               disabled={busy}
               onClick={onNewFile}
-              className="cursor-pointer rounded-lg bg-accent px-3 py-2 text-[12.5px] font-semibold text-well transition-[filter] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+              className="cursor-pointer rounded-lg bg-accent px-3 py-2 text-body font-semibold text-well transition-[filter] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
             >
               New Glove80 config
             </button>
           </div>
         </div>
 
-        <div className="my-5 flex items-center gap-3 text-[10.5px] font-medium uppercase tracking-[0.12em] text-faint">
+        <div className="my-5 flex items-center gap-3 text-caption font-medium uppercase tracking-[0.12em] text-faint">
           <span className="h-px flex-1 bg-line-soft" />
           Connect a keyboard
           <span className="h-px flex-1 bg-line-soft" />
@@ -241,7 +241,7 @@ export function ConnectScreen({
 
         <div className="flex flex-col gap-3">
           {providers === null && (
-            <div className="flex items-center justify-center gap-2.5 rounded-2xl border border-line-soft bg-panel py-8 text-[13px] text-mute">
+            <div className="flex items-center justify-center gap-2.5 rounded-2xl border border-line-soft bg-panel py-8 text-ui text-mute">
               <SpinnerIcon size={16} className="text-accent" />
               Loading backends…
             </div>
@@ -256,13 +256,13 @@ export function ConnectScreen({
             />
           ))}
           {providers?.length === 0 && (
-            <div className="rounded-2xl border border-line-soft bg-panel px-5 py-8 text-center text-[13px] text-mute">
+            <div className="rounded-2xl border border-line-soft bg-panel px-5 py-8 text-center text-ui text-mute">
               No backends are available in this build.
             </div>
           )}
         </div>
 
-        <p className="mt-8 text-center text-[11.5px] text-faint">
+        <p className="mt-8 text-center text-small text-faint">
           Files and connections stay local — nothing leaves this machine.
         </p>
       </div>

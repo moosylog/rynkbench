@@ -1,11 +1,9 @@
-// Advanced mode: combos, morse, macros, forks, global behavior, keymap-wide
-// transforms, and usage analysis — each a sub-tab, the editors gated on what
-// the connected firmware actually supports.
+// The Behaviors area's editors (combos, morse, macros, forks, global behavior,
+// keymap-wide transforms) and the Insights area's usage report. The area shell
+// draws the section tabs and decides which sections the firmware offers
+// (src/ui/areas.ts), so each screen here renders without a nav of its own.
 
-import { useMemo, useState } from "react";
 import { useWorkbench } from "../state";
-import { cx } from "../kit";
-import { useTerms, type TermId } from "../terms";
 import { CombosTab } from "./CombosTab";
 import { MorseTab } from "./MorseTab";
 import { MacrosTab } from "./MacrosTab";
@@ -14,63 +12,24 @@ import { BehaviorTab } from "./BehaviorTab";
 import { TransformsTab } from "./TransformsTab";
 import { UsageTab } from "./UsageTab";
 
-type AdvTab = "combos" | "morse" | "macros" | "forks" | "behavior" | "transforms" | "usage";
+export type AdvancedSectionId = "combos" | "morse" | "macros" | "forks" | "behavior" | "transforms" | "usage";
 
-export function AdvancedMode() {
-  const { bundle } = useWorkbench();
-  const term = useTerms();
-  const caps = bundle.caps;
-
-  const tabs = useMemo(() => {
-    const out: Array<{ id: AdvTab; term: TermId }> = [];
-    if (caps.max_combos > 0) out.push({ id: "combos", term: "tab.combos" });
-    if (caps.max_morse > 0) out.push({ id: "morse", term: "tab.morse" });
-    if (caps.macro_space_size > 0) out.push({ id: "macros", term: "tab.macros" });
-    if (caps.max_forks > 0) out.push({ id: "forks", term: "tab.forks" });
-    out.push({ id: "behavior", term: "tab.behavior" });
-    out.push({ id: "transforms", term: "tab.transforms" });
-    out.push({ id: "usage", term: "tab.usage" });
-    return out;
-  }, [caps.max_combos, caps.max_morse, caps.macro_space_size, caps.max_forks]);
-
-  const [tab, setTab] = useState<AdvTab>(tabs[0].id);
-  const active = tabs.some((t) => t.id === tab) ? tab : tabs[0].id;
-
-  const nav = (
-    <div className="flex items-center gap-1 px-1">
-      {tabs.map((t) => (
-        <button
-          key={t.id}
-          type="button"
-          onClick={() => setTab(t.id)}
-          className={cx(
-            "relative cursor-pointer rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors duration-150",
-            t.id === active ? "text-ink" : "text-faint hover:text-mute",
-          )}
-        >
-          {term(t.term)}
-          {t.id === active && (
-            <span className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-accent" />
-          )}
-        </button>
-      ))}
-    </div>
-  );
-
-  switch (active) {
+export function AdvancedSection({ section }: { section: AdvancedSectionId }) {
+  const { dispatch } = useWorkbench();
+  switch (section) {
     case "combos":
-      return <CombosTab nav={nav} goBehavior={() => setTab("behavior")} />;
+      return <CombosTab nav={null} goBehavior={() => dispatch({ type: "mode", mode: "behavior" })} />;
     case "morse":
-      return <MorseTab nav={nav} />;
+      return <MorseTab nav={null} />;
     case "macros":
-      return <MacrosTab nav={nav} />;
+      return <MacrosTab nav={null} />;
     case "forks":
-      return <ForksTab nav={nav} />;
+      return <ForksTab nav={null} />;
     case "behavior":
-      return <BehaviorTab nav={nav} />;
+      return <BehaviorTab nav={null} />;
     case "transforms":
-      return <TransformsTab nav={nav} />;
+      return <TransformsTab nav={null} />;
     case "usage":
-      return <UsageTab nav={nav} />;
+      return <UsageTab nav={null} />;
   }
 }

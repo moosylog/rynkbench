@@ -79,7 +79,7 @@ function LayerChips({
           onClick={() => onSel(n)}
           title={titleFor(n)}
           className={cx(
-            "relative flex h-7 min-w-9 cursor-pointer items-center justify-center gap-1 rounded-md border px-2 text-[11.5px] transition-colors duration-120",
+            "relative flex h-7 min-w-9 cursor-pointer items-center justify-center gap-1 rounded-md border px-2 text-small transition-colors duration-120",
             n === sel
               ? "border-accent bg-accent-dim/30 text-accent"
               : "border-line bg-raised text-mute hover:border-line-strong",
@@ -137,12 +137,12 @@ function DeviceScenes({ slots }: { slots: number }) {
       <SectionLabel>Layer lighting</SectionLabel>
 
       <div className="mt-2 flex flex-col gap-2">
-        <div className="tnum text-[11px] text-faint">
+        <div className="tnum text-small text-faint">
           {state.scenes.length}/{slots} scene cells used
         </div>
 
         <div>
-          <div className="text-[11px] text-faint">When several layers are active</div>
+          <div className="text-small text-faint">When several layers are active</div>
           <Segmented
             className="mt-1"
             items={POLICIES.map((policy) => ({
@@ -158,12 +158,12 @@ function DeviceScenes({ slots }: { slots: number }) {
 
         {capabilities.has("lighting.output") && (
           <div className="rounded-lg border border-accent/25 bg-accent-dim/10 p-2.5">
-            <div className="text-[12.5px] font-medium text-ink">Wake lighting on this layer</div>
-            <p className="mt-1 text-[10.5px] leading-relaxed text-faint">
+            <div className="text-body font-medium text-ink">Wake lighting on this layer</div>
+            <p className="mt-1 text-caption leading-relaxed text-faint">
               Keep this layer's stored scene visible even when normal lighting is turned off.
             </p>
             {targetLayer === null ? (
-              <p className="mt-2 text-[11.5px] text-mute">
+              <p className="mt-2 text-small text-mute">
                 Select a layer target above the keyboard to configure its scene and wake setting.
               </p>
             ) : (
@@ -185,7 +185,7 @@ function DeviceScenes({ slots }: { slots: number }) {
                     ? `${targetName} wakes lighting · disable`
                     : `Wake lighting on ${targetName}`}
                 </Button>
-                <p className="mt-1.5 text-[10.5px] leading-relaxed text-faint">
+                <p className="mt-1.5 text-caption leading-relaxed text-faint">
                   Paint and apply the scene of {targetName} above. The scene and wake setting
                   are stored on the keyboard and survive reboot.
                 </p>
@@ -206,7 +206,7 @@ function DeviceScenes({ slots }: { slots: number }) {
           </Button>
         )}
 
-        <div className="text-[10.5px] leading-relaxed text-faint">
+        <div className="text-caption leading-relaxed text-faint">
           Edit each layer's scene with the target tabs above the board. Scenes are stored on the
           keyboard — layer lighting keeps working after Rynkbench disconnects, and survives reboot.
         </div>
@@ -339,7 +339,7 @@ function LocalPresets() {
                 Update
               </Button>
             </div>
-            <div className="tnum text-[11px] text-faint">
+            <div className="tnum text-small text-faint">
               {preset.cells.length} lit key{preset.cells.length === 1 ? "" : "s"}
               {applied === sel && (
                 <span className="text-accent">
@@ -373,7 +373,7 @@ function LocalPresets() {
           </Button>
         )}
 
-        <label className="flex cursor-pointer items-center justify-between text-[12.5px] text-mute">
+        <label className="flex cursor-pointer items-center justify-between text-body text-mute">
           <span>Follow live layer</span>
           <input
             type="checkbox"
@@ -383,11 +383,11 @@ function LocalPresets() {
           />
         </label>
         {stored.follow && applied !== null && (
-          <div className="text-[11px] text-accent">
+          <div className="text-small text-accent">
             {layerName(state.layerMetadata, applied)} preset applied · following the live layer
           </div>
         )}
-        <div className="text-[10.5px] leading-relaxed text-faint">
+        <div className="text-caption leading-relaxed text-faint">
           Applied by Rynkbench while connected — presets live in this browser, not on the
           keyboard.
         </div>

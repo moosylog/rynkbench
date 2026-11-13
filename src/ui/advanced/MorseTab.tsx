@@ -34,11 +34,11 @@ function PatternBuilder({
   return (
     <div className="flex flex-col gap-2.5 rounded-lg border border-line-soft bg-well/60 p-2.5">
       <div className="flex items-center gap-2">
-        <div className="flex min-h-8 min-w-0 flex-1 items-center rounded-lg border border-line bg-well px-2.5 font-mono text-[15px] tracking-wide text-accent">
+        <div className="flex min-h-8 min-w-0 flex-1 items-center rounded-lg border border-line bg-well px-2.5 font-mono text-title tracking-wide text-accent">
           {elements.length > 0 ? (
             morsePatternGlyph(elementsToPattern(elements))
           ) : (
-            <span className="text-[11.5px] font-sans tracking-normal text-faint">
+            <span className="text-small font-sans tracking-normal text-faint">
               Build the tap/hold sequence…
             </span>
           )}
@@ -71,7 +71,7 @@ function PatternBuilder({
           ▬ Hold
         </Button>
       </div>
-      <div className="text-[11px] text-faint">
+      <div className="text-small text-faint">
         Action for this pattern:{" "}
         <span className={cx("font-mono", action === "No" ? "text-faint" : "text-ink")}>
           {actionLabel(action) || "unset"}
@@ -105,7 +105,7 @@ function ProfileEditor({
     label: string,
     key: "hold_timeout_ms" | "gap_timeout_ms" | "prior_idle_time_ms",
   ) => (
-    <label className="flex items-center justify-between gap-3 text-[12.5px] text-mute">
+    <label className="flex items-center justify-between gap-3 text-body text-mute">
       {label}
       <span className="flex items-center gap-1.5">
         <TextInput
@@ -131,7 +131,7 @@ function ProfileEditor({
     label: string,
     key: "unilateral_tap" | "enable_flow_tap" | "retro_tap" | "hold_trigger_on_release",
   ) => (
-    <label className="flex items-center justify-between gap-3 text-[12.5px] text-mute">
+    <label className="flex items-center justify-between gap-3 text-body text-mute">
       {label}
       <select
         value={value[key] === undefined ? "default" : value[key] ? "on" : "off"}
@@ -141,7 +141,7 @@ function ProfileEditor({
             [key]: e.target.value === "default" ? undefined : e.target.value === "on",
           })
         }
-        className="rounded-lg border border-line bg-well px-2 py-1 text-[12.5px] text-ink"
+        className="rounded-lg border border-line bg-well px-2 py-1 text-body text-ink"
       >
         <option value="default">Default</option>
         <option value="on">On</option>
@@ -152,7 +152,7 @@ function ProfileEditor({
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="flex items-center justify-between gap-3 text-[12.5px] text-mute">
+      <label className="flex items-center justify-between gap-3 text-body text-mute">
         Mode
         <select
           value={value.mode ?? "default"}
@@ -162,7 +162,7 @@ function ProfileEditor({
               mode: e.target.value === "default" ? undefined : (e.target.value as MorseMode),
             })
           }
-          className="rounded-lg border border-line bg-well px-2 py-1 text-[12.5px] text-ink"
+          className="rounded-lg border border-line bg-well px-2 py-1 text-body text-ink"
         >
           <option value="default">Default</option>
           {MORSE_MODES.map((m) => (
@@ -179,7 +179,7 @@ function ProfileEditor({
       {numOrDefault("Flow-tap prior idle", "prior_idle_time_ms")}
       {triState("Retro tap", "retro_tap")}
       {triState("Hold trigger on release", "hold_trigger_on_release")}
-      <div className="text-[11px] leading-relaxed text-faint">
+      <div className="text-small leading-relaxed text-faint">
         Blank fields fall back to the global defaults.
       </div>
     </div>
@@ -200,16 +200,16 @@ export function MorseTab({ nav }: { nav: ReactNode }) {
         {nav}
         <CenterScroll>
           <div className="flex items-center justify-between px-1">
-            <span className="text-[12.5px] text-faint">
+            <span className="text-body text-faint">
               A morse key runs a different action per tap/hold pattern — tap-dance and beyond.
               Bind slots to keys from the keymap editor (Morse tab) or here via ● ▬ patterns.
             </span>
-            <span className="tnum shrink-0 text-[11px] text-faint">
+            <span className="tnum shrink-0 text-small text-faint">
               {state.morse.filter((m) => !morseIsEmpty(m)).length} / {caps.max_morse} slots
             </span>
           </div>
           {entries.length === 0 && (
-            <div className="rounded-xl border border-line-soft bg-panel px-4 py-8 text-center text-[12.5px] text-faint">
+            <div className="rounded-xl border border-line-soft bg-panel px-4 py-8 text-center text-body text-faint">
               No morse slots configured yet.
             </div>
           )}
@@ -218,16 +218,16 @@ export function MorseTab({ nav }: { nav: ReactNode }) {
             return (
               <SlotCard key={index} selected={index === sel} onClick={() => open(index)}>
                 <div className="flex items-center gap-2.5">
-                  <span className="rounded-md border border-cap-edge bg-cap px-1.5 py-0.5 font-mono text-[11.5px] text-cap-ink">
+                  <span className="rounded-md border border-cap-edge bg-cap px-1.5 py-0.5 font-mono text-small text-cap-ink">
                     Mo{index}
                   </span>
-                  <span className="tnum text-[12px] text-faint">
+                  <span className="tnum text-body text-faint">
                     {shown.actions.length} pattern{shown.actions.length === 1 ? "" : "s"}
                   </span>
                 </div>
                 <div className="mt-2 flex flex-col gap-1">
                   {shown.actions.map(([pattern, action], i) => (
-                    <div key={i} className="flex items-center gap-3 text-[12.5px]">
+                    <div key={i} className="flex items-center gap-3 text-body">
                       <span className="w-28 shrink-0 font-mono tracking-wide text-accent">
                         {morsePatternGlyph(pattern)}
                       </span>
@@ -237,7 +237,7 @@ export function MorseTab({ nav }: { nav: ReactNode }) {
                     </div>
                   ))}
                   {shown.actions.length === 0 && (
-                    <span className="text-[12px] text-faint">empty</span>
+                    <span className="text-body text-faint">empty</span>
                   )}
                 </div>
               </SlotCard>
@@ -253,13 +253,13 @@ export function MorseTab({ nav }: { nav: ReactNode }) {
       <InspectorShell>
         {!editing ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
-            <div className="flex size-12 items-center justify-center rounded-xl border border-line bg-raised font-mono text-[14px] tracking-wide text-faint">
+            <div className="flex size-12 items-center justify-center rounded-xl border border-line bg-raised font-mono text-ui tracking-wide text-faint">
               ●▬●
             </div>
-            <div className="text-[13.5px] font-medium text-mute">
+            <div className="text-ui font-medium text-mute">
               Select a morse slot to edit its patterns
             </div>
-            <div className="text-[12px] leading-relaxed text-faint">
+            <div className="text-body leading-relaxed text-faint">
               Each pattern is a sequence of taps ● and holds ▬ (up to {MAX_MORSE_ELEMENTS}),
               resolved to an action when the sequence ends.
             </div>
@@ -268,7 +268,7 @@ export function MorseTab({ nav }: { nav: ReactNode }) {
           <div className="flex min-h-0 flex-1 flex-col gap-3">
             <div className="flex items-center justify-between">
               <SectionLabel>Morse slot {sel}</SectionLabel>
-              <span className="tnum text-[11px] text-faint">
+              <span className="tnum text-small text-faint">
                 {draft.actions.length} / {caps.max_patterns_per_key} patterns
               </span>
             </div>
@@ -279,10 +279,10 @@ export function MorseTab({ nav }: { nav: ReactNode }) {
                   key={i}
                   className="flex items-center gap-2 rounded-lg border border-line bg-raised px-3 py-1.5"
                 >
-                  <span className="w-24 shrink-0 font-mono text-[13px] tracking-wide text-accent">
+                  <span className="w-24 shrink-0 font-mono text-ui tracking-wide text-accent">
                     {morsePatternGlyph(pattern)}
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-[12.5px] text-ink">
+                  <span className="min-w-0 flex-1 truncate text-body text-ink">
                     {actionLabel(action) || "—"}
                   </span>
                   <button
@@ -298,7 +298,7 @@ export function MorseTab({ nav }: { nav: ReactNode }) {
                 </div>
               ))}
               {draft.actions.length === 0 && (
-                <div className="rounded-lg border border-line-soft bg-well/50 px-3 py-3 text-center text-[12px] text-faint">
+                <div className="rounded-lg border border-line-soft bg-well/50 px-3 py-3 text-center text-body text-faint">
                   No patterns yet — build one below.
                 </div>
               )}
@@ -311,7 +311,7 @@ export function MorseTab({ nav }: { nav: ReactNode }) {
               }
             />
             {patternsFull && (
-              <div className="text-[11.5px] text-warn">
+              <div className="text-small text-warn">
                 This slot is at its pattern limit ({caps.max_patterns_per_key}).
               </div>
             )}

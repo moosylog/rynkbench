@@ -72,7 +72,7 @@ function AddStep({ onAdd }: { onAdd: (step: MacroStep) => void }) {
             spellCheck={false}
           />
           {!isEncodableText(text) && (
-            <div className="text-[11px] text-warn">
+            <div className="text-small text-warn">
               Only plain ASCII (en-US) can be stored in a macro.
             </div>
           )}
@@ -109,7 +109,7 @@ function AddStep({ onAdd }: { onAdd: (step: MacroStep) => void }) {
             onChange={(e) => setDelay(Number(e.target.value))}
             className="w-24 text-right"
           />
-          <span className="text-[11.5px] text-faint">ms</span>
+          <span className="text-small text-faint">ms</span>
           <Button
             variant="primary"
             className="flex-1"
@@ -152,7 +152,7 @@ export function MacrosTab({ nav }: { nav: ReactNode }) {
         {nav}
         <CenterScroll>
           <div className="flex items-center gap-3 px-1">
-            <span className="min-w-0 flex-1 text-[12.5px] text-faint">
+            <span className="min-w-0 flex-1 text-body text-faint">
               Macros share one byte region on the keyboard; keys reference them by position
               (M0, M1, …). Deleting a macro shifts the ones after it.
             </span>
@@ -163,7 +163,7 @@ export function MacrosTab({ nav }: { nav: ReactNode }) {
             <div className="flex items-baseline justify-between">
               <SectionLabel>Macro space</SectionLabel>
               <span
-                className={cx("tnum text-[12px]", overCapacity ? "text-danger" : "text-mute")}
+                className={cx("tnum text-body", overCapacity ? "text-danger" : "text-mute")}
               >
                 {usedBytes} / {capacity} bytes
               </span>
@@ -180,20 +180,20 @@ export function MacrosTab({ nav }: { nav: ReactNode }) {
           </div>
 
           {drafts.length === 0 && (
-            <div className="rounded-xl border border-line-soft bg-panel px-4 py-8 text-center text-[12.5px] text-faint">
+            <div className="rounded-xl border border-line-soft bg-panel px-4 py-8 text-center text-body text-faint">
               No macros yet.
             </div>
           )}
           {drafts.map((macro, index) => (
             <SlotCard key={index} selected={index === sel} onClick={() => setSel(index)}>
               <div className="flex items-center gap-2.5">
-                <span className="rounded-md border border-cap-edge bg-cap px-1.5 py-0.5 font-mono text-[11.5px] text-cap-ink">
+                <span className="rounded-md border border-cap-edge bg-cap px-1.5 py-0.5 font-mono text-small text-cap-ink">
                   M{index}
                 </span>
-                <span className="min-w-0 flex-1 truncate text-[12.5px] text-ink">
+                <span className="min-w-0 flex-1 truncate text-body text-ink">
                   {macroPreview(macro)}
                 </span>
-                <span className="tnum shrink-0 text-[11px] text-faint">
+                <span className="tnum shrink-0 text-small text-faint">
                   {macro.steps.length} step{macro.steps.length === 1 ? "" : "s"} ·{" "}
                   {macroByteCost(macro)} B
                 </span>
@@ -225,7 +225,7 @@ export function MacrosTab({ nav }: { nav: ReactNode }) {
             }}
           >
             {overCapacity && (
-              <span className="text-[12px] text-danger">Over capacity — trim some steps.</span>
+              <span className="text-body text-danger">Over capacity — trim some steps.</span>
             )}
             <WriteStatus
               id="macros"
@@ -239,13 +239,13 @@ export function MacrosTab({ nav }: { nav: ReactNode }) {
       <InspectorShell>
         {selected === null || sel === null ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
-            <div className="flex size-12 items-center justify-center rounded-xl border border-line bg-raised font-mono text-[13px] text-faint">
+            <div className="flex size-12 items-center justify-center rounded-xl border border-line bg-raised font-mono text-ui text-faint">
               M0
             </div>
-            <div className="text-[13.5px] font-medium text-mute">
+            <div className="text-ui font-medium text-mute">
               Select a macro to edit its steps
             </div>
-            <div className="text-[12px] leading-relaxed text-faint">
+            <div className="text-body leading-relaxed text-faint">
               A macro plays a sequence of text, key taps, press/release pairs, and delays.
             </div>
           </div>
@@ -253,7 +253,7 @@ export function MacrosTab({ nav }: { nav: ReactNode }) {
           <div className="flex min-h-0 flex-1 flex-col gap-3">
             <div className="flex items-center justify-between">
               <SectionLabel>Macro {sel}</SectionLabel>
-              <span className="tnum text-[11px] text-faint">{macroByteCost(selected)} B</span>
+              <span className="tnum text-small text-faint">{macroByteCost(selected)} B</span>
             </div>
 
             <div className="flex flex-col gap-1">
@@ -266,13 +266,13 @@ export function MacrosTab({ nav }: { nav: ReactNode }) {
                   >
                     <span
                       className={cx(
-                        "w-14 shrink-0 text-[10px] font-semibold uppercase tracking-wider",
+                        "w-14 shrink-0 text-caption font-semibold uppercase tracking-wider",
                         STEP_TAG_TONE[s.tag],
                       )}
                     >
                       {s.tag}
                     </span>
-                    <span className="min-w-0 flex-1 truncate font-mono text-[12.5px] text-ink">
+                    <span className="min-w-0 flex-1 truncate font-mono text-body text-ink">
                       {s.body}
                     </span>
                     <button
@@ -315,7 +315,7 @@ export function MacrosTab({ nav }: { nav: ReactNode }) {
                 );
               })}
               {selected.steps.length === 0 && (
-                <div className="rounded-lg border border-line-soft bg-well/50 px-3 py-3 text-center text-[12px] text-faint">
+                <div className="rounded-lg border border-line-soft bg-well/50 px-3 py-3 text-center text-body text-faint">
                   No steps yet — add one below.
                 </div>
               )}
@@ -328,7 +328,7 @@ export function MacrosTab({ nav }: { nav: ReactNode }) {
                 <TrashIcon size={13} />
                 Delete macro {sel}
               </Button>
-              <div className="text-[11px] leading-relaxed text-faint">
+              <div className="text-small leading-relaxed text-faint">
                 Deleting renumbers later macros — keys bound to M{sel + 1}+ will shift by one.
                 Changes apply when you write the region.
               </div>

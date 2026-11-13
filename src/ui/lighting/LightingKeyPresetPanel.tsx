@@ -94,7 +94,7 @@ export function LightingKeyPresetPanel({
   return (
     <div>
       <SectionLabel>Key presets</SectionLabel>
-      <p className="mt-1 text-[11.5px] leading-relaxed text-faint">
+      <p className="mt-1 text-small leading-relaxed text-faint">
         One click binds the action and installs its status colors on this key for{" "}
         {layerName(state.layerMetadata, layer)}. Repeating a preset reinstalls its rules.
       </p>
@@ -121,32 +121,32 @@ export function LightingKeyPresetPanel({
                   : "cursor-not-allowed border-line opacity-50",
               )}
             >
-              <div className="flex items-center gap-2 text-[13px] font-medium text-accent">
+              <div className="flex items-center gap-2 text-ui font-medium text-accent">
                 {preset.label}
                 {installed(preset.kind) && (
-                  <span className="rounded-full border border-ok/40 px-1.5 py-px text-[10px] font-medium text-ok">
+                  <span className="rounded-full border border-ok/40 px-1.5 py-px text-caption font-medium text-ok">
                     installed
                   </span>
                 )}
               </div>
-              <div className="text-[11.5px] text-faint">{preset.hint}</div>
+              <div className="text-small text-faint">{preset.hint}</div>
             </button>
           );
         })}
       </div>
       {state.batchMode && (
-        <p className="mt-2 text-[11px] leading-relaxed text-warn">
+        <p className="mt-2 text-small leading-relaxed text-warn">
           Turn batch mode off first: presets write the action and its lighting immediately.
         </p>
       )}
       {!wakes && (
-        <p className="mt-2 text-[11px] leading-relaxed text-faint">
+        <p className="mt-2 text-small leading-relaxed text-faint">
           The indicator lights while {layerName(state.layerMetadata, layer)} is active. To see it
           while lighting is off, enable that layer’s wake setting in Lighting mode.
         </p>
       )}
       {message && (
-        <p role="status" className="mt-2 text-[11px] leading-relaxed text-mute">
+        <p role="status" className="mt-2 text-small leading-relaxed text-mute">
           {message}
         </p>
       )}

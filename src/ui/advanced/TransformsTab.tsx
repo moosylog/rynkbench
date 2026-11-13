@@ -137,7 +137,7 @@ export function TransformsTab({ nav }: { nav: ReactNode }) {
       <CenterScroll>
         <Panel className="p-5">
           <SectionLabel>Swap Ctrl ↔ GUI</SectionLabel>
-          <p className="mt-1.5 text-[12px] leading-relaxed text-faint">
+          <p className="mt-1.5 text-body leading-relaxed text-faint">
             Converts a PC-style keymap to its macOS counterpart (and back — the swap is
             its own inverse). Rewrites every binding that names Ctrl or GUI: keys on all
             layers, combos, morse slots, forks, and macro steps. Changes are written to
@@ -161,7 +161,7 @@ export function TransformsTab({ nav }: { nav: ReactNode }) {
 
         <Panel className="p-5">
           <SectionLabel>Switch alpha layout</SectionLabel>
-          <p className="mt-1.5 text-[12px] leading-relaxed text-faint">
+          <p className="mt-1.5 text-body leading-relaxed text-faint">
             Converts between alpha layouts in either direction — tell it what the keymap
             is now and what it should become. Each layer migrates its own way:{" "}
             <span className="text-mute">alphas</span> substitutes the letter keycodes in
@@ -174,7 +174,7 @@ export function TransformsTab({ nav }: { nav: ReactNode }) {
           </p>
           {(["from", "to"] as const).map((which) => (
             <div key={which} className="mt-3 flex items-center gap-1.5">
-              <span className="w-10 text-[11.5px] uppercase tracking-wide text-faint">
+              <span className="w-10 text-small uppercase tracking-wide text-faint">
                 {which}
               </span>
               {LAYOUTS.map((entry) => (
@@ -194,7 +194,7 @@ export function TransformsTab({ nav }: { nav: ReactNode }) {
           <div className="mt-4 flex flex-col gap-1.5">
             {state.layers.map((_, layer) => (
               <div key={layer} className="flex items-center gap-2">
-                <span className="w-40 truncate text-[12.5px] text-mute">
+                <span className="w-40 truncate text-body text-mute">
                   {layerName(layer)}
                   {layer === state.defaultLayer && (
                     <span className="text-faint"> · default</span>
@@ -215,8 +215,8 @@ export function TransformsTab({ nav }: { nav: ReactNode }) {
                       }
                       className={
                         migrations[layer] === entry.id
-                          ? "cursor-pointer rounded-md bg-accent/15 px-2 py-0.5 text-[11.5px] font-medium text-accent"
-                          : "cursor-pointer rounded-md px-2 py-0.5 text-[11.5px] text-faint hover:text-mute"
+                          ? "cursor-pointer rounded-md bg-accent/15 px-2 py-0.5 text-small font-medium text-accent"
+                          : "cursor-pointer rounded-md px-2 py-0.5 text-small text-faint hover:text-mute"
                       }
                     >
                       {entry.label}
@@ -244,22 +244,22 @@ export function TransformsTab({ nav }: { nav: ReactNode }) {
         </Panel>
 
         {blocked !== null && (
-          <div className="text-center text-[12.5px] text-warn">{blocked}</div>
+          <div className="text-center text-body text-warn">{blocked}</div>
         )}
         {run.phase === "running" && (
-          <div className="text-center text-[12.5px] text-accent">
+          <div className="text-center text-body text-accent">
             Writing {run.done}/{run.total}…
           </div>
         )}
         {run.phase === "done" && (
-          <div className={run.failed ? "text-center text-[12.5px] text-warn" : "text-center text-[12.5px] text-ok"}>
+          <div className={run.failed ? "text-center text-body text-warn" : "text-center text-body text-ok"}>
             {run.failed
               ? `Wrote ${run.written} changes; ${run.failed} failed — see the key inspector.`
               : `Wrote ${run.written} ${run.written === 1 ? "change" : "changes"} to the keyboard.`}
           </div>
         )}
         {run.phase === "error" && (
-          <div className="text-center text-[12.5px] text-danger">Transform failed: {run.message}</div>
+          <div className="text-center text-body text-danger">Transform failed: {run.message}</div>
         )}
       </CenterScroll>
     </div>

@@ -96,7 +96,7 @@ function LayerTabs() {
         onChange={(layer) => dispatch({ type: "uiLayer", layer })}
       />
       {state.uiLayer !== state.currentLayer && (
-        <span className="text-[11.5px] text-faint">
+        <span className="text-small text-faint">
           Editing {selectedName} · {layerName(state.layerMetadata, state.currentLayer)} is live
         </span>
       )}
@@ -128,7 +128,7 @@ function LayerTabs() {
             </Button>
           </form>
         ) : (
-          <Button variant="ghost" className="text-[12px]" onClick={() => setRenaming(true)}>
+          <Button variant="ghost" className="text-body" onClick={() => setRenaming(true)}>
             Rename
           </Button>
         ))}
@@ -136,7 +136,7 @@ function LayerTabs() {
         <div className="flex items-center gap-0.5">
           <Button
             variant="ghost"
-            className="px-2 text-[12px]"
+            className="px-2 text-body"
             title={pointingStaged ? "Apply or discard staged pointing edits first" : "Move layer left"}
             disabled={state.layerBusy || pointingStaged || state.uiLayer === 0}
             onClick={() => void io.moveLayer(state.uiLayer, state.uiLayer - 1)}
@@ -145,7 +145,7 @@ function LayerTabs() {
           </Button>
           <Button
             variant="ghost"
-            className="px-2 text-[12px]"
+            className="px-2 text-body"
             title={pointingStaged ? "Apply or discard staged pointing edits first" : "Move layer right"}
             disabled={
               state.layerBusy || pointingStaged || state.uiLayer === occupiedLayers.length - 1
@@ -156,7 +156,7 @@ function LayerTabs() {
           </Button>
           <Button
             variant="ghost"
-            className="px-2 text-[12px]"
+            className="px-2 text-body"
             title={pointingStaged ? "Apply or discard staged pointing edits first" : "Duplicate layer"}
             disabled={state.layerBusy || pointingStaged || occupiedLayers.length >= numLayers}
             onClick={() => void io.duplicateLayer(state.uiLayer)}
@@ -165,7 +165,7 @@ function LayerTabs() {
           </Button>
           <Button
             variant="ghost"
-            className="px-2 text-[12px] text-danger"
+            className="px-2 text-body text-danger"
             title={pointingStaged ? "Apply or discard staged pointing edits first" : "Delete and compact this layer"}
             disabled={state.layerBusy || pointingStaged || occupiedLayers.length <= 1}
             onClick={() => {
@@ -197,7 +197,7 @@ function LayerTabs() {
       {state.uiLayer !== state.defaultLayer && (
         <Button
           variant="ghost"
-          className="text-[12px]"
+          className="text-body"
           title="Make this the layer the keyboard starts on"
           onClick={() => io.setDefaultLayer(state.uiLayer)}
         >
@@ -206,7 +206,7 @@ function LayerTabs() {
         </Button>
       )}
       {state.layerError && (
-        <span className="max-w-64 text-[11px] text-danger" title={state.layerError}>
+        <span className="max-w-64 text-small text-danger" title={state.layerError}>
           {state.layerError}
         </span>
       )}
@@ -519,7 +519,7 @@ export function KeymapCenter() {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 max-lg:min-h-[380px]">
       <LayerTabs />
-      <div className="flex min-h-5 items-center justify-between gap-4 px-1 text-[11.5px] text-faint">
+      <div className="flex min-h-5 items-center justify-between gap-4 px-1 text-small text-faint">
         <span className="flex items-center gap-3">
           {layerLightingAvailable && (
             <label className="flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap">
@@ -675,34 +675,34 @@ function KeyInspector({ row, col }: { row: number; col: number }) {
         <div className="flex items-center justify-between">
           <SectionLabel>Selected key</SectionLabel>
           <span className="flex flex-col items-end font-mono">
-            <span className="text-[12px] text-ink">{keyAddressLabel(addressable)}</span>
-            <span className="text-[10.5px] text-faint">
+            <span className="text-body text-ink">{keyAddressLabel(addressable)}</span>
+            <span className="text-caption text-faint">
               matrix {matrixKeyLabel(addressable)} · layer {state.uiLayer}
             </span>
           </span>
         </div>
         <div className="mt-2 flex items-center gap-3 rounded-xl border border-line bg-raised px-3.5 py-3">
-          <div className="flex h-10 min-w-10 items-center justify-center rounded-lg border border-cap-edge bg-cap px-2 font-mono text-[15px] text-cap-ink">
+          <div className="flex h-10 min-w-10 items-center justify-center rounded-lg border border-cap-edge bg-cap px-2 font-mono text-title text-cap-ink">
             {keyActionGlyph(action).text || "·"}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-[13px] leading-snug text-ink [overflow-wrap:anywhere]">
+            <div className="text-ui leading-snug text-ink [overflow-wrap:anywhere]">
               {keyActionDescription(action)}
             </div>
             {pending?.status === "pending" && (
-              <div className="text-[11.5px] text-accent">
+              <div className="text-small text-accent">
                 Writing to device…
               </div>
             )}
             {staged && (
-              <div className="text-[11.5px] text-accent">
+              <div className="text-small text-accent">
                 Staged — written when the batch is applied
               </div>
             )}
           </div>
         </div>
         {pending?.status === "error" && (
-          <div className="mt-2 flex items-start gap-2 rounded-lg border border-danger/40 bg-danger-dim/25 px-3 py-2 text-[12px] text-danger">
+          <div className="mt-2 flex items-start gap-2 rounded-lg border border-danger/40 bg-danger-dim/25 px-3 py-2 text-body text-danger">
             <WarningIcon size={14} className="mt-0.5 shrink-0" />
             <div className="min-w-0 flex-1">
               <div>Write failed: {pending.message}</div>
@@ -798,10 +798,10 @@ function EncoderInspector({ id }: { id: number }) {
           : "border-line bg-raised hover:border-line-strong",
       )}
     >
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-faint">
+      <span className="text-caption font-semibold uppercase tracking-wider text-faint">
         {label}
       </span>
-      <span className="font-mono text-[13px] text-ink">
+      <span className="font-mono text-ui text-ink">
         {keyActionGlyph(value).text || "unset"}
       </span>
     </button>
@@ -812,22 +812,22 @@ function EncoderInspector({ id }: { id: number }) {
       <div>
         <div className="flex items-center justify-between">
           <SectionLabel>Encoder {id}</SectionLabel>
-          <span className="font-mono text-[11px] text-faint">
+          <span className="font-mono text-small text-faint">
             layer {layer}
           </span>
         </div>
         {pending?.status === "pending" && (
-          <div className="mt-1 text-[11.5px] text-accent">
+          <div className="mt-1 text-small text-accent">
             Writing to device…
           </div>
         )}
         {staged && (
-          <div className="mt-1 text-[11.5px] text-accent">
+          <div className="mt-1 text-small text-accent">
             Staged — written when the batch is applied
           </div>
         )}
         {pending?.status === "error" && (
-          <div className="mt-1 text-[11.5px] text-danger">
+          <div className="mt-1 text-small text-danger">
             Write failed: {pending.message}
           </div>
         )}
@@ -864,7 +864,7 @@ function PointingInspector({ id }: { id: number }) {
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <SectionLabel>{label}</SectionLabel>
-        <span className="text-[11px] text-faint">{name}</span>
+        <span className="text-small text-faint">{name}</span>
       </div>
       {state.pointingDraft ? (
         <LayerPointing selectedDeviceId={id} />
@@ -872,7 +872,7 @@ function PointingInspector({ id }: { id: number }) {
         // The read failed; that is not the same as the firmware saying it has
         // no pointing configuration, so offer the re-read rather than blaming
         // the board for a limitation it may not have.
-        <div className="flex flex-col gap-2 rounded-lg border border-warn/40 bg-warn/10 px-3 py-2.5 text-[12px] leading-relaxed text-warn">
+        <div className="flex flex-col gap-2 rounded-lg border border-warn/40 bg-warn/10 px-3 py-2.5 text-body leading-relaxed text-warn">
           <span>Could not read this keyboard's pointing configuration: {state.pointingError}</span>
           <Button
             variant="ghost"
@@ -884,7 +884,7 @@ function PointingInspector({ id }: { id: number }) {
           </Button>
         </div>
       ) : (
-        <div className="rounded-lg border border-warn/40 bg-warn/10 px-3 py-2.5 text-[12px] leading-relaxed text-warn">
+        <div className="rounded-lg border border-warn/40 bg-warn/10 px-3 py-2.5 text-body leading-relaxed text-warn">
           This firmware does not expose runtime pointing configuration, so this trackpad cannot be edited here.
         </div>
       )}
@@ -900,12 +900,12 @@ export function KeymapInspector() {
       <div className="flex flex-col gap-4">
         <div className="flex min-h-52 flex-col items-center justify-center gap-3 px-6 text-center">
           <div className="flex size-12 items-center justify-center rounded-xl border border-line bg-raised text-faint">
-            <span className="font-mono text-[16px]">⌨</span>
+            <span className="font-mono text-title">⌨</span>
           </div>
-          <div className="text-[13.5px] font-medium text-mute">
+          <div className="text-ui font-medium text-mute">
             Select a key or trackpad to edit it
           </div>
-          <div className="text-[12px] leading-relaxed text-faint">
+          <div className="text-body leading-relaxed text-faint">
             Click or focus a key or trackpad and press Enter to select it. Switch
             layers with the tabs above the board.
           </div>
@@ -920,7 +920,7 @@ export function KeymapInspector() {
       <div className="mb-2 flex justify-end">
         <button
           type="button"
-          className="flex cursor-pointer items-center gap-1 text-[11.5px] text-faint transition-colors duration-120 hover:text-mute"
+          className="flex cursor-pointer items-center gap-1 text-small text-faint transition-colors duration-120 hover:text-mute"
           onClick={() => dispatch({ type: "select", selection: null })}
         >
           <CloseIcon size={11} />

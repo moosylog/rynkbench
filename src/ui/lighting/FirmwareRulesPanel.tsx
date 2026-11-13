@@ -71,11 +71,11 @@ export function FirmwareRulesPanel() {
   return (
     <div>
       <SectionLabel>Configured firmware rules</SectionLabel>
-      <p className="mt-1 text-[11.5px] leading-relaxed text-faint">
+      <p className="mt-1 text-small leading-relaxed text-faint">
         Read-only from keyboard.toml · {total} cells · {activeCount} active in this preview
       </p>
       {(toggleAction !== undefined || wakeLayerList.length > 0) && (
-        <p className="mt-1 text-[11.5px] leading-relaxed text-mute">
+        <p className="mt-1 text-small leading-relaxed text-mute">
           {toggleAction !== undefined && `User${toggleAction} toggles all lighting`}
           {toggleAction !== undefined && wakeLayerList.length > 0 && " · "}
           {wakeLayerList.length > 0 &&
@@ -85,7 +85,7 @@ export function FirmwareRulesPanel() {
         </p>
       )}
       {outputMode !== null && (
-        <p className="mt-1 text-[11.5px] leading-relaxed text-mute">
+        <p className="mt-1 text-small leading-relaxed text-mute">
           {outputMode.cycle_user_action !== undefined &&
             `User${outputMode.cycle_user_action} cycles always on → always off → plugged-in only · `}
           Current: {outputMode.mode === "AlwaysOn"
@@ -100,14 +100,14 @@ export function FirmwareRulesPanel() {
       )}
       {groups.length > 0 && (
         <details className="mt-2 rounded-lg border border-line-soft bg-well px-3 py-2">
-          <summary className="cursor-pointer text-[12px] font-medium text-mute">
+          <summary className="cursor-pointer text-body font-medium text-mute">
             Show {groups.length} rule groups
           </summary>
           <div className="mt-2 flex flex-col gap-2">
             {groups.map((group) => {
               const names = group.leds.map((id) => labels.get(id) ?? `LED ${id}`).join(", ");
               return (
-                <div key={group.id} className="flex items-start gap-2 text-[11.5px]">
+                <div key={group.id} className="flex items-start gap-2 text-small">
                   <span
                     className="mt-1 size-2 shrink-0 rounded-full"
                     style={{ background: effectColor(group.effect) }}

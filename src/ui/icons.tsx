@@ -79,6 +79,38 @@ export function FileConfigIcon(props: IconProps) {
   );
 }
 
+/** Insights: what is used and how the keyboard is doing. */
+export function InsightsIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M2 13.8h12" />
+      <path d="M4 11.2V8.6M7 11.2V4.6M10 11.2V6.8M13 11.2V2.6" />
+    </svg>
+  );
+}
+
+/** Library: layouts kept as files. */
+export function LibraryIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M2 2.6h3.2v10.8H2zM6.2 2.6h3.2v10.8H6.2z" />
+      <path d="M10.4 3.6l2.9-.8 2.2 10-2.9.8z" />
+      <path d="M2 5.2h3.2M6.2 5.2h3.2" />
+    </svg>
+  );
+}
+
+/** Settings: a slider pair. */
+export function SettingsIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M2.2 4.8h6.2M11.6 4.8h2.2M2.2 11.2h2.2M7.6 11.2h6.2" />
+      <circle cx="10" cy="4.8" r="1.6" />
+      <circle cx="6" cy="11.2" r="1.6" />
+    </svg>
+  );
+}
+
 /** Effects mode: an animated sparkle from the firmware's effect pack. */
 export function SparkleIcon(props: IconProps) {
   return (

@@ -81,7 +81,7 @@ export function BehaviorTab({ nav }: { nav: ReactNode }) {
     return (
       <div className="flex min-h-0 flex-1 flex-col gap-3">
         {nav}
-        <div className="mx-auto mt-8 max-w-xl text-center text-[12.5px] text-faint">
+        <div className="mx-auto mt-8 max-w-xl text-center text-body text-faint">
           This device did not report its behavior configuration.
         </div>
       </div>
@@ -97,15 +97,15 @@ export function BehaviorTab({ nav }: { nav: ReactNode }) {
         <div className="mx-auto flex max-w-xl flex-col gap-4 pb-8">
           <Panel className="p-5">
             <SectionLabel>Global timing</SectionLabel>
-            <p className="mt-1.5 text-[12px] leading-relaxed text-faint">
+            <p className="mt-1.5 text-body leading-relaxed text-faint">
               These apply keyboard-wide. Morse slots can override tap timings per key.
             </p>
             <div className="mt-4 flex flex-col gap-4">
               {FIELDS.map((f) => (
                 <label key={f.key} className="flex items-center justify-between gap-4">
                   <span className="min-w-0">
-                    <span className="block text-[13px] text-ink">{f.label}</span>
-                    <span className="block text-[11.5px] leading-snug text-faint">{f.hint}</span>
+                    <span className="block text-ui text-ink">{f.label}</span>
+                    <span className="block text-small leading-snug text-faint">{f.hint}</span>
                   </span>
                   <span className="flex shrink-0 items-center gap-1.5">
                     <TextInput
@@ -118,7 +118,7 @@ export function BehaviorTab({ nav }: { nav: ReactNode }) {
                       }
                       className="w-24 text-right"
                     />
-                    <span className="text-[11.5px] text-faint">ms</span>
+                    <span className="text-small text-faint">ms</span>
                   </span>
                 </label>
               ))}
@@ -138,10 +138,10 @@ export function BehaviorTab({ nav }: { nav: ReactNode }) {
             >
               <div className="flex-1" />
               {dirty && !writing && (
-                <span className="text-[11.5px] text-warn">Unsaved changes</span>
+                <span className="text-small text-warn">Unsaved changes</span>
               )}
               {justSaved && !dirty && (
-                <span className="animate-pop text-[11.5px] text-ok">Saved to keyboard ✓</span>
+                <span className="animate-pop text-small text-ok">Saved to keyboard ✓</span>
               )}
             </SaveBar>
           </Panel>

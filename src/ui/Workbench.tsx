@@ -1,7 +1,8 @@
-// The workbench: top bar, mode rail, canvas center, contextual inspector.
+// The workbench: top bar, area rail, section tabs, and the section on show.
 
 import { useEffect, useMemo, useReducer, useRef, useSyncExternalStore } from "react";
-import type { ConnectedBundle, Mode } from "./state";
+import type { ReactNode } from "react";
+import type { ConnectedBundle } from "./state";
 import {
   WorkbenchContext,
   canTravelKeyEditHistory,
@@ -16,83 +17,164 @@ import { KeymapCenter, KeymapInspector } from "./keymap/KeymapMode";
 import { LightingMode } from "./lighting/LightingMode";
 import { EffectsMode } from "./effects/EffectsMode";
 import { LiveMode } from "./live/LiveMode";
-import { AdvancedMode } from "./advanced/AdvancedMode";
+import { AdvancedSection } from "./advanced/AdvancedMode";
 import { ProfilesMode } from "./ProfilesMode";
 import { DeviceMode } from "./device/DeviceMode";
+import { LibraryMode } from "./library/LibraryMode";
 import { InspectorShell, cx } from "./kit";
 import { historyShortcut, keyEditHistoryLabel } from "../model/history";
 import { firmwareFactsOf, resolveCapabilities } from "../capabilities";
-import { useTerms, type TermId } from "./terms";
+import { useTerms } from "./terms";
 import { getLocaleId, subscribeLocale } from "./locale";
+import { areaOfSection, areasFor, sectionTerm, type Area, type AreaId, type SectionId } from "./areas";
+import { DocumentTransferContext, useDocumentTransfer } from "./transfer-actions";
 import {
   CombinatorIcon,
   DeviceIcon,
-  EyeIcon,
+  InsightsIcon,
   KeymapIcon,
+  LibraryIcon,
   LightingIcon,
-  ProfilesIcon,
-  SparkleIcon,
 } from "./icons";
 
-interface ModeEntry {
-  id: Mode;
-  term: TermId;
-  icon: typeof KeymapIcon;
-}
+const AREA_ICON: Record<AreaId, typeof KeymapIcon> = {
+  layout: KeymapIcon,
+  behaviors: CombinatorIcon,
+  lighting: LightingIcon,
+  device: DeviceIcon,
+  library: LibraryIcon,
+  insights: InsightsIcon,
+};
 
-const MODES: ModeEntry[] = [
-  { id: "keymap", term: "mode.keymap", icon: KeymapIcon },
-  { id: "lighting", term: "mode.lighting", icon: LightingIcon },
-  { id: "effects", term: "mode.effects", icon: SparkleIcon },
-  { id: "live", term: "mode.live", icon: EyeIcon },
-  { id: "profiles", term: "mode.profiles", icon: ProfilesIcon },
-  { id: "advanced", term: "mode.advanced", icon: CombinatorIcon },
-  { id: "device", term: "mode.device", icon: DeviceIcon },
-];
-
-function ModeRail({
-  modes,
-  mode,
-  onMode,
+/** The areas, one button each. On a phone the rail is a bar along the bottom. */
+function AreaRail({
+  areas,
+  current,
+  onArea,
 }: {
-  modes: ModeEntry[];
-  mode: Mode;
-  onMode: (m: Mode) => void;
+  areas: Area[];
+  current: AreaId | undefined;
+  onArea: (area: Area) => void;
 }) {
   const term = useTerms();
-  const activeIndex = modes.findIndex((m) => m.id === mode);
   return (
-    <nav className="relative flex w-[76px] shrink-0 flex-col items-stretch gap-1 border-r border-line-soft bg-panel px-2 py-3">
-      {/* sliding active indicator */}
-      <div
-        aria-hidden
-        className="absolute left-0 h-14 w-0.5 rounded-r bg-accent transition-all duration-180"
-        style={{
-          top: `${12 + activeIndex * 60}px`,
-          transitionTimingFunction: "cubic-bezier(0.25,0.8,0.35,1)",
-        }}
-      />
-      {modes.map((m) => {
-        const Icon = m.icon;
-        const active = m.id === mode;
+    <nav
+      aria-label="Areas"
+      className={cx(
+        "flex w-[76px] shrink-0 flex-col items-stretch gap-1 border-r border-line-soft bg-panel px-2 py-3",
+        "max-sm:w-full max-sm:flex-row max-sm:justify-around max-sm:border-r-0 max-sm:border-t max-sm:px-1 max-sm:py-1",
+      )}
+    >
+      {areas.map((area) => {
+        const Icon = AREA_ICON[area.id];
+        const active = area.id === current;
         return (
           <button
-            key={m.id}
+            key={area.id}
             type="button"
-            onClick={() => onMode(m.id)}
+            onClick={() => onArea(area)}
             className={cx(
-              "flex h-14 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl transition-colors duration-150",
+              "relative flex h-14 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl transition-colors duration-150",
+              "max-sm:h-12 max-sm:flex-1",
               active ? "bg-raised text-accent" : "text-faint hover:bg-raised/60 hover:text-mute",
             )}
             aria-current={active ? "page" : undefined}
           >
+            {active && (
+              <span
+                aria-hidden
+                className="absolute -left-2 top-2 bottom-2 w-0.5 rounded-r bg-accent max-sm:hidden"
+              />
+            )}
             <Icon size={18} />
-            <span className="text-[10px] font-medium tracking-wide">{term(m.term)}</span>
+            <span className="text-caption font-medium">{term(area.term)}</span>
           </button>
         );
       })}
     </nav>
   );
+}
+
+/** The sections of the current area, when it has more than one. */
+function SectionTabs({
+  sections,
+  current,
+  onSection,
+}: {
+  sections: SectionId[];
+  current: SectionId;
+  onSection: (section: SectionId) => void;
+}) {
+  const term = useTerms();
+  if (sections.length < 2) return null;
+  return (
+    <div
+      role="tablist"
+      aria-label="Sections"
+      className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-line-soft bg-bg px-4"
+    >
+      {sections.map((section) => {
+        const active = section === current;
+        return (
+          <button
+            key={section}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={() => onSection(section)}
+            className={cx(
+              "relative shrink-0 cursor-pointer whitespace-nowrap px-3 py-2.5 text-ui font-medium transition-colors duration-150",
+              active ? "text-ink" : "text-faint hover:text-mute",
+            )}
+          >
+            {term(sectionTerm(section))}
+            {active && <span className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-accent" />}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** One section's screen. */
+function SectionView({ section }: { section: SectionId }) {
+  switch (section) {
+    case "keymap":
+      return (
+        <>
+          <KeymapCenter />
+          <InspectorShell>
+            <KeymapInspector />
+          </InspectorShell>
+        </>
+      );
+    case "combos":
+    case "morse":
+    case "macros":
+    case "forks":
+    case "behavior":
+    case "transforms":
+    case "usage":
+      return <AdvancedSection section={section} />;
+    case "profiles":
+      return <ProfilesMode />;
+    case "lighting":
+      return <LightingMode />;
+    case "effects":
+      return <EffectsMode />;
+    case "device":
+      return <DeviceMode />;
+    case "library":
+      return <LibraryMode />;
+    case "live":
+      return <LiveMode />;
+  }
+}
+
+/** Shares the workbench's one document transfer with the top bar and Library. */
+function DocumentTransferProvider({ children }: { children: ReactNode }) {
+  const transfer = useDocumentTransfer();
+  return <DocumentTransferContext value={transfer}>{children}</DocumentTransferContext>;
 }
 
 export function Workbench({
@@ -114,19 +196,38 @@ export function Workbench({
   // whole workbench when the TopBar selector changes it.
   useSyncExternalStore(subscribeLocale, getLocaleId);
 
-  // Effects is its own view rather than a lighting panel, but it only exists
-  // on firmware that ships the effect extension.
+  // The areas and their sections come from what the keyboard and the session
+  // offer (src/ui/areas.ts).
   const capabilities = useMemo(() => resolveCapabilities(firmwareFactsOf(bundle)), [bundle]);
-  const modes = useMemo(
+  const areas = useMemo(
     () =>
-      MODES.filter(
-        (m) =>
-          (bundle.session.kind !== "offline" || (m.id !== "live" && m.id !== "device")) &&
-          (m.id !== "effects" || capabilities.has("lighting.extension")) &&
-          (m.id !== "profiles" || bundle.morseProfileCapacity > 0),
-      ),
-    [bundle.session.kind, capabilities, bundle.morseProfileCapacity],
+      areasFor({
+        connected: bundle.session.kind !== "offline",
+        combos: bundle.caps.max_combos > 0,
+        morse: bundle.caps.max_morse > 0,
+        macros: bundle.caps.macro_space_size > 0,
+        forks: bundle.caps.max_forks > 0,
+        tapProfiles: bundle.morseProfileCapacity > 0,
+        lighting: capabilities.has("lighting.state"),
+        effects: capabilities.has("lighting.extension"),
+      }),
+    [bundle, capabilities],
   );
+  // A section the board does not offer (a link from elsewhere) falls back to
+  // the keymap, which every board has.
+  const currentArea = areaOfSection(areas, state.mode);
+  const section: SectionId = currentArea ? state.mode : "keymap";
+  const area = currentArea ?? areas[0];
+  // Each area remembers the section last shown in it.
+  const lastSection = useRef<Partial<Record<AreaId, SectionId>>>({});
+  useEffect(() => {
+    lastSection.current[area.id] = section;
+  }, [area.id, section]);
+  const showArea = (next: Area) => {
+    const remembered = lastSection.current[next.id];
+    const target = remembered && next.sections.includes(remembered) ? remembered : next.sections[0];
+    dispatch({ type: "mode", mode: target });
+  };
 
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -222,42 +323,34 @@ export function Workbench({
 
   return (
     <WorkbenchContext value={ctx}>
+      <DocumentTransferProvider>
       <div className="relative flex h-full flex-col" aria-busy={state.layerBusy}>
         {state.layerBusy && (
           <div
             className="absolute inset-0 z-50 flex items-center justify-center bg-well/70 backdrop-blur-[1px]"
             role="status"
           >
-            <div className="rounded-xl border border-line bg-panel px-4 py-3 text-[13px] text-ink shadow-lg">
+            <div className="rounded-xl border border-line bg-panel px-4 py-3 text-ui text-ink shadow-lg">
               Rewriting and verifying layers on the keyboard…
             </div>
           </div>
         )}
         <TopBar />
-        <div className="flex min-h-0 flex-1">
-          <ModeRail
-            modes={modes}
-            mode={state.mode}
-            onMode={(mode) => dispatch({ type: "mode", mode })}
-          />
-          <main className="flex min-h-0 flex-1 gap-4 p-4 max-lg:flex-col max-lg:overflow-y-auto">
-            {state.mode === "keymap" && (
-              <>
-                <KeymapCenter />
-                <InspectorShell>
-                  <KeymapInspector />
-                </InspectorShell>
-              </>
-            )}
-            {state.mode === "lighting" && <LightingMode />}
-            {state.mode === "effects" && <EffectsMode />}
-            {state.mode === "live" && <LiveMode />}
-            {state.mode === "profiles" && <ProfilesMode />}
-            {state.mode === "advanced" && <AdvancedMode />}
-            {state.mode === "device" && <DeviceMode />}
-          </main>
+        <div className="flex min-h-0 flex-1 max-sm:flex-col-reverse">
+          <AreaRail areas={areas} current={area.id} onArea={showArea} />
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+            <SectionTabs
+              sections={area.sections}
+              current={section}
+              onSection={(mode) => dispatch({ type: "mode", mode })}
+            />
+            <main className="flex min-h-0 flex-1 gap-4 p-4 max-lg:flex-col max-lg:overflow-y-auto max-sm:p-2">
+              <SectionView section={section} />
+            </main>
+          </div>
         </div>
       </div>
+      </DocumentTransferProvider>
     </WorkbenchContext>
   );
 }

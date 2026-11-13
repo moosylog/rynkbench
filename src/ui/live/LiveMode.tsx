@@ -50,7 +50,7 @@ function ModifierRow() {
           : active.map(([, label]) => (
               <span
                 key={label}
-                className="rounded-full border border-accent-deep/60 bg-accent-dim/30 px-2 py-0.5 text-[10.5px] text-accent"
+                className="rounded-full border border-accent-deep/60 bg-accent-dim/30 px-2 py-0.5 text-caption text-accent"
               >
                 {label}
               </span>
@@ -115,7 +115,7 @@ function LayerStack() {
                 tone,
               )}
             >
-              <span className="tnum font-mono text-[12px]">L{i}</span>
+              <span className="tnum font-mono text-body">L{i}</span>
               {litLayers.has(i) && (
                 <span
                   title="Has compiled or stored scene lighting"
@@ -123,12 +123,12 @@ function LayerStack() {
                 />
               )}
               <div className="flex-1" />
-              <span className="text-[10.5px] uppercase tracking-wide">{note}</span>
+              <span className="text-caption uppercase tracking-wide">{note}</span>
             </div>
           );
         })}
       </div>
-      <p className="mt-2.5 text-[10.5px] leading-relaxed text-faint">
+      <p className="mt-2.5 text-caption leading-relaxed text-faint">
         Precedence is by layer index — highest active layer wins; activation order never matters.
         Transparent keys fall through the remaining active layers.
       </p>
@@ -235,13 +235,13 @@ export function LiveMode() {
             className="animate-pop"
             title={`Active layers: ${activeLabel}. Default layer: ${state.defaultLayer}.`}
           >
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-accent-deep/60 bg-accent-dim/30 px-2 py-0.5 text-[10.5px] font-medium text-accent">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-accent-deep/60 bg-accent-dim/30 px-2 py-0.5 text-caption font-medium text-accent">
               <span className="size-1.5 rounded-full bg-accent" />
               {activeLabel}
             </span>
           </span>
           <div className="flex-1" />
-          <span className="text-[11px] text-faint">computed from last-known state</span>
+          <span className="text-small text-faint">computed from last-known state</span>
         </div>
         <BoardWell model={bundle.model}>
           {bgColor && (
@@ -258,7 +258,7 @@ export function LiveMode() {
             decorFor={decorFor}
           />
         </BoardWell>
-        <div className="px-1 text-[11px] leading-relaxed text-faint">
+        <div className="px-1 text-small leading-relaxed text-faint">
           {outputOn ? (
             <>
               Composited preview: scene lighting and the overlay over each key's effective binding.
@@ -281,7 +281,7 @@ export function LiveMode() {
               <SectionLabel>Lighting output</SectionLabel>
               <span
                 className={cx(
-                  "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10.5px] font-medium",
+                  "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-caption font-medium",
                   outputOn ? "border-ok/50 text-ok" : "border-line text-faint",
                 )}
               >
@@ -371,7 +371,7 @@ export function LiveMode() {
                 )}
               </div>
             ) : (
-              <div className="mt-2 text-[12.5px] text-faint">Lighting state unavailable.</div>
+              <div className="mt-2 text-body text-faint">Lighting state unavailable.</div>
             )}
           </Panel>
 

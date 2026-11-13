@@ -22,7 +22,7 @@ function Sites({ sites }: { sites: SiteRef[] }) {
   };
 
   return (
-    <span className="text-[11.5px] text-faint">
+    <span className="text-small text-faint">
       {sites.slice(0, max).map((site, index) => (
         <Fragment key={`${site.label}-${index}`}>
           {index > 0 && ", "}
@@ -49,11 +49,11 @@ function LayerRow({ usage }: { usage: LayerUsage }) {
   return (
     <div className="flex flex-col gap-0.5 border-b border-line-soft py-2 last:border-b-0">
       <div className="flex items-center gap-2">
-        <span className="w-6 text-right text-[11.5px] tabular-nums text-faint">
+        <span className="w-6 text-right text-small tabular-nums text-faint">
           {usage.layer}
         </span>
-        <span className="text-[13px] text-ink">{usage.name}</span>
-        <span className="text-[11.5px] text-faint">
+        <span className="text-ui text-ink">{usage.name}</span>
+        <span className="text-small text-faint">
           {usage.boundKeys} bound {usage.boundKeys === 1 ? "key" : "keys"}
         </span>
         <div className="flex-1" />
@@ -62,7 +62,7 @@ function LayerRow({ usage }: { usage: LayerUsage }) {
       </div>
       {usage.activators.length > 0 && (
         <div className="pl-8">
-          <span className="text-[11.5px] text-mute">Activated by </span>
+          <span className="text-small text-mute">Activated by </span>
           <Sites sites={usage.activatorSites} />
         </div>
       )}
@@ -85,15 +85,15 @@ function CountRow({
   return (
     <div className="flex flex-col gap-0.5 border-b border-line-soft py-2 last:border-b-0">
       <div className="flex items-center gap-2">
-        <span className="text-[13px] text-ink">{label}</span>
+        <span className="text-ui text-ink">{label}</span>
         {detail && (
-          <span className="min-w-0 flex-1 truncate text-[11.5px] text-faint">{detail}</span>
+          <span className="min-w-0 flex-1 truncate text-small text-faint">{detail}</span>
         )}
         {!detail && <div className="flex-1" />}
         {orphan ? (
           <Chip tone="danger">unused</Chip>
         ) : (
-          <span className="shrink-0 text-[11.5px] tabular-nums text-mute">
+          <span className="shrink-0 text-small tabular-nums text-mute">
             {count} {count === 1 ? "reference" : "references"}
           </span>
         )}
@@ -148,13 +148,13 @@ export function UsageTab({ nav }: { nav: ReactNode }) {
         <Panel className="p-5">
           <SectionLabel>Health</SectionLabel>
           {report.warnings.length === 0 ? (
-            <p className="mt-2 text-[12.5px] text-ok">
+            <p className="mt-2 text-body text-ok">
               Everything defined is referenced, and every layer is reachable.
             </p>
           ) : (
             <ul className="mt-2 flex flex-col gap-1.5">
               {report.warnings.map((warning) => (
-                <li key={warning} className="flex items-start gap-2 text-[12.5px] text-warn">
+                <li key={warning} className="flex items-start gap-2 text-body text-warn">
                   <span className="mt-0.5 shrink-0">
                     <WarningIcon size={13} />
                   </span>

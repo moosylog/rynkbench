@@ -1,73 +1,12 @@
-// Workbench top bar: identity, live status, disconnect.
+// Workbench top bar: identity, history, batch, live status, settings, disconnect.
 
-import { useSyncExternalStore } from "react";
 import type { BatteryStatus } from "../vendor/rynk-wasm/rynk_wasm";
 import { stagedEditCount, useWorkbench } from "./state";
-import { DocumentControls } from "./DocumentControls";
-import { useDocumentTransfer } from "./transfer-actions";
+import { useSharedDocumentTransfer } from "./transfer-actions";
 import { Chip, Button } from "./kit";
-import { TransferReportPanel } from "./TransferReport";
 import { BatteryGlyph, PowerIcon, RedoIcon, UndoIcon, Wordmark } from "./icons";
 import { KIND_LABEL } from "./session-labels";
-import { LOCALES, getLocaleId, setLocaleId, subscribeLocale } from "./locale";
-import { setTheme, useTheme } from "./theme";
-import { setWording, useWording } from "./terms";
-
-/** OS keyboard-layout picker: what characters HID codes are displayed and
- *  searched as. A browser-local display preference, never written anywhere. */
-function LocaleSelect() {
-  const localeId = useSyncExternalStore(subscribeLocale, getLocaleId);
-  return (
-    <select
-      value={localeId}
-      onChange={(event) => setLocaleId(event.target.value)}
-      title="OS keyboard layout used to display and pick characters"
-      aria-label="OS keyboard layout"
-      className="max-w-40 cursor-pointer rounded-md border border-line bg-raised px-2 py-1.5 text-[12px] text-mute hover:border-line-strong"
-    >
-      {LOCALES.map((locale) => (
-        <option key={locale.id} value={locale.id}>
-          {locale.name}
-        </option>
-      ))}
-    </select>
-  );
-}
-
-/** Dark or light. The label names the current theme; pressing it switches. */
-function ThemeToggle() {
-  const theme = useTheme();
-  const next = theme === "dark" ? "light" : "dark";
-  return (
-    <button
-      type="button"
-      onClick={() => setTheme(next)}
-      title={`Switch to the ${next} theme`}
-      aria-label={`Switch to the ${next} theme`}
-      className="cursor-pointer rounded-md border border-line bg-raised px-2 py-1.5 text-[12px] text-mute hover:border-line-strong"
-    >
-      {theme === "dark" ? "Dark" : "Light"}
-    </button>
-  );
-}
-
-/** Technical (RMK and Rynk terms) or friendly wording. The label names the
- *  current voice; pressing it switches. */
-function WordingToggle() {
-  const wording = useWording();
-  const next = wording === "technical" ? "friendly" : "technical";
-  return (
-    <button
-      type="button"
-      onClick={() => setWording(next)}
-      title={`Wording: ${wording}. Switch to ${next} wording`}
-      aria-label={`Wording: ${wording}. Switch to ${next} wording`}
-      className="cursor-pointer rounded-md border border-line bg-raised px-2 py-1.5 text-[12px] text-mute hover:border-line-strong"
-    >
-      {wording === "technical" ? "Technical" : "Friendly"}
-    </button>
-  );
-}
+import { SettingsMenu } from "./SettingsMenu";
 
 function BatteryReadout({ battery, split }: { battery: BatteryStatus; split: boolean }) {
   const available = battery !== "Unavailable" ? battery.Available : null;
@@ -83,7 +22,7 @@ function BatteryReadout({ battery, split }: { battery: BatteryStatus; split: boo
       }
     >
       <BatteryGlyph level={level} charging={charging} />
-      <span className="tnum text-[12.5px] text-mute">
+      <span className="tnum text-body text-mute">
         {level != null ? `${level}%` : available ? "—" : "n/a"}
       </span>
     </div>
@@ -93,8 +32,7 @@ function BatteryReadout({ battery, split }: { battery: BatteryStatus; split: boo
 export function TopBar() {
   const { bundle, state, dispatch, io, history } = useWorkbench();
   const offline = bundle.session.kind === "offline";
-  const transfer = useDocumentTransfer();
-  const { report, dismissReport, workspaceName } = transfer;
+  const { workspaceName } = useSharedDocumentTransfer();
   const split = bundle.caps.is_split;
   const stagedCount = stagedEditCount(state);
   const activeLabel = [...new Set([state.defaultLayer, ...state.activeLayers])]
@@ -102,16 +40,16 @@ export function TopBar() {
     .join(" | ");
 
   return (
-    <header className="relative flex h-14 shrink-0 items-center gap-4 border-b border-line-soft bg-panel px-4">
+    <header className="relative flex h-14 shrink-0 items-center gap-4 border-b border-line-soft bg-panel px-4 max-sm:gap-2 max-sm:px-2">
       <div className="flex items-center gap-3">
         <Wordmark size={26} />
         <div className="flex flex-col leading-tight">
-          <span className="max-w-52 truncate text-[13.5px] font-semibold text-ink">
+          <span className="max-w-52 truncate text-ui font-semibold text-ink">
             {workspaceName}
           </span>
-          <span className="text-[10.5px] text-faint">Rynkbench</span>
+          <span className="text-caption text-faint max-sm:hidden">Rynkbench</span>
         </div>
-        <Chip tone="neutral">{KIND_LABEL[bundle.session.kind] ?? bundle.session.kind}</Chip>
+        <Chip tone="neutral" className="max-sm:hidden">{KIND_LABEL[bundle.session.kind] ?? bundle.session.kind}</Chip>
       </div>
 
       <div className="flex-1" />
@@ -133,7 +71,6 @@ export function TopBar() {
           }
         >
           <UndoIcon size={15} />
-          Undo key
         </Button>
         <Button
           variant="ghost"
@@ -148,13 +85,12 @@ export function TopBar() {
           }
         >
           <RedoIcon size={15} />
-          Redo key
         </Button>
       </div>
 
       {!offline && (
         <>
-          <div className="h-6 w-px bg-line-soft" />
+          <div className="h-6 w-px bg-line-soft max-sm:hidden" />
           <div className="flex items-center gap-1.5">
             <Button
               variant="ghost"
@@ -199,7 +135,7 @@ export function TopBar() {
             )}
             {state.batchError && (
               <span
-                className="max-w-48 truncate text-[11.5px] text-danger"
+                className="max-w-48 truncate text-small text-danger"
                 role="alert"
                 title={state.batchError}
               >
@@ -211,7 +147,7 @@ export function TopBar() {
       )}
 
       {history.phase !== "idle" && (
-        <span className="text-[11.5px] text-accent" role="status">
+        <span className="text-small text-accent" role="status">
           {history.phase === "writing"
             ? "Saving configuration…"
             : history.phase === "undoing"
@@ -221,7 +157,7 @@ export function TopBar() {
       )}
       {history.error && (
         <span
-          className="max-w-48 truncate text-[11.5px] text-danger"
+          className="max-w-48 truncate text-small text-danger"
           role="alert"
           title={history.error}
         >
@@ -231,7 +167,7 @@ export function TopBar() {
 
       <div
         key={activeLabel}
-        className="animate-pop"
+        className="animate-pop max-sm:hidden"
         title={`Active layers: ${activeLabel}. Default layer: ${state.defaultLayer}.`}
       >
         <Chip tone="accent" className="tnum">
@@ -244,22 +180,12 @@ export function TopBar() {
 
       <div className="h-6 w-px bg-line-soft" />
 
-      <LocaleSelect />
-      <ThemeToggle />
-      <WordingToggle />
-
-      <DocumentControls transfer={transfer} offline={offline} busy={history.phase !== "idle"} />
-
-      <div className="h-6 w-px bg-line-soft" />
+      <SettingsMenu />
 
       <Button variant="ghost" onClick={io.disconnect} title={offline ? "Close file" : "Disconnect"}>
         <PowerIcon size={15} />
         {offline ? "Close" : "Disconnect"}
       </Button>
-
-      {report && (
-        <TransferReportPanel report={report} onDismiss={dismissReport} />
-      )}
     </header>
   );
 }

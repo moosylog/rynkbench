@@ -43,7 +43,7 @@ export function DangerZone() {
   const controls = (action: DangerAction, label: string, confirm: string, working: string) => {
     if (done === action) {
       return (
-        <div className="mt-3 text-[12.5px] text-warn">
+        <div className="mt-3 text-body text-warn">
           {action === "wipe"
             ? "Stored settings are being wiped; the keyboard reboots on stock defaults when the erase finishes. Reconnect and re-pair it after it comes back."
             : "Bootloader jump requested — the device should now be in flashing mode."}
@@ -78,19 +78,19 @@ export function DangerZone() {
     <Panel className="border-danger/30 p-4">
       <div className="flex items-center gap-2 text-danger">
         <WarningIcon size={15} />
-        <span className="text-[13px] font-semibold">Danger zone</span>
+        <span className="text-ui font-semibold">Danger zone</span>
       </div>
-      <p className="mt-2 text-[12.5px] leading-relaxed text-mute">
+      <p className="mt-2 text-body leading-relaxed text-mute">
         Reboot the keyboard into its bootloader for firmware flashing. The device will
         disconnect and stop typing until it is flashed or power-cycled.
       </p>
       {controls("bootloader", "Reboot to bootloader…", "Confirm reboot", "Rebooting…")}
       {error?.action === "bootloader" && (
-        <div className="mt-2 text-[12px] text-danger">Failed: {error.message}</div>
+        <div className="mt-2 text-body text-danger">Failed: {error.message}</div>
       )}
 
       <div className="mt-4 border-t border-line-soft pt-4">
-        <p className="text-[12.5px] leading-relaxed text-mute">
+        <p className="text-body leading-relaxed text-mute">
           Wipe everything persisted on the keyboard, including its keymap, layer names,
           combos, morses, macros, lighting scenes, and Bluetooth pairings. The keyboard
           reboots on stock defaults and disconnects; paired computers and phones must be
@@ -98,7 +98,7 @@ export function DangerZone() {
         </p>
         {controls("wipe", "Wipe stored settings…", "Confirm wipe", "Wiping…")}
         {error?.action === "wipe" && (
-          <div className="mt-2 text-[12px] text-danger">Failed: {error.message}</div>
+          <div className="mt-2 text-body text-danger">Failed: {error.message}</div>
         )}
       </div>
     </Panel>

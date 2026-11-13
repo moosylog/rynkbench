@@ -83,14 +83,14 @@ export function LayerLighting({ ledId }: { ledId: number | undefined }) {
     return (
       <div className="border-t border-line-soft pt-4">
         <SectionLabel>Layer lighting</SectionLabel>
-        <div className="mt-2 flex items-center gap-2 text-[12px] text-mute">
+        <div className="mt-2 flex items-center gap-2 text-body text-mute">
           <span
             className="size-3 rounded-sm border border-cap-edge"
             style={{ background: effectColor(current) }}
           />
           {effectKind(current)} · firmware default
         </div>
-        <p className="mt-1.5 text-[11.5px] text-faint">
+        <p className="mt-1.5 text-small text-faint">
           This firmware exposes layer lighting for viewing only.
         </p>
       </div>
@@ -143,21 +143,21 @@ export function LayerLighting({ ledId }: { ledId: number | undefined }) {
             />
           )}
           {ledId !== undefined && staged.has(ledId) && (
-            <span className="text-[11px] text-accent">staged</span>
+            <span className="text-small text-accent">staged</span>
           )}
         </span>
-        <span className="tnum text-[11px] text-faint">
+        <span className="tnum text-small text-faint">
           {state.scenes.length}/{scenes.slots} cells
         </span>
       </button>
 
       {!open ? null : ledId === undefined ? (
-        <p className="mt-1.5 text-[11.5px] leading-relaxed text-faint">
+        <p className="mt-1.5 text-small leading-relaxed text-faint">
           This key has no LED, so it cannot carry a scene cell.
         </p>
       ) : (
         <>
-          <p className="mt-1 text-[11.5px] leading-relaxed text-faint">
+          <p className="mt-1 text-small leading-relaxed text-faint">
             Stored on the keyboard for {name} and composited natively as the layer activates.
           </p>
 
@@ -166,11 +166,11 @@ export function LayerLighting({ ledId }: { ledId: number | undefined }) {
               className="size-5 shrink-0 rounded-md border border-cap-edge"
               style={{ background: current ? effectColor(current) : "var(--color-cap)" }}
             />
-            <span className="min-w-0 flex-1 text-[12px] text-mute">
+            <span className="min-w-0 flex-1 text-body text-mute">
               {current ? `${effectKind(current)} on this key` : "Unlit on this layer"}
               {compiled && " · firmware default"}
             </span>
-            {staged.has(ledId) && <span className="text-[11px] text-accent">staged</span>}
+            {staged.has(ledId) && <span className="text-small text-accent">staged</span>}
           </div>
 
           <div className="mt-3">
@@ -233,7 +233,7 @@ export function LayerLighting({ ledId }: { ledId: number | undefined }) {
 
           <button
             type="button"
-            className="mt-2 w-full cursor-pointer text-[11.5px] text-faint transition-colors duration-120 hover:text-mute"
+            className="mt-2 w-full cursor-pointer text-small text-faint transition-colors duration-120 hover:text-mute"
             onClick={() => {
               dispatch({ type: "lightingTarget", target: layer });
               dispatch({ type: "mode", mode: "lighting" });

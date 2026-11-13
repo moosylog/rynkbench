@@ -222,8 +222,8 @@ export default function App() {
           >
             <div className="flex min-w-72 flex-col items-center rounded-2xl border border-line bg-panel px-8 py-7 shadow-2xl">
               <SpinnerIcon size={24} className="text-accent" />
-              <div className="mt-4 text-[15px] font-semibold text-ink">Reconnecting to keyboard…</div>
-              <div className="mt-1 text-[12.5px] text-mute">
+              <div className="mt-4 text-title font-semibold text-ink">Reconnecting to keyboard…</div>
+              <div className="mt-1 text-body text-mute">
                 {reconnectAttempt.attempt > 0
                   ? `Attempt ${reconnectAttempt.attempt} of ${reconnectAttempt.total}`
                   : "Preparing connection recovery"}

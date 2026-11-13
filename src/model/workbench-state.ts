@@ -58,14 +58,22 @@ import type { KeyboardModel } from "./keyboard";
 import type { KeyEditHistory, KeyEditHistoryEntry } from "./history";
 import type { LayerRewrite } from "../layers/management";
 
+/** The screen on show: one section of one area (src/ui/areas.ts). */
 export type Mode =
   | "keymap"
+  | "combos"
+  | "morse"
+  | "macros"
+  | "forks"
+  | "profiles"
+  | "behavior"
+  | "transforms"
   | "lighting"
   | "effects"
-  | "live"
-  | "profiles"
-  | "advanced"
-  | "device";
+  | "device"
+  | "library"
+  | "usage"
+  | "live";
 
 /** Which lighting surface the canvas edits: the transient overlay, or one
  *  layer's durable scene table. Only ever a number when scenes are supported. */
