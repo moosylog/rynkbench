@@ -77,6 +77,7 @@ import {
   hasLightingFeature,
 } from "./lighting-features";
 import { unsupported } from "./unsupported";
+import { classifyError, SessionError } from "./errors";
 import {
   encodeRuleChunks,
   ruleFromAdvanced,
@@ -132,7 +133,7 @@ export function waitsForFlash(op: string): boolean {
  *  no room for the write, nothing was applied, and the same request is welcome
  *  again once the queue drains. */
 export function isBusyError(error: unknown): boolean {
-  return error instanceof Error && error.name === "Rejected" && /\bBusy\b/.test(error.message);
+  return classifyError(error) === "busy";
 }
 
 const BUSY_RETRY_DELAY_MS = 100;
@@ -159,12 +160,12 @@ async function retryBusy<T>(op: () => Promise<T>): Promise<T> {
  *  for the length of a storage page migration. Matches the native client. */
 const KEYMAP_WRITE_PAGE_KEYS = 4;
 
-export class RequestTimeout extends Error {
+export class RequestTimeout extends SessionError {
   readonly op: string;
   readonly timeoutMs: number;
 
   constructor(op: string, timeoutMs: number) {
-    super(`the keyboard did not answer ${op} within ${timeoutMs}ms — the link was closed`);
+    super("timeout", `the keyboard did not answer ${op} within ${timeoutMs}ms — the link was closed`);
     this.op = op;
     this.timeoutMs = timeoutMs;
     this.name = "RequestTimeout";

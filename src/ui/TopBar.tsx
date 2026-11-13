@@ -10,6 +10,8 @@ import { TransferReportPanel } from "./TransferReport";
 import { BatteryGlyph, PowerIcon, RedoIcon, UndoIcon, Wordmark } from "./icons";
 import { KIND_LABEL } from "./session-labels";
 import { LOCALES, getLocaleId, setLocaleId, subscribeLocale } from "./locale";
+import { setTheme, useTheme } from "./theme";
+import { setWording, useWording } from "./terms";
 
 /** OS keyboard-layout picker: what characters HID codes are displayed and
  *  searched as. A browser-local display preference, never written anywhere. */
@@ -29,6 +31,41 @@ function LocaleSelect() {
         </option>
       ))}
     </select>
+  );
+}
+
+/** Dark or light. The label names the current theme; pressing it switches. */
+function ThemeToggle() {
+  const theme = useTheme();
+  const next = theme === "dark" ? "light" : "dark";
+  return (
+    <button
+      type="button"
+      onClick={() => setTheme(next)}
+      title={`Switch to the ${next} theme`}
+      aria-label={`Switch to the ${next} theme`}
+      className="cursor-pointer rounded-md border border-line bg-raised px-2 py-1.5 text-[12px] text-mute hover:border-line-strong"
+    >
+      {theme === "dark" ? "Dark" : "Light"}
+    </button>
+  );
+}
+
+/** Technical (RMK and Rynk terms) or friendly wording. The label names the
+ *  current voice; pressing it switches. */
+function WordingToggle() {
+  const wording = useWording();
+  const next = wording === "technical" ? "friendly" : "technical";
+  return (
+    <button
+      type="button"
+      onClick={() => setWording(next)}
+      title={`Wording: ${wording}. Switch to ${next} wording`}
+      aria-label={`Wording: ${wording}. Switch to ${next} wording`}
+      className="cursor-pointer rounded-md border border-line bg-raised px-2 py-1.5 text-[12px] text-mute hover:border-line-strong"
+    >
+      {wording === "technical" ? "Technical" : "Friendly"}
+    </button>
   );
 }
 
@@ -208,6 +245,8 @@ export function TopBar() {
       <div className="h-6 w-px bg-line-soft" />
 
       <LocaleSelect />
+      <ThemeToggle />
+      <WordingToggle />
 
       <DocumentControls transfer={transfer} offline={offline} busy={history.phase !== "idle"} />
 

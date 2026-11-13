@@ -4,14 +4,12 @@
 import type { ReactNode } from "react";
 import type {
   ComboDefinition,
-  Fork,
   KeyAction,
   LedIndicator,
-  Morse,
   MouseButtons,
   StateBits,
 } from "../../vendor/rynk-wasm/rynk_wasm";
-import { comboIsEmpty as definitionIsEmpty } from "../combos";
+import { comboIsEmpty as definitionIsEmpty } from "../../model/combos";
 import { keyActionGlyph } from "../labels";
 import { ModGrid } from "../keymap/ActionEditor";
 import type { SlotKind } from "../state";
@@ -27,13 +25,7 @@ export function comboIsEmpty(combo: ComboDefinition): boolean {
   return definitionIsEmpty(combo);
 }
 
-export function morseIsEmpty(morse: Morse): boolean {
-  return morse.actions.length === 0;
-}
-
-export function forkIsEmpty(fork: Fork): boolean {
-  return fork.trigger === "No";
-}
+export { forkIsEmpty, morseIsEmpty } from "../../model/slots";
 
 export function anyStateBits(bits: StateBits): boolean {
   return (

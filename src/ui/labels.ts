@@ -9,7 +9,7 @@ import type {
   ModifierCombination,
 } from "../vendor/rynk-wasm/rynk_wasm";
 import { activeLocale, characterFor, keycapCharacter } from "./locale";
-import { DEFAULT_TAP_HOLD_PROFILE } from "./morse";
+import { DEFAULT_TAP_HOLD_PROFILE } from "../model/morse";
 
 /** Compact keycap symbols for HID codes that deserve better than their name. */
 const HID_SYMBOLS: Partial<Record<HidKeyCode, string>> = {

@@ -14,10 +14,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   LightingLayerPolicy,
   LightingOverlayCell,
-  LightingSceneStatus,
 } from "../../vendor/rynk-wasm/rynk_wasm";
 import { layerName } from "../layer-names";
 import { useWorkbench } from "../state";
+import { useCapabilities, useCapability } from "../use-capabilities";
 import { Button, SectionLabel, Segmented, TextInput, cx } from "../kit";
 import { TrashIcon } from "../icons";
 import { maskHasLayer, setLayerInMask } from "./wakeLayers";
@@ -49,8 +49,8 @@ function load(serial: string): Stored {
 }
 
 export function LayerPresets() {
-  const { bundle } = useWorkbench();
-  return bundle.sceneStatus ? <DeviceScenes status={bundle.sceneStatus} /> : <LocalPresets />;
+  const scenes = useCapability("lighting.scenes");
+  return scenes ? <DeviceScenes slots={scenes.slots} /> : <LocalPresets />;
 }
 
 function LayerChips({
@@ -101,8 +101,9 @@ const POLICIES: Array<{ id: LightingLayerPolicy; label: string; hint: string }> 
   { id: "ActiveStack", label: "Stack active layers", hint: "Composite every active layer, top wins" },
 ];
 
-function DeviceScenes({ status }: { status: LightingSceneStatus }) {
+function DeviceScenes({ slots }: { slots: number }) {
   const { bundle, state, io } = useWorkbench();
+  const capabilities = useCapabilities();
   const serial = bundle.info.serial_number;
   const numLayers = bundle.caps.num_layers;
 
@@ -137,7 +138,7 @@ function DeviceScenes({ status }: { status: LightingSceneStatus }) {
 
       <div className="mt-2 flex flex-col gap-2">
         <div className="tnum text-[11px] text-faint">
-          {state.scenes.length}/{status.capacity} scene cells used
+          {state.scenes.length}/{slots} scene cells used
         </div>
 
         <div>
@@ -155,7 +156,7 @@ function DeviceScenes({ status }: { status: LightingSceneStatus }) {
           />
         </div>
 
-        {state.lightingOutputMode !== null && (
+        {capabilities.has("lighting.output") && (
           <div className="rounded-lg border border-accent/25 bg-accent-dim/10 p-2.5">
             <div className="text-[12.5px] font-medium text-ink">Wake lighting on this layer</div>
             <p className="mt-1 text-[10.5px] leading-relaxed text-faint">

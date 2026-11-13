@@ -30,7 +30,7 @@ import {
   setPointingOverride,
   updatePointingDeviceMode,
   type PointingModeKind,
-} from "../pointing";
+} from "../../model/pointing";
 import { layerName } from "../layer-names";
 import { useWorkbench } from "../state";
 import { KeycodeBrowser } from "./ActionEditor";

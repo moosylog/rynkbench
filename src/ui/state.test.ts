@@ -15,7 +15,7 @@ import type {
   PointingConfig,
 } from "../vendor/rynk-wasm/rynk_wasm";
 import type { RynkSession } from "../session/types";
-import { initialKeyEditHistory } from "./history";
+import { initialKeyEditHistory } from "../model/history";
 import {
   activeLightingBase,
   activeLightingDraft,

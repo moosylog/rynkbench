@@ -7,7 +7,7 @@ import type {
   LightingSceneCell,
 } from "../../vendor/rynk-wasm/rynk_wasm";
 import { GLOVE80_COLS, GLOVE80_ROWS } from "../../model/boards/glove80";
-import { same } from "../deep-equal";
+import { same } from "../../model/deep-equal";
 import type { StatusRule, StatusSetupResult } from "./statusPresets";
 import { setLayerInMask } from "./wakeLayers";
 

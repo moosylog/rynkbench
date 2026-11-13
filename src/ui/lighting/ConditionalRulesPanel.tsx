@@ -24,6 +24,7 @@ import type {
 } from "../../vendor/rynk-wasm/rynk_wasm";
 import { conditionalTablesEqual, useWorkbench } from "../state";
 import { ApplyBar, Button, SectionLabel, Segmented, TextInput, cx } from "../kit";
+import { useCapability } from "../use-capabilities";
 import { ArrowDownIcon, ArrowUpIcon, PlusIcon, TrashIcon } from "../icons";
 import { cssEmissiveRgb } from "../color";
 import { describeRuleConditions, runtimeConditionalSupported } from "./firmwareRules";
@@ -106,7 +107,7 @@ function LevelField({
 
 export function ConditionalRulesPanel() {
   const { bundle, state, dispatch, io } = useWorkbench();
-  const status = bundle.runtimeConditionalStatus;
+  const ruleTable = useCapability("lighting.rules");
   const [selectedRule, setSelectedRule] = useState<Rule | null>(null);
   const [moveFrom, setMoveFrom] = useState<number | null>(null);
   const [moveTo, setMoveTo] = useState(0);
@@ -139,13 +140,13 @@ export function ConditionalRulesPanel() {
     [bundle.caps.num_split_peripherals],
   );
 
-  if (!runtimeConditionalSupported(status) || status === null) return null;
+  if (!runtimeConditionalSupported(ruleTable) || ruleTable === undefined) return null;
 
   const rules = state.runtimeConditionalDraft;
   const selectedIndex = selectedRule === null ? -1 : rules.indexOf(selectedRule);
   const selected = selectedIndex === -1 ? null : selectedIndex;
   const dirty = !conditionalTablesEqual(rules, state.runtimeConditionalScenes);
-  const full = rules.length >= status.capacity;
+  const full = rules.length >= ruleTable.slots;
   const ledName = (id: number) => ledLabels.get(id) ?? `LED ${id}`;
 
   const setRules = (cells: Rules) => dispatch({ type: "conditionalDraft", cells });
@@ -229,7 +230,7 @@ export function ConditionalRulesPanel() {
         {dirty && <span className="text-[10.5px] text-warn">unapplied</span>}
       </div>
       <p className="mt-1 text-[11.5px] leading-relaxed text-faint">
-        Stored on the keyboard · {rules.length}/{status.capacity} rules · applied top to bottom,
+        Stored on the keyboard · {rules.length}/{ruleTable.slots} rules · applied top to bottom,
         later rules win shared keys and override the compiled rules above.
       </p>
 
@@ -310,7 +311,7 @@ export function ConditionalRulesPanel() {
         disabled={full || ledOptions.length === 0}
         title={
           full
-            ? `The table is full at ${status.capacity} rules`
+            ? `The table is full at ${ruleTable.slots} rules`
             : "Append an unconditional rule, then narrow it below"
         }
         onClick={add}

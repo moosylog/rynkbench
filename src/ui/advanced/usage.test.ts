@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { KeyAction, Morse } from "../../vendor/rynk-wasm/rynk_wasm";
-import { encodeMacros } from "../macros";
+import { encodeMacros } from "../../model/macros";
 import { noStateBits } from "../../model/slots";
 import { analyzeUsage, keyActionRefs, type UsageInput } from "./usage";
 

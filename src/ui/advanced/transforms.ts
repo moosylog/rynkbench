@@ -13,8 +13,8 @@ import type {
   ModifierCombination,
   Morse,
 } from "../../vendor/rynk-wasm/rynk_wasm";
-import { decodeMacros, encodeMacros } from "../macros";
-import { same } from "../deep-equal";
+import { decodeMacros, encodeMacros } from "../../model/macros";
+import { same } from "../../model/deep-equal";
 
 /** Identifier-level HID keycode substitution. */
 export type HidMap = Partial<Record<HidKeyCode, HidKeyCode>>;

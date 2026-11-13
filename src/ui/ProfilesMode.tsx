@@ -13,7 +13,7 @@ import { morseProfilePendingId, useWorkbench } from "./state";
 import { useDeviceDraft } from "./device-draft";
 import { emptyMorseProfile } from "../model/slots";
 import { MORSE_MODES } from "./morse-profile";
-import { DEFAULT_TAP_HOLD_PROFILE } from "./morse";
+import { DEFAULT_TAP_HOLD_PROFILE } from "../model/morse";
 import { SaveBar, WriteStatus } from "./write-status";
 
 const NUMBER_FIELDS: Array<{ key: keyof MorseProfile; label: string }> = [

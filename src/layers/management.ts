@@ -12,6 +12,7 @@ import type {
   PointingConfig,
 } from "../vendor/rynk-wasm/rynk_wasm";
 import type { LayerMetadata, RuntimeLightingRule } from "../session/types";
+import { mapActionLayers, mapKeyActionLayers } from "../domain";
 
 export interface LayerRewriteSnapshot {
   metadata: LayerMetadata[];
@@ -61,31 +62,8 @@ function mapLayer(layer: number, mapping: Map<number, number>, path: string): nu
 }
 
 function remapAction(action: Action, mapping: Map<number, number>, path: string): Action {
-  if (typeof action === "string") return action;
-  if ("LayerOn" in action) return { LayerOn: mapLayer(action.LayerOn, mapping, path) };
-  if ("LayerOnWithModifier" in action) {
-    return {
-      LayerOnWithModifier: [
-        mapLayer(action.LayerOnWithModifier[0], mapping, path),
-        action.LayerOnWithModifier[1],
-      ],
-    };
-  }
-  if ("LayerOff" in action) return { LayerOff: mapLayer(action.LayerOff, mapping, path) };
-  if ("LayerToggle" in action)
-    return { LayerToggle: mapLayer(action.LayerToggle, mapping, path) };
-  if ("DefaultLayer" in action)
-    return { DefaultLayer: mapLayer(action.DefaultLayer, mapping, path) };
-  if ("LayerToggleOnly" in action)
-    return { LayerToggleOnly: mapLayer(action.LayerToggleOnly, mapping, path) };
-  if ("OneShotLayer" in action)
-    return { OneShotLayer: mapLayer(action.OneShotLayer, mapping, path) };
-  if ("PersistentDefaultLayer" in action) {
-    return {
-      PersistentDefaultLayer: mapLayer(action.PersistentDefaultLayer, mapping, path),
-    };
-  }
-  return structuredClone(action);
+  // The domain knows which actions carry a layer; this only says what to do with it.
+  return structuredClone(mapActionLayers(action, (layer) => mapLayer(layer, mapping, path)));
 }
 
 export function remapKeyAction(
@@ -93,28 +71,9 @@ export function remapKeyAction(
   mapping: Map<number, number>,
   path: string,
 ): KeyAction {
-  if (typeof action === "string") return action;
-  if ("Single" in action) return { Single: remapAction(action.Single, mapping, path) };
-  if ("Tap" in action) return { Tap: remapAction(action.Tap, mapping, path) };
-  if ("TapHold" in action) {
-    return {
-      TapHold: [
-        remapAction(action.TapHold[0], mapping, `${path} tap`),
-        remapAction(action.TapHold[1], mapping, `${path} hold`),
-        action.TapHold[2],
-      ],
-    };
-  }
-  if ("LayerModTap" in action) {
-    return {
-      LayerModTap: [
-        mapLayer(action.LayerModTap[0], mapping, path),
-        action.LayerModTap[1],
-        action.LayerModTap[2],
-      ],
-    };
-  }
-  return structuredClone(action);
+  return structuredClone(
+    mapKeyActionLayers(action, (layer, part) => mapLayer(layer, mapping, part ? `${path} ${part}` : path)),
+  );
 }
 
 function assertImmutableLayerRefsStayPut(

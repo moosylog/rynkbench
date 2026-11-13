@@ -6,11 +6,11 @@ import type {
   LightingEffect,
   LightingOverlayCell,
   LightingOutputMode,
-  LightingRuntimeConditionalSceneStatus,
   LightingSceneCell,
   SplitTransportState,
 } from "../../vendor/rynk-wasm/rynk_wasm";
 import type { RuntimeLightingRule } from "../../session/types";
+import type { TableCapability } from "../../capabilities";
 
 /** Whether this firmware has a mutable ordered conditional table at all.
  *  Firmware without one reports no table (the status read is rejected, which
@@ -18,9 +18,9 @@ import type { RuntimeLightingRule } from "../../session/types";
  *  entirely — that is distinct from a supported table that happens to be
  *  empty, which shows an editor with no rules yet. */
 export function runtimeConditionalSupported(
-  status: LightingRuntimeConditionalSceneStatus | null,
+  rules: TableCapability | undefined,
 ): boolean {
-  return status !== null && status.capacity > 0;
+  return rules !== undefined && rules.slots > 0;
 }
 
 export interface FirmwareLightingPreview {

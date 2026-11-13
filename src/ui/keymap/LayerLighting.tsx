@@ -16,6 +16,7 @@ import { layerName } from "../layer-names";
 import type { Hsv } from "../color";
 import { hsvToRgb, rgbToHsv } from "../color";
 import { ApplyBar, Button, ErrorBanner, SectionLabel, cx } from "../kit";
+import { useCapability } from "../use-capabilities";
 import { ChevronRightIcon } from "../icons";
 
 const DEFAULT_HSV: Hsv = { h: 195, s: 0.85, v: 1 };
@@ -41,9 +42,9 @@ function brushFrom(effect: LightingEffect): Brush {
 }
 
 export function LayerLighting({ ledId }: { ledId: number | undefined }) {
-  const { bundle, state, dispatch, io } = useWorkbench();
+  const { state, dispatch, io } = useWorkbench();
+  const scenes = useCapability("lighting.scenes");
   const layer = state.uiLayer;
-  const sceneStatus = bundle.sceneStatus;
   const [open, setOpen] = useState(false);
   const [brush, setBrush] = useState<Brush>(DEFAULT_BRUSH);
 
@@ -77,7 +78,7 @@ export function LayerLighting({ ledId }: { ledId: number | undefined }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ledId, layer]);
 
-  if (sceneStatus === null) {
+  if (scenes === undefined) {
     if (current === undefined) return null;
     return (
       <div className="border-t border-line-soft pt-4">
@@ -146,7 +147,7 @@ export function LayerLighting({ ledId }: { ledId: number | undefined }) {
           )}
         </span>
         <span className="tnum text-[11px] text-faint">
-          {state.scenes.length}/{sceneStatus.capacity} cells
+          {state.scenes.length}/{scenes.slots} cells
         </span>
       </button>
 

@@ -5,6 +5,7 @@
 import { useMemo, useState } from "react";
 import { useWorkbench } from "../state";
 import { cx } from "../kit";
+import { useTerms, type TermId } from "../terms";
 import { CombosTab } from "./CombosTab";
 import { MorseTab } from "./MorseTab";
 import { MacrosTab } from "./MacrosTab";
@@ -17,17 +18,18 @@ type AdvTab = "combos" | "morse" | "macros" | "forks" | "behavior" | "transforms
 
 export function AdvancedMode() {
   const { bundle } = useWorkbench();
+  const term = useTerms();
   const caps = bundle.caps;
 
   const tabs = useMemo(() => {
-    const out: Array<{ id: AdvTab; label: string }> = [];
-    if (caps.max_combos > 0) out.push({ id: "combos", label: "Combos" });
-    if (caps.max_morse > 0) out.push({ id: "morse", label: "Morse" });
-    if (caps.macro_space_size > 0) out.push({ id: "macros", label: "Macros" });
-    if (caps.max_forks > 0) out.push({ id: "forks", label: "Forks" });
-    out.push({ id: "behavior", label: "Behavior" });
-    out.push({ id: "transforms", label: "Transforms" });
-    out.push({ id: "usage", label: "Usage" });
+    const out: Array<{ id: AdvTab; term: TermId }> = [];
+    if (caps.max_combos > 0) out.push({ id: "combos", term: "tab.combos" });
+    if (caps.max_morse > 0) out.push({ id: "morse", term: "tab.morse" });
+    if (caps.macro_space_size > 0) out.push({ id: "macros", term: "tab.macros" });
+    if (caps.max_forks > 0) out.push({ id: "forks", term: "tab.forks" });
+    out.push({ id: "behavior", term: "tab.behavior" });
+    out.push({ id: "transforms", term: "tab.transforms" });
+    out.push({ id: "usage", term: "tab.usage" });
     return out;
   }, [caps.max_combos, caps.max_morse, caps.macro_space_size, caps.max_forks]);
 
@@ -46,7 +48,7 @@ export function AdvancedMode() {
             t.id === active ? "text-ink" : "text-faint hover:text-mute",
           )}
         >
-          {t.label}
+          {term(t.term)}
           {t.id === active && (
             <span className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-accent" />
           )}

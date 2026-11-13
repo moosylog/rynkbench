@@ -7,7 +7,7 @@ import {
   modifierSymbols,
 } from "./labels";
 import { DEFAULT_LOCALE_ID, setLocaleId } from "./locale";
-import { DEFAULT_TAP_HOLD_PROFILE } from "./morse";
+import { DEFAULT_TAP_HOLD_PROFILE } from "../model/morse";
 import { noModifiers } from "../model/slots";
 
 function mods(fields: Partial<ModifierCombination>): ModifierCombination {

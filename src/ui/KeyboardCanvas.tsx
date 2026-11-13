@@ -20,7 +20,7 @@ import type { Encoder, Key, Rect } from "../vendor/rynk-wasm/rynk_wasm";
 import type { KeyboardModel, KeyView, PointingDeviceView } from "../model/keyboard";
 import type { KeyGlyph } from "./labels";
 import { keyHoverTitle } from "./key-address";
-import { same } from "./deep-equal";
+import { same } from "../model/deep-equal";
 import { cx } from "./kit";
 
 export interface KeyDecor {

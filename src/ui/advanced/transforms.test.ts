@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { KeyAction, ModifierCombination } from "../../vendor/rynk-wasm/rynk_wasm";
-import { decodeMacros, encodeMacros } from "../macros";
+import { decodeMacros, encodeMacros } from "../../model/macros";
 import { emptyFork, noStateBits } from "../../model/slots";
 import {
   CTRL_GUI_SWAP,

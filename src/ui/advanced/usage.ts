@@ -2,10 +2,10 @@ import type { MacroOp } from "../../vendor/rynk-wasm/rynk_wasm";
 // Behavior usage analysis: where every layer, morse slot, macro, morse
 // profile, fork, and combo is referenced, which are orphaned, and which
 // layers cannot be reached from the default layer. Pure logic — the Usage
-// tab renders the report this module produces.
+// tab renders the report this module produces. Who refers to what comes from
+// the reference graph (src/domain); this module turns it into a report.
 
 import type {
-  Action,
   ComboDefinition,
   Fork,
   KeyAction,
@@ -14,9 +14,11 @@ import type {
 } from "../../vendor/rynk-wasm/rynk_wasm";
 import type { LayerMetadata } from "../../session/types";
 import { layerName as nameOfLayer } from "../layer-names";
-import { comboIsEmpty, forkIsEmpty, morseIsEmpty } from "./bits";
-import { DEFAULT_TAP_HOLD_PROFILE } from "../morse";
-import { decodeMacros, macroPreview } from "../macros";
+import { activators, attributedEdges, buildGraph, keyActionReferences, layerRef, reachableLayers, referencedBy } from "../../domain";
+import type { Attributed, Ref } from "../../domain";
+import { comboIsEmpty } from "../../model/combos";
+import { forkIsEmpty, morseIsEmpty } from "../../model/slots";
+import { decodeMacros, macroPreview } from "../../model/macros";
 
 export interface UsageInput {
   layers: KeyAction[][];
@@ -33,12 +35,27 @@ export interface UsageInput {
 /** One place a reference appears, e.g. "Layer 0 · r3c6" or "Combo 4". */
 export type Site = string;
 
+/** Where a site is, so a screen can take the user there. A key sits at a
+ *  matrix row and column of a layer; combos and forks are numbered slots. */
+export type SiteTarget =
+  | { kind: "cell"; layer: number; row: number; col: number }
+  | { kind: "combo" | "fork"; index: number };
+
+/** A site with the place it points to; `label` is the same text as the plain
+ *  site list. */
+export interface SiteRef {
+  label: Site;
+  target: SiteTarget | null;
+}
+
 export interface LayerUsage {
   layer: number;
   name: string;
   boundKeys: number;
   /** Sites that can activate this layer, with the action kind. */
   activators: Site[];
+  /** The same sites, each with where it is. */
+  activatorSites: SiteRef[];
   reachable: boolean;
   isDefault: boolean;
 }
@@ -46,6 +63,8 @@ export interface LayerUsage {
 export interface SlotUsage {
   index: number;
   refs: Site[];
+  /** The same sites, each with where it is. */
+  refSites: SiteRef[];
 }
 
 export interface MacroUsage extends SlotUsage {
@@ -81,6 +100,8 @@ export interface UsageReport {
   warnings: string[];
 }
 
+/** What a key binding refers to, grouped by kind, each in order. Kept for
+ *  callers that want the lists; the graph (src/domain) is the source of truth. */
 interface Refs {
   /** Layer references that activate the target. */
   activates: number[];
@@ -91,58 +112,17 @@ interface Refs {
   profiles: number[];
 }
 
-function emptyRefs(): Refs {
-  return { activates: [], layers: [], morse: [], macros: [], profiles: [] };
-}
-
-function actionRefs(action: Action, refs: Refs): void {
-  if (typeof action === "string") return;
-  if ("LayerOn" in action) {
-    refs.activates.push(action.LayerOn);
-    refs.layers.push(action.LayerOn);
-  } else if ("LayerOnWithModifier" in action) {
-    refs.activates.push(action.LayerOnWithModifier[0]);
-    refs.layers.push(action.LayerOnWithModifier[0]);
-  } else if ("LayerOff" in action) {
-    refs.layers.push(action.LayerOff);
-  } else if ("LayerToggle" in action) {
-    refs.activates.push(action.LayerToggle);
-    refs.layers.push(action.LayerToggle);
-  } else if ("LayerToggleOnly" in action) {
-    refs.activates.push(action.LayerToggleOnly);
-    refs.layers.push(action.LayerToggleOnly);
-  } else if ("DefaultLayer" in action) {
-    refs.activates.push(action.DefaultLayer);
-    refs.layers.push(action.DefaultLayer);
-  } else if ("PersistentDefaultLayer" in action) {
-    refs.activates.push(action.PersistentDefaultLayer);
-    refs.layers.push(action.PersistentDefaultLayer);
-  } else if ("OneShotLayer" in action) {
-    refs.activates.push(action.OneShotLayer);
-    refs.layers.push(action.OneShotLayer);
-  } else if ("TriggerMacro" in action) {
-    refs.macros.push(action.TriggerMacro);
-  }
-}
-
 export function keyActionRefs(keyAction: KeyAction): Refs {
-  const refs = emptyRefs();
-  if (typeof keyAction === "string") return refs;
-  if ("Single" in keyAction) {
-    actionRefs(keyAction.Single, refs);
-  } else if ("Tap" in keyAction) {
-    actionRefs(keyAction.Tap, refs);
-  } else if ("TapHold" in keyAction) {
-    actionRefs(keyAction.TapHold[0], refs);
-    actionRefs(keyAction.TapHold[1], refs);
-    if (keyAction.TapHold[2] !== DEFAULT_TAP_HOLD_PROFILE) {
-      refs.profiles.push(keyAction.TapHold[2]);
-    }
-  } else if ("Morse" in keyAction) {
-    refs.morse.push(keyAction.Morse);
-  } else if ("LayerModTap" in keyAction) {
-    refs.activates.push(keyAction.LayerModTap[0]);
-    refs.layers.push(keyAction.LayerModTap[0]);
+  const refs: Refs = { activates: [], layers: [], morse: [], macros: [], profiles: [] };
+  for (const { kind, to } of keyActionReferences(keyAction)) {
+    const index = to.kind === "cell" ? -1 : to.index;
+    if (kind === "activates") {
+      refs.activates.push(index);
+      refs.layers.push(index);
+    } else if (kind === "deactivates") refs.layers.push(index);
+    else if (kind === "morse") refs.morse.push(index);
+    else if (kind === "invokes") refs.macros.push(index);
+    else refs.profiles.push(index);
   }
   return refs;
 }
@@ -170,87 +150,74 @@ function comboParts(combo: ComboDefinition): {
   return { triggers: [], output: combo.Positions.output, layer: combo.Positions.layer ?? null };
 }
 
-export function analyzeUsage(input: UsageInput): UsageReport {
+/** Names places in the report's words and says where they are. A place is a key
+ *  ("Layer 0 · r3c6"), a combo ("Combo 4") or a fork ("Fork 1"); a reference a
+ *  morse slot passes on is named after the slot and the key that uses it. */
+function siteLabeller(input: Pick<UsageInput, "cols" | "layerMetadata">) {
+  const layerName = (layer: number): string => nameOfLayer(input.layerMetadata, layer);
+  const siteOf = (ref: Ref): Site => {
+    if (ref.kind === "cell") {
+      return `${layerName(ref.layer)} · r${Math.floor(ref.offset / input.cols)}c${ref.offset % input.cols}`;
+    }
+    return `${ref.kind === "combo" ? "Combo" : "Fork"} ${ref.index}`;
+  };
+  const siteOfEntry = (entry: Attributed): Site =>
+    entry.via && entry.via.kind === "morse"
+      ? `Morse ${entry.via.index} via ${siteOf(entry.owner)}`
+      : siteOf(entry.owner);
+  /** Where a site is. A reference passed on by a morse slot points at the key that uses the slot. */
+  const targetOf = (ref: Ref): SiteTarget | null => {
+    if (ref.kind === "cell") {
+      return { kind: "cell", layer: ref.layer, row: Math.floor(ref.offset / input.cols), col: ref.offset % input.cols };
+    }
+    return ref.kind === "combo" || ref.kind === "fork" ? { kind: ref.kind, index: ref.index } : null;
+  };
+  const siteRefOfEntry = (entry: Attributed): SiteRef => ({ label: siteOfEntry(entry), target: targetOf(entry.owner) });
+  return { siteOf, siteOfEntry, targetOf, siteRefOfEntry };
+}
+
+/** Every place that refers to a layer: a key or combo that turns it on or off,
+ *  or a combo limited to it, directly or through a morse slot. */
+export function layerReferences(
+  input: Pick<UsageInput, "layers" | "cols" | "layerMetadata" | "combos" | "morse" | "forks">,
+  layer: number,
+): SiteRef[] {
+  const graph = buildGraph({
+    layers: input.layers,
+    cols: input.cols,
+    combos: input.combos,
+    morse: input.morse,
+    forks: input.forks,
+    macroCount: 0,
+    profileSlots: [],
+  });
+  const { siteRefOfEntry } = siteLabeller(input);
+  return referencedBy(attributedEdges(graph), layerRef(layer)).map(siteRefOfEntry);
+}
+
+/** `decode` is how macro ops become macros; it is a parameter so the analysis
+ *  can run without the wasm decoder. */
+export function analyzeUsage(input: UsageInput, decode: typeof decodeMacros = decodeMacros): UsageReport {
   const warnings: string[] = [];
   const layerName = (layer: number): string => nameOfLayer(input.layerMetadata, layer);
 
-  // Every reference-bearing site: keymap cells, morse slot actions (attributed
-  // to the layers that reference the slot), combo triggers/outputs, forks.
-  interface SiteRefs {
-    site: Site;
-    fromLayer: number | null;
-    refs: Refs;
-  }
-  const sites: SiteRefs[] = [];
+  const decodedMacros = decode(input.macroOps);
+  const graph = buildGraph({
+    layers: input.layers,
+    cols: input.cols,
+    combos: input.combos,
+    morse: input.morse,
+    forks: input.forks,
+    macroCount: decodedMacros.length,
+    profileSlots: input.morseProfiles.map((entry) => entry.index),
+  });
+  const attributed = attributedEdges(graph);
 
-  input.layers.forEach((cells, layer) => {
-    cells.forEach((keyAction, offset) => {
-      const refs = keyActionRefs(keyAction);
-      const row = Math.floor(offset / input.cols);
-      const col = offset % input.cols;
-      sites.push({ site: `${layerName(layer)} · r${row}c${col}`, fromLayer: layer, refs });
-    });
-  });
-  input.combos.forEach((combo, index) => {
-    const { triggers, output, layer } = comboParts(combo);
-    if (comboIsEmpty(combo)) return;
-    const refs = emptyRefs();
-    for (const trigger of triggers) mergeRefs(refs, keyActionRefs(trigger));
-    mergeRefs(refs, keyActionRefs(output));
-    sites.push({ site: `Combo ${index}`, fromLayer: layer, refs });
-  });
-  input.forks.forEach((fork, index) => {
-    if (forkIsEmpty(fork)) return;
-    const refs = emptyRefs();
-    mergeRefs(refs, keyActionRefs(fork.trigger));
-    mergeRefs(refs, keyActionRefs(fork.negative_output));
-    mergeRefs(refs, keyActionRefs(fork.positive_output));
-    sites.push({ site: `Fork ${index}`, fromLayer: null, refs });
-  });
-
-  // Morse slot actions can themselves activate layers (e.g. hold = MO(5)).
-  // Attribute them to every site that references the slot.
-  const morseRefs: Refs[] = input.morse.map((slot) => {
-    const refs = emptyRefs();
-    for (const [, action] of slot.actions) actionRefs(action, refs);
-    return refs;
-  });
-  const expanded: SiteRefs[] = [];
-  for (const entry of sites) {
-    expanded.push(entry);
-    for (const slotIndex of entry.refs.morse) {
-      const slot = morseRefs[slotIndex];
-      if (slot) {
-        expanded.push({
-          site: `Morse ${slotIndex} via ${entry.site}`,
-          fromLayer: entry.fromLayer,
-          refs: slot,
-        });
-      }
-    }
-  }
+  const { siteOf, siteOfEntry, targetOf, siteRefOfEntry } = siteLabeller(input);
 
   // Layer activators and reachability.
-  const activators = new Map<number, Site[]>();
-  const edges = new Map<number | null, Set<number>>();
-  for (const { site, fromLayer, refs } of expanded) {
-    for (const target of refs.activates) {
-      if (!activators.has(target)) activators.set(target, []);
-      activators.get(target)!.push(site);
-      if (!edges.has(fromLayer)) edges.set(fromLayer, new Set());
-      edges.get(fromLayer)!.add(target);
-    }
-  }
-  const reachable = new Set<number>();
-  const global = [...(edges.get(null) ?? [])];
-  const queue = [input.defaultLayer];
-  while (queue.length > 0) {
-    const layer = queue.shift()!;
-    if (reachable.has(layer)) continue;
-    reachable.add(layer);
-    for (const target of edges.get(layer) ?? []) queue.push(target);
-    for (const target of global) queue.push(target);
-  }
+  const activatorsByLayer = activators(attributed);
+  const reachable = reachableLayers(attributed, input.defaultLayer);
 
   const occupied = (layer: number): boolean =>
     input.layerMetadata
@@ -262,7 +229,8 @@ export function analyzeUsage(input: UsageInput): UsageReport {
       layer,
       name: layerName(layer),
       boundKeys: cells.filter(isBound).length,
-      activators: activators.get(layer) ?? [],
+      activators: (activatorsByLayer.get(layer) ?? []).map(siteOfEntry),
+      activatorSites: (activatorsByLayer.get(layer) ?? []).map(siteRefOfEntry),
       reachable: reachable.has(layer),
       isDefault: layer === input.defaultLayer,
     };
@@ -276,18 +244,24 @@ export function analyzeUsage(input: UsageInput): UsageReport {
     }
     return usage;
   });
-  for (const [target, siteList] of activators) {
+  for (const [target, entries] of activatorsByLayer) {
     if (target >= input.layers.length) {
-      warnings.push(`Layer ${target} does not exist but is referenced by ${siteList[0]}.`);
+      warnings.push(`Layer ${target} does not exist but is referenced by ${siteOfEntry(entries[0])}.`);
     }
   }
 
-  // Morse slots.
-  const morse: SlotUsage[] = input.morse.map((_, index) => ({ index, refs: [] }));
-  for (const { site, refs } of sites) {
-    for (const index of refs.morse) {
-      if (morse[index]) morse[index].refs.push(site);
-      else warnings.push(`Morse slot ${index} does not exist but is referenced by ${site}.`);
+  // Morse slots: referenced by the places themselves, not through another slot.
+  const morse: SlotUsage[] = input.morse.map((_, index) => ({ index, refs: [], refSites: [] }));
+  for (const owner of graph.owners) {
+    for (const edge of owner.edges) {
+      if (edge.kind !== "morse" || edge.to.kind !== "morse") continue;
+      const index = edge.to.index;
+      if (morse[index]) {
+        morse[index].refs.push(siteOf(owner.ref));
+        morse[index].refSites.push({ label: siteOf(owner.ref), target: targetOf(owner.ref) });
+      } else {
+        warnings.push(`Morse slot ${index} does not exist but is referenced by ${siteOf(owner.ref)}.`);
+      }
     }
   }
   morse.forEach((slot, index) => {
@@ -296,18 +270,21 @@ export function analyzeUsage(input: UsageInput): UsageReport {
     }
   });
 
-  // Macros.
-  const decodedMacros = decodeMacros(input.macroOps);
+  // Macros: referenced by a place or by a morse slot a place refers to.
   const macros: MacroUsage[] = decodedMacros.map((macro, index) => ({
     index,
     refs: [],
+    refSites: [],
     preview: macroPreview(macro),
   }));
-  for (const { site, refs } of expanded) {
-    for (const index of refs.macros) {
-      if (macros[index]) macros[index].refs.push(site);
-      else warnings.push(`Macro ${index} does not exist but is referenced by ${site}.`);
+  for (const entry of attributed) {
+    if (entry.edge.kind !== "invokes" || entry.edge.to.kind !== "macro") continue;
+    const index = entry.edge.to.index;
+    if (macros[index]) {
+      macros[index].refs.push(siteOfEntry(entry));
+      macros[index].refSites.push(siteRefOfEntry(entry));
     }
+    else warnings.push(`Macro ${index} does not exist but is referenced by ${siteOfEntry(entry)}.`);
   }
   macros.forEach((macro, index) => {
     if (decodedMacros[index].steps.length > 0 && macro.refs.length === 0) {
@@ -317,9 +294,10 @@ export function analyzeUsage(input: UsageInput): UsageReport {
 
   // Morse profiles.
   const profileRefs = new Map<number, number>();
-  for (const { refs } of sites) {
-    for (const index of refs.profiles) {
-      profileRefs.set(index, (profileRefs.get(index) ?? 0) + 1);
+  for (const owner of graph.owners) {
+    for (const edge of owner.edges) {
+      if (edge.kind !== "profile" || edge.to.kind !== "profile") continue;
+      profileRefs.set(edge.to.index, (profileRefs.get(edge.to.index) ?? 0) + 1);
     }
   }
   const profiles: ProfileUsage[] = input.morseProfiles.map((entry) => ({
@@ -376,12 +354,4 @@ export function analyzeUsage(input: UsageInput): UsageReport {
   });
 
   return { layers, morse, macros, profiles, forks, combos, warnings };
-}
-
-function mergeRefs(into: Refs, from: Refs): void {
-  into.activates.push(...from.activates);
-  into.layers.push(...from.layers);
-  into.morse.push(...from.morse);
-  into.macros.push(...from.macros);
-  into.profiles.push(...from.profiles);
 }

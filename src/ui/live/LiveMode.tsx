@@ -9,6 +9,7 @@ import type { KeyView } from "../../model/keyboard";
 import { BoardWell, KeyboardCanvas } from "../KeyboardCanvas";
 import type { KeyDecor } from "../KeyboardCanvas";
 import { useWorkbench } from "../state";
+import { useCapabilities } from "../use-capabilities";
 import { cssEmissiveRgb, hsvToRgb } from "../color";
 import { InspectorShell, Panel, Row, SectionLabel, cx } from "../kit";
 import { KIND_LABEL } from "../session-labels";
@@ -137,6 +138,7 @@ function LayerStack() {
 
 export function LiveMode() {
   const { bundle, state } = useWorkbench();
+  const capabilities = useCapabilities();
   const cols = bundle.caps.num_cols;
   // Only a firmware that cannot report resolved modifiers needs the matrix
   // fallback; on everything else the poll stays off.
@@ -148,7 +150,7 @@ export function LiveMode() {
     : [];
   const bg = lighting?.background;
   const bgOn = outputOn && (bg?.enabled ?? false);
-  const extensionActive = state.lightingExtension !== null;
+  const extensionActive = capabilities.has("lighting.extension");
   const bgColor = bg && bgOn && !extensionActive
     ? wireHsvCss(bg.hue, bg.saturation, bg.value)
     : null;

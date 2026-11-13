@@ -30,7 +30,7 @@ import {
   activePointingDevices,
   activePointingOverrides,
   pointingModeKind,
-} from "../pointing";
+} from "../../model/pointing";
 import {
   keyClipboardShortcut,
   parseKeyActionClipboard,
@@ -40,6 +40,8 @@ import {
 } from "./keyManipulation";
 import type { ClipboardBoard } from "./keyManipulation";
 import { Button, SectionLabel, TextInput, UnderlineTabs, cx } from "../kit";
+import { useCapabilities } from "../use-capabilities";
+import { deletionBlockedMessage, layerDeletionBlockers } from "./layerImpact";
 import { StarIcon, WarningIcon, CloseIcon, PlusIcon, TrashIcon, SpinnerIcon } from "../icons";
 
 function clipboardBoard(state: WorkbenchState, cols: number): ClipboardBoard {
@@ -48,6 +50,7 @@ function clipboardBoard(state: WorkbenchState, cols: number): ClipboardBoard {
 
 function LayerTabs() {
   const { bundle, state, dispatch, io } = useWorkbench();
+  const capabilities = useCapabilities();
   const numLayers = bundle.caps.num_layers;
   const occupiedLayers = state.layerMetadata
     ? state.layerMetadata.flatMap((metadata, layer) => (metadata.occupied ? [layer] : []))
@@ -63,9 +66,9 @@ function LayerTabs() {
   const selectedName = layerName(state.layerMetadata, state.uiLayer);
   const structureSupported =
     state.layerMetadata !== null &&
-    state.pointingConfig !== null &&
+    capabilities.has("pointing") &&
     state.behaviorOptions !== null &&
-    (state.lightingState === null || state.lightingOutputMode !== null);
+    (!capabilities.has("lighting.state") || capabilities.has("lighting.output"));
   const pointingStaged = pointingDraftDirty(state);
 
   return (
@@ -166,6 +169,22 @@ function LayerTabs() {
             title={pointingStaged ? "Apply or discard staged pointing edits first" : "Delete and compact this layer"}
             disabled={state.layerBusy || pointingStaged || occupiedLayers.length <= 1}
             onClick={() => {
+              // Say what still uses the layer now, before reading the keyboard to find out.
+              const blockers = layerDeletionBlockers(
+                {
+                  layers: state.layers,
+                  cols: bundle.caps.num_cols,
+                  layerMetadata: state.layerMetadata,
+                  combos: state.combos,
+                  morse: state.morse,
+                  forks: state.forks,
+                },
+                state.uiLayer,
+              );
+              if (blockers.length > 0) {
+                dispatch({ type: "layerOperationError", message: deletionBlockedMessage(selectedName, blockers) });
+                return;
+              }
               if (window.confirm(`Delete ${selectedName}? Layer references will be rewritten first.`)) {
                 void io.deleteLayer(state.uiLayer);
               }
@@ -197,9 +216,10 @@ function LayerTabs() {
 
 export function KeymapCenter() {
   const { bundle, state, dispatch, io } = useWorkbench();
+  const capabilities = useCapabilities();
   const cols = bundle.caps.num_cols;
   const layer = state.layers[state.uiLayer];
-  const layerLightingAvailable = bundle.sceneStatus !== null || bundle.compiledSceneStatus !== null;
+  const layerLightingAvailable = capabilities.has("lighting.scenes") || capabilities.has("lighting.compiled");
   const [showLighting, setShowLighting] = useState(true);
   const [drag, setDrag] = useState<{
     source: KeyView;

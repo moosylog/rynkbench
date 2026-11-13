@@ -20,7 +20,9 @@ import { AdvancedMode } from "./advanced/AdvancedMode";
 import { ProfilesMode } from "./ProfilesMode";
 import { DeviceMode } from "./device/DeviceMode";
 import { InspectorShell, cx } from "./kit";
-import { historyShortcut, keyEditHistoryLabel } from "./history";
+import { historyShortcut, keyEditHistoryLabel } from "../model/history";
+import { firmwareFactsOf, resolveCapabilities } from "../capabilities";
+import { useTerms, type TermId } from "./terms";
 import { getLocaleId, subscribeLocale } from "./locale";
 import {
   CombinatorIcon,
@@ -34,18 +36,18 @@ import {
 
 interface ModeEntry {
   id: Mode;
-  label: string;
+  term: TermId;
   icon: typeof KeymapIcon;
 }
 
 const MODES: ModeEntry[] = [
-  { id: "keymap", label: "Keymap", icon: KeymapIcon },
-  { id: "lighting", label: "Lighting", icon: LightingIcon },
-  { id: "effects", label: "Effects", icon: SparkleIcon },
-  { id: "live", label: "Live", icon: EyeIcon },
-  { id: "profiles", label: "Profiles", icon: ProfilesIcon },
-  { id: "advanced", label: "Advanced", icon: CombinatorIcon },
-  { id: "device", label: "Device", icon: DeviceIcon },
+  { id: "keymap", term: "mode.keymap", icon: KeymapIcon },
+  { id: "lighting", term: "mode.lighting", icon: LightingIcon },
+  { id: "effects", term: "mode.effects", icon: SparkleIcon },
+  { id: "live", term: "mode.live", icon: EyeIcon },
+  { id: "profiles", term: "mode.profiles", icon: ProfilesIcon },
+  { id: "advanced", term: "mode.advanced", icon: CombinatorIcon },
+  { id: "device", term: "mode.device", icon: DeviceIcon },
 ];
 
 function ModeRail({
@@ -57,6 +59,7 @@ function ModeRail({
   mode: Mode;
   onMode: (m: Mode) => void;
 }) {
+  const term = useTerms();
   const activeIndex = modes.findIndex((m) => m.id === mode);
   return (
     <nav className="relative flex w-[76px] shrink-0 flex-col items-stretch gap-1 border-r border-line-soft bg-panel px-2 py-3">
@@ -84,7 +87,7 @@ function ModeRail({
             aria-current={active ? "page" : undefined}
           >
             <Icon size={18} />
-            <span className="text-[10px] font-medium tracking-wide">{m.label}</span>
+            <span className="text-[10px] font-medium tracking-wide">{term(m.term)}</span>
           </button>
         );
       })}
@@ -113,15 +116,16 @@ export function Workbench({
 
   // Effects is its own view rather than a lighting panel, but it only exists
   // on firmware that ships the effect extension.
+  const capabilities = useMemo(() => resolveCapabilities(firmwareFactsOf(bundle)), [bundle]);
   const modes = useMemo(
     () =>
       MODES.filter(
         (m) =>
           (bundle.session.kind !== "offline" || (m.id !== "live" && m.id !== "device")) &&
-          (m.id !== "effects" || bundle.lightingExtension !== null) &&
+          (m.id !== "effects" || capabilities.has("lighting.extension")) &&
           (m.id !== "profiles" || bundle.morseProfileCapacity > 0),
       ),
-    [bundle.session.kind, bundle.lightingExtension, bundle.morseProfileCapacity],
+    [bundle.session.kind, capabilities, bundle.morseProfileCapacity],
   );
 
   const stateRef = useRef(state);

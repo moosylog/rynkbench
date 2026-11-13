@@ -1,20 +1,48 @@
 // Usage: where every layer, morse slot, macro, tap-hold profile, fork, and
 // combo is referenced — and which of them are orphaned or unreachable.
 
-import { useMemo } from "react";
+import { Fragment, useMemo } from "react";
 import type { ReactNode } from "react";
 import { useWorkbench } from "../state";
 import { Chip, Panel, SectionLabel } from "../kit";
 import { WarningIcon } from "../icons";
 import { CenterScroll } from "./bits";
-import { analyzeUsage, type LayerUsage } from "./usage";
+import { analyzeUsage, type LayerUsage, type SiteRef, type SiteTarget } from "./usage";
 
-function Sites({ sites }: { sites: string[] }) {
+/** The places something is used. A key is a link: it opens the keymap on that
+ *  key. Combos and forks are listed as text. */
+function Sites({ sites }: { sites: SiteRef[] }) {
+  const { dispatch } = useWorkbench();
   const max = 5;
-  const text =
-    sites.slice(0, max).join(", ") +
-    (sites.length > max ? `, … ${sites.length - max} more` : "");
-  return <span className="text-[11.5px] text-faint">{text}</span>;
+
+  const showKey = (target: Extract<SiteTarget, { kind: "cell" }>) => {
+    dispatch({ type: "uiLayer", layer: target.layer });
+    dispatch({ type: "select", selection: { type: "key", row: target.row, col: target.col } });
+    dispatch({ type: "mode", mode: "keymap" });
+  };
+
+  return (
+    <span className="text-[11.5px] text-faint">
+      {sites.slice(0, max).map((site, index) => (
+        <Fragment key={`${site.label}-${index}`}>
+          {index > 0 && ", "}
+          {site.target?.kind === "cell" ? (
+            <button
+              type="button"
+              title="Show this key in the keymap"
+              className="cursor-pointer underline decoration-dotted underline-offset-2 hover:text-ink"
+              onClick={() => site.target?.kind === "cell" && showKey(site.target)}
+            >
+              {site.label}
+            </button>
+          ) : (
+            site.label
+          )}
+        </Fragment>
+      ))}
+      {sites.length > max && `, … ${sites.length - max} more`}
+    </span>
+  );
 }
 
 function LayerRow({ usage }: { usage: LayerUsage }) {
@@ -35,7 +63,7 @@ function LayerRow({ usage }: { usage: LayerUsage }) {
       {usage.activators.length > 0 && (
         <div className="pl-8">
           <span className="text-[11.5px] text-mute">Activated by </span>
-          <Sites sites={usage.activators} />
+          <Sites sites={usage.activatorSites} />
         </div>
       )}
     </div>
@@ -50,7 +78,7 @@ function CountRow({
 }: {
   label: string;
   detail?: string;
-  refs: string[] | number;
+  refs: SiteRef[] | number;
   orphan: boolean;
 }) {
   const count = typeof refs === "number" ? refs : refs.length;
@@ -159,7 +187,7 @@ export function UsageTab({ nav }: { nav: ReactNode }) {
                   <CountRow
                     key={slot.index}
                     label={`Morse ${slot.index}`}
-                    refs={slot.refs}
+                    refs={slot.refSites}
                     orphan={slot.refs.length === 0}
                   />
                 ))}
@@ -178,7 +206,7 @@ export function UsageTab({ nav }: { nav: ReactNode }) {
                     key={macro.index}
                     label={`Macro ${macro.index}`}
                     detail={macro.preview}
-                    refs={macro.refs}
+                    refs={macro.refSites}
                     orphan={macro.refs.length === 0}
                   />
                 ))}

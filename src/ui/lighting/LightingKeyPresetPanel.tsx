@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import type { KeyView } from "../../model/keyboard";
 import type { KeyAction } from "../../vendor/rynk-wasm/rynk_wasm";
 import { SectionLabel, cx } from "../kit";
+import { useCapabilities } from "../use-capabilities";
 import { keyAddressLabel } from "../key-address";
 import { layerName } from "../layer-names";
 import { hasPendingConfigurationWrite, useWorkbench } from "../state";
@@ -43,19 +44,20 @@ export function LightingKeyPresetPanel({
   const { bundle, state, io, dispatch } = useWorkbench();
   const [message, setMessage] = useState<string | null>(null);
   const installing = useRef(false);
-  const status = bundle.runtimeConditionalStatus;
+  const capabilities = useCapabilities();
+  const ruleTable = capabilities.get("lighting.rules");
   const busy = hasPendingConfigurationWrite(state);
   const wakes = maskHasLayer(
     state.lightingOutputMode?.wake_layers ?? state.lightingControls.wake_layers,
     layer,
   );
   const led = target.ledId;
-  if (!status || led === undefined) return null;
+  if (!ruleTable || led === undefined) return null;
 
   const supported = (kind: LightingKeyKind) =>
     kind === "output-mode"
-      ? state.lightingOutputMode !== null
-      : state.lightingExtension !== null && hasLayerIndicatorConditions(bundle.lightingCaps);
+      ? capabilities.has("lighting.output")
+      : capabilities.has("lighting.extension") && hasLayerIndicatorConditions(bundle.lightingCaps);
 
   const install = async (kind: LightingKeyKind) => {
     if (installing.current || busy || state.batchMode || !supported(kind)) return;
@@ -71,7 +73,7 @@ export function LightingKeyPresetPanel({
         },
         state.runtimeConditionalDraft,
         { kind, layer, row: target.row, col: target.col, led },
-        status.capacity,
+        ruleTable.slots,
       );
       setMessage(
         result.ok
@@ -84,7 +86,7 @@ export function LightingKeyPresetPanel({
     }
   };
 
-  const blocked = state.batchMode || busy || status.capacity === 0;
+  const blocked = state.batchMode || busy || ruleTable.slots === 0;
   const rulesKind = installedLightingKeyKind(state.runtimeConditionalDraft, led, layer);
   const installed = (kind: LightingKeyKind) =>
     rulesKind === kind && JSON.stringify(current) === JSON.stringify(lightingKeyAction(kind));

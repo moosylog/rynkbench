@@ -5,7 +5,7 @@ import { KeycodeBrowser } from "../keymap/ActionEditor";
 import { useWorkbench } from "../state";
 import { useDeviceDraft } from "../device-draft";
 import { SaveBar, WriteStatus } from "../write-status";
-import type { DecodedMacro, MacroStep } from "../macros";
+import type { DecodedMacro, MacroStep } from "../../model/macros";
 import {
   clampDelay,
   decodeMacros,
@@ -13,7 +13,7 @@ import {
   isEncodableText,
   macroByteCost,
   macroPreview,
-} from "../macros";
+} from "../../model/macros";
 import { Button, InspectorShell, SectionLabel, Segmented, TextInput, cx } from "../kit";
 import { CloseIcon, PlusIcon, TrashIcon } from "../icons";
 import { CenterScroll, SlotCard } from "./bits";

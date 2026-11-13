@@ -1,4 +1,4 @@
-import { macroTableSize } from "../ui/macros";
+import { macroTableSize } from "../model/macros";
 // Moving a configuration document between a file and the keyboard.
 //
 // Every document is parsed and fully validated before a single write goes out,
@@ -19,11 +19,11 @@ import {
 } from "../session/lighting-features";
 import { ruleFromWire } from "../session/lighting-rules";
 import { isUnsupportedError } from "../session/unsupported";
-import type { ConnectedBundle, WorkbenchAction, WorkbenchState } from "../ui/state";
-import { errorMessage } from "../ui/state";
-import { same } from "../ui/deep-equal";
+import type { ConnectedBundle, WorkbenchAction, WorkbenchState } from "../model/workbench-state";
+import { errorMessage } from "../session/errors";
+import { same } from "../model/deep-equal";
 import type { ComboDefinition, Fork, Morse } from "../vendor/rynk-wasm/rynk_wasm";
-import { normalizePointingConfig, pointingConfigsEqual } from "../ui/pointing";
+import { normalizePointingConfig, pointingConfigsEqual } from "../model/pointing";
 import {
   parseDocument,
   renderDocument,

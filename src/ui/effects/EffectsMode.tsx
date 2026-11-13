@@ -16,7 +16,7 @@ import type {
 import type { ExtensionParamWrite } from "../state";
 import { paramEffects, useWorkbench } from "../state";
 import { useDeviceDraft } from "../device-draft";
-import { same } from "../deep-equal";
+import { same } from "../../model/deep-equal";
 import {
   ApplyBar,
   Button,

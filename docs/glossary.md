@@ -1,0 +1,20 @@
+# Glossary
+
+One word, one meaning. Code, docs and screens use these terms.
+
+- **Keyboard instance:** one connected keyboard or opened file, with its own capabilities, model, draft, history and snapshots.
+- **Capability:** a declared unit of keyboard functionality (for example `lighting.rules`) with limits and semantics. See ADR 0002.
+- **Board spec:** declarative data describing one board: how to recognize it, geometry, presets, firmware channel, file formats.
+- **Feature set:** what one keyboard instance offers after merging firmware advertisement, board spec and environment.
+- **Offer:** the policy engine's answer to "is this feature shown here, and how far does it reach", with the reason.
+- **Reach:** how far a change goes: `device` (live), `build` (needs a firmware build), `file` (only in the file).
+- **Edge table:** the one list of places a reference can live. The graph is derived from it.
+- **Integrity gate:** the check that refuses a change which adds a broken reference, loop, duplicate or over-capacity table.
+- **Policy rule:** one rule with a reason and an outcome (preserve, transform, warn, confirm, reject) per moment.
+- **Moment:** when a rule applies: open, import, apply to device, export, firmware update.
+- **Draft:** a copy of the model a command works on before anything reaches the keyboard.
+- **Plan:** the ordered steps that make the keyboard match a draft.
+- **Adapter:** converts between the model and a source or target, and reports what it lost.
+- **Wire type:** a data shape defined by the protocol package. Screens must not use them.
+- **Domain type:** a data shape defined by the app's own model.
+- **Baseline (ratchet):** the recorded set of known boundary violations; it may only shrink.

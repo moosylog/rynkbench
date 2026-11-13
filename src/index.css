@@ -107,6 +107,44 @@
   color-scheme: dark;
 }
 
+/* Light theme: the same token names with light values, so a theme is a set of
+   values and no component changes. Dark is the default; this set applies when
+   <html data-theme="light"> (src/ui/theme/index.ts). src/ui/theme/themes.test.ts keeps
+   both sets complete and legible. */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --color-bg: oklch(97.5% 0.004 240);
+  --color-well: oklch(94.5% 0.006 240);
+  --color-panel: oklch(99% 0.003 240);
+  --color-raised: oklch(100% 0 240);
+  --color-hover: oklch(95% 0.006 240);
+
+  --color-line: oklch(88% 0.008 240);
+  --color-line-soft: oklch(92% 0.006 240);
+  --color-line-strong: oklch(78% 0.01 240);
+
+  --color-ink: oklch(22% 0.01 240);
+  --color-mute: oklch(42% 0.012 240);
+  --color-faint: oklch(50% 0.012 240);
+
+  --color-accent: oklch(52% 0.11 205);
+  --color-accent-deep: oklch(42% 0.09 205);
+  --color-accent-dim: oklch(90% 0.05 200);
+
+  --color-danger: oklch(52% 0.19 25);
+  --color-danger-dim: oklch(94% 0.04 25);
+  --color-ok: oklch(50% 0.13 152);
+  --color-warn: oklch(52% 0.12 70);
+
+  --color-cap: oklch(97% 0.004 240);
+  --color-cap-side: oklch(86% 0.008 240);
+  --color-cap-edge: oklch(80% 0.01 240);
+  --color-cap-ink: oklch(25% 0.01 240);
+  --color-cap-ink-dim: oklch(50% 0.01 240);
+  --color-plate: oklch(93% 0.006 240);
+}
+
 html,
 body,
 #root {
@@ -175,6 +213,17 @@ body {
     ),
     var(--color-well);
   box-shadow: inset 0 1px 8px rgb(0 0 0 / 0.25);
+}
+
+:root[data-theme="light"] .canvas-well {
+  background:
+    radial-gradient(
+      ellipse 60% 55% at 50% 48%,
+      oklch(98% 0.005 240 / 70%),
+      transparent 75%
+    ),
+    var(--color-well);
+  box-shadow: inset 0 1px 8px rgb(0 0 0 / 0.08);
 }
 
 .key-lift {

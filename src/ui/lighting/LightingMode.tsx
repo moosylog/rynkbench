@@ -25,6 +25,7 @@ import { LayerPresets } from "./LayerPresets";
 import type { Hsv } from "../color";
 import { cssEmissiveRgb, cssRgb, hsvToRgb } from "../color";
 import { ApplyBar, Button, ErrorBanner, InspectorShell, SectionLabel, Segmented, cx } from "../kit";
+import { useCapabilities } from "../use-capabilities";
 import { EraserIcon, MarqueeIcon, SparkleIcon } from "../icons";
 import {
   BLACK_EFFECT,
@@ -69,6 +70,7 @@ function brushCell(brush: Brush, ledId: number, allowTtl: boolean): LightingOver
 
 export function LightingMode() {
   const { bundle, state, dispatch, io } = useWorkbench();
+  const capabilities = useCapabilities();
   const [brush, setBrush] = useState<Brush>(DEFAULT_BRUSH);
   const [pick, setPick] = useState<KeyPick | null>(null);
   const canvasMode = pick ? "select" : brush.mode;
@@ -257,7 +259,7 @@ export function LightingMode() {
   const stagedCount = staged.size;
   const visibleCount = previewEffects.size;
   const compiledCount = compiledLayerLeds.size;
-  const sceneStatus = bundle.sceneStatus;
+  const scenes = capabilities.get("lighting.scenes");
 
   const applyLayerDraft = () => {
     if (!isLayerTarget) return;
@@ -276,7 +278,7 @@ export function LightingMode() {
   return (
     <>
       <div className="flex min-h-0 flex-1 flex-col gap-3 max-lg:min-h-[380px]">
-        {sceneStatus && <LightingTargets />}
+        {scenes && <LightingTargets />}
         <div className="flex items-center gap-3 px-1">
           <SectionLabel>
             {isLayerTarget ? `${layerName(state.layerMetadata, target)} scene` : "Overlay"}
@@ -287,9 +289,9 @@ export function LightingMode() {
             {` · ${stagedCount} staged`}
             {selectedKey ? ` · ${keyAddressLabel(selectedKey)} selected` : ""}
           </span>
-          {isLayerTarget && sceneStatus && (
+          {isLayerTarget && scenes && (
             <span className="tnum text-[11.5px] text-faint">
-              · {state.scenes.length}/{sceneStatus.capacity} cells used
+              · {state.scenes.length}/{scenes.slots} cells used
             </span>
           )}
           {!isLayerTarget && !bundle.overlayReadSupported && (
@@ -549,7 +551,7 @@ export function LightingMode() {
             <FirmwareRulesPanel />
           </div>
 
-          {bundle.runtimeConditionalStatus && (
+          {capabilities.has("lighting.rules") && (
             <>
               <div className="border-t border-line-soft pt-4">
                 <StatusPresetsPanel pick={pick} onPick={setPick} />

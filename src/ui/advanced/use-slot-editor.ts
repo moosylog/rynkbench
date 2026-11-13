@@ -6,7 +6,7 @@
 import { useState } from "react";
 import type { SlotKind, SlotValueOf } from "../state";
 import { slotPendingId, useWorkbench } from "../state";
-import { same } from "../deep-equal";
+import { same } from "../../model/deep-equal";
 
 export interface SlotEntry<T> {
   value: T;

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { KeyView } from "../../model/keyboard";
 import { Button, SectionLabel } from "../kit";
+import { useCapability } from "../use-capabilities";
 import { keyAddressLabel, keyHoverTitle } from "../key-address";
 import { KeyChoice } from "./KeyChoice";
 import { BATTERY_BAR_PICK, CONNECTION_KEY_PICK } from "./keyPick";
@@ -45,7 +46,7 @@ export function StatusPresetsPanel({
   onPick: (pick: KeyPick | null) => void;
 }) {
   const { bundle, state, dispatch, io } = useWorkbench();
-  const status = bundle.runtimeConditionalStatus;
+  const ruleTable = useCapability("lighting.rules");
   const numLayers = bundle.caps.num_layers;
   const wakeLayers = state.lightingOutputMode?.wake_layers ?? state.lightingControls.wake_layers;
   const [wakeLayer] = layersInMask(wakeLayers, numLayers);
@@ -91,7 +92,7 @@ export function StatusPresetsPanel({
     (led) => selectedKeys.find((key) => key.ledId === led)!,
   );
 
-  if (status === null) return null;
+  if (ruleTable === undefined) return null;
 
   const nameOf = (n: number) => layerName(state.layerMetadata, n);
   const predicatesSupported = hasConnectionEffectsConditions(bundle.lightingCaps);
@@ -117,8 +118,8 @@ export function StatusPresetsPanel({
     );
 
   const applyRules = async (rules: typeof state.runtimeConditionalDraft, success: string) => {
-    if (rules.length > status.capacity) {
-      setMessage(`This setup needs ${rules.length} rules; the keyboard holds ${status.capacity}.`);
+    if (rules.length > ruleTable.slots) {
+      setMessage(`This setup needs ${rules.length} rules; the keyboard holds ${ruleTable.slots}.`);
       return false;
     }
     setMessage("Installing and verifying…");
@@ -129,8 +130,8 @@ export function StatusPresetsPanel({
 
   const installGlove80 = async () => {
     const rules = installGlove80StatusRules(state.runtimeConditionalDraft, layer, layout);
-    if (rules.length > status.capacity) {
-      setMessage(`The complete Glove80 setup needs ${rules.length} rules; this keyboard holds ${status.capacity}.`);
+    if (rules.length > ruleTable.slots) {
+      setMessage(`The complete Glove80 setup needs ${rules.length} rules; this keyboard holds ${ruleTable.slots}.`);
       return;
     }
     setMessage("Installing and verifying…");

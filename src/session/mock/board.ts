@@ -1,4 +1,4 @@
-import { macroTableSize } from "../../ui/macros";
+import { macroTableSize } from "../../model/macros";
 import type { MacroOp } from "../../vendor/rynk-wasm/rynk_wasm";
 // The mock backend's engine: a BoardSpec is one simulated device (static
 // identity, geometry, topology, defaults); MockSession drives its mutable

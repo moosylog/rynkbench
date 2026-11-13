@@ -1,19 +1,21 @@
 import { useRef, useState } from "react";
 import { Button } from "../kit";
+import { useCapabilities } from "../use-capabilities";
 import { layerName } from "../layer-names";
 import { hasPendingConfigurationWrite, useWorkbench } from "../state";
 import { STOCK_PROFILE_KEYS, writeStockMagicLayer } from "./stockMagicLayer";
 
 export function StockMagicLayerPanel({ layer }: { layer: number }) {
   const { bundle, state, io, dispatch } = useWorkbench();
-  const status = bundle.runtimeConditionalStatus;
+  const capabilities = useCapabilities();
+  const ruleTable = capabilities.get("lighting.rules");
   const [message, setMessage] = useState<string | null>(null);
   const installing = useRef(false);
   const busy = hasPendingConfigurationWrite(state);
   const name = layerName(state.layerMetadata, layer);
   const profiles = Math.min(bundle.caps.num_ble_profiles, STOCK_PROFILE_KEYS.length);
 
-  if (!status || !bundle.boardProfile?.presets.includes("glove80-stock-magic")) return null;
+  if (!ruleTable || !bundle.boardProfile?.presets.includes("glove80-stock-magic")) return null;
 
   const install = async () => {
     if (installing.current || busy || state.batchMode) return;
@@ -36,9 +38,9 @@ export function StockMagicLayerPanel({ layer }: { layer: number }) {
           keys: bundle.model.keys,
           current: state.layers[layer],
           rules: state.runtimeConditionalDraft,
-          ruleCapacity: status.capacity,
-          scenes: bundle.sceneStatus ? state.scenes : null,
-          sceneCapacity: bundle.sceneStatus?.capacity ?? 0,
+          ruleCapacity: ruleTable.slots,
+          scenes: capabilities.has("lighting.scenes") ? state.scenes : null,
+          sceneCapacity: capabilities.get("lighting.scenes")?.slots ?? 0,
           wakeLayers: state.lightingOutputMode?.wake_layers ?? null,
         },
       );

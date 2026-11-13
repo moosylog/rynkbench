@@ -18,7 +18,7 @@ import {
 } from "../key-address";
 import { ActionEditor, SlotPicker } from "../keymap/ActionEditor";
 import { useWorkbench } from "../state";
-import { same } from "../deep-equal";
+import { same } from "../../model/deep-equal";
 import { emptyCombo } from "../../model/slots";
 import { Button, Chip, InspectorShell, SectionLabel, cx } from "../kit";
 import { CloseIcon, PlusIcon, TrashIcon } from "../icons";
@@ -32,7 +32,7 @@ import {
   comboWithLayer,
   comboWithOutput,
   samePosition,
-} from "../combos";
+} from "../../model/combos";
 
 function TriggerChip({ action, onRemove }: { action: KeyAction; onRemove: () => void }) {
   const glyph = keyActionGlyph(action);
