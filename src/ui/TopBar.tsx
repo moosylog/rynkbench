@@ -3,7 +3,7 @@
 // batch, live status, display settings and Close.
 
 import type { BatteryStatus } from "../vendor/rynk-wasm/rynk_wasm";
-import { stagedEditCount, useWorkbench } from "./state";
+import { useWorkbench } from "./state";
 import { useSharedDocumentTransfer } from "./transfer-actions";
 import { Chip, Button, cx } from "./kit";
 import {
@@ -23,7 +23,7 @@ import { FileMenus } from "./FileMenus";
 import { useTerms } from "./terms";
 import { layerName } from "./layer-names";
 import type { Area, AreaId } from "./areas";
-import { KIND_LABEL } from "./session-labels";
+import { ConnectionChip } from "./draft/ConnectionChip";
 import { SettingsMenu } from "./SettingsMenu";
 
 function BatteryReadout({ battery, split }: { battery: BatteryStatus; split: boolean }) {
@@ -96,11 +96,10 @@ export function TopBar({
   /** Opens the side panel on a phone; absent where there is no panel. */
   onDrawer?: () => void;
 }) {
-  const { bundle, state, dispatch, io, history } = useWorkbench();
+  const { bundle, state, io, history } = useWorkbench();
   const offline = bundle.session.kind === "offline";
   const { workspaceName } = useSharedDocumentTransfer();
   const split = bundle.caps.is_split;
-  const stagedCount = stagedEditCount(state);
   const activeLabel = [...new Set([state.defaultLayer, ...state.activeLayers])]
     .sort((a, b) => a - b)
     .join(" | ");
@@ -132,7 +131,6 @@ export function TopBar({
         <span className="max-w-[220px] truncate text-body font-semibold text-mute max-sm:hidden" title={workspaceName}>
           {workspaceName}
         </span>
-        <Chip tone="neutral" className="max-lg:hidden">{KIND_LABEL[bundle.session.kind] ?? bundle.session.kind}</Chip>
       </div>
 
       <FileMenus />
@@ -169,64 +167,8 @@ export function TopBar({
         </Button>
       </div>
 
-      {!offline && (
-        <>
-          <div className="h-6 w-px bg-line-soft max-sm:hidden" />
-          <div className="flex items-center gap-1.5">
-            <Button
-              variant="ghost"
-              className={state.batchMode ? "text-accent" : undefined}
-              disabled={state.batchBusy || (state.batchMode && stagedCount > 0)}
-              onClick={() =>
-                dispatch({ type: "batchMode", enabled: !state.batchMode })
-              }
-              title={
-                state.batchMode
-                  ? stagedCount > 0
-                    ? "Apply or discard the staged edits to leave batch mode"
-                    : "Batch mode is on: key and encoder edits are staged locally until you apply them"
-                  : "Stage key and encoder edits locally and write them to the keyboard all at once"
-              }
-            >
-              Batch{state.batchMode ? ": on" : ""}
-            </Button>
-            {state.batchMode && (
-              <>
-                <Chip tone="accent" className="tnum">
-                  {stagedCount} staged
-                </Chip>
-                <Button
-                  variant="primary"
-                  className="py-1"
-                  disabled={state.batchBusy || stagedCount === 0}
-                  reason={state.batchBusy ? "Applying the staged edits" : "Nothing staged yet"}
-                  onClick={() => void io.applyBatch()}
-                  title="Write every staged edit to the keyboard"
-                >
-                  {state.batchBusy ? "Applying…" : "Apply all"}
-                </Button>
-                <Button
-                  variant="ghost"
-                  disabled={state.batchBusy || stagedCount === 0}
-                  onClick={() => dispatch({ type: "batchDiscard" })}
-                  title="Drop every staged edit and restore what the keyboard holds"
-                >
-                  Discard
-                </Button>
-              </>
-            )}
-            {state.batchError && (
-              <span
-                className="max-w-48 truncate text-small text-danger"
-                role="alert"
-                title={state.batchError}
-              >
-                {state.batchError}
-              </span>
-            )}
-          </div>
-        </>
-      )}
+      <div className="h-6 w-px bg-line-soft max-sm:hidden" />
+      <ConnectionChip />
 
       {history.phase !== "idle" && (
         <span className="text-small text-accent" role="status">
@@ -264,10 +206,12 @@ export function TopBar({
 
       <SettingsMenu />
 
-      <Button variant="ghost" onClick={io.disconnect} title={offline ? "Close file" : "Disconnect"}>
-        <PowerIcon size={15} />
-        {offline ? "Close" : "Disconnect"}
-      </Button>
+      {offline && (
+        <Button variant="ghost" onClick={io.disconnect} title="Close file">
+          <PowerIcon size={15} />
+          Close
+        </Button>
+      )}
     </header>
   );
 }

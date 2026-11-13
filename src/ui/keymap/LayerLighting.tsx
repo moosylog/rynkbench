@@ -2,9 +2,9 @@
 // key on the layer shown (Off, Custom color, Layer below, and with the
 // firmware's rule table Lock light and Battery level), the chosen one's fields
 // under it, and Paint, which makes the choice a brush for the canvas. While
-// the tab is open the canvas shows the board under its lights. Changes are
-// staged and written with Apply, beside Paint. Brushes, zones and rules stay
-// in the Lighting screen.
+// the tab is open the canvas shows the board under its lights. Changes join
+// the draft (sent with Review & send; in Live, once painting pauses). Brushes,
+// zones and rules stay in the Lighting screen.
 
 import { useEffect, useState } from "react";
 import type { LightingEffect } from "../../model/lighting-types";
@@ -15,7 +15,7 @@ import { sameLight, type KeyLight } from "../lighting/keyLight";
 import { LED_PRESETS } from "../color";
 import { layerName } from "../layer-names";
 import { cx, ErrorBanner } from "../kit";
-import { BrushIcon, UndoIcon } from "../icons";
+import { BrushIcon } from "../icons";
 import { KeyLightFields } from "./KeyLightFields";
 import { lightView, useLightView } from "./lightView";
 import { useKeyLights } from "./useKeyLights";
@@ -91,29 +91,6 @@ export function LayerLighting({ ledId }: { ledId: number | undefined }) {
         <h3 className="mr-auto text-small font-semibold tracking-widest text-mute uppercase">
           Key lighting · {layerName(state.layerMetadata, layer)}
         </h3>
-        {lights.changes > 0 && (
-          <>
-            <button
-              type="button"
-              onClick={lights.discard}
-              disabled={state.lightingBusy}
-              title="Discard: go back to the lighting on the keyboard"
-              aria-label="Discard lighting changes"
-              className="flex size-8 cursor-pointer items-center justify-center rounded-full border border-line-strong text-mute hover:text-ink disabled:opacity-40"
-            >
-              <UndoIcon size={13} />
-            </button>
-            <button
-              type="button"
-              onClick={() => void lights.apply()}
-              disabled={state.lightingBusy}
-              title="Write these lighting changes to the keyboard"
-              className="h-8 cursor-pointer rounded-full bg-accent-fill px-3 text-body font-semibold text-on-accent hover:brightness-110 disabled:opacity-40"
-            >
-              {state.lightingBusy ? "Applying…" : `Apply ${lights.changes}`}
-            </button>
-          </>
-        )}
         <button
           type="button"
           aria-pressed={view.brush !== null}

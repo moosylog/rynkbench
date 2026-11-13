@@ -200,7 +200,7 @@ export function initialWorkbenchState(bundle: ConnectedBundle): WorkbenchState {
     pending: {},
     keyEditHistory: initialKeyEditHistory(),
     keyEditHistorySuspended: false,
-    batchMode: false,
+    batchMode: bundle.session.kind !== "offline", // a keyboard starts in Draft (ADR 0010)
     stagedKeys: {},
     stagedEncoders: {},
     batchBusy: false,

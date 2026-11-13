@@ -13,5 +13,6 @@ One short page per decision that shapes the code, so the reason survives the peo
 | [0007](0007-areas-and-type-scale.md) | Six areas from the capability set; named type sizes | Partly superseded by 0008 |
 | [0008](0008-glide-main-screen.md) | GLIDE's main screen and look | Accepted |
 | [0009](0009-key-slots-on-rmk.md) | GLIDE's key slots on RMK bindings | Accepted |
+| [0010](0010-draft-and-live.md) | Draft and Live: when changes reach the keyboard | Accepted |
 
 The glossary is in [../glossary.md](../glossary.md).

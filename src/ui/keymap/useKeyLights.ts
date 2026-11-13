@@ -1,7 +1,7 @@
 // Reading and writing keys' lights on the layer shown, for the Lighting tab
 // and for Paint on the canvas. A light lives in the layer's scene (Off, a
 // colour, Layer below) or in the rule table (a lock or battery light); both
-// are staged and written together by `apply`. Your colours and changing one
+// are staged in the draft and sent with it. Your colours and changing one
 // colour everywhere work over every layer's scene and the rules.
 
 import { useMemo } from "react";
@@ -17,33 +17,19 @@ import {
   statusLightOf,
   type KeyLight,
 } from "../lighting/keyLight";
-import { sceneTableWithLayer, targetPreviewEffects } from "../lighting/preview";
-import { lightingBaseFor, lightingDraftFor, stagedBetween, useWorkbench } from "../state";
+import { targetPreviewEffects } from "../lighting/preview";
+import { lightingDraftFor, useWorkbench } from "../state";
 import { useCapability } from "../use-capabilities";
 
 export function useKeyLights() {
-  const { bundle, state, dispatch, io } = useWorkbench();
+  const { bundle, state, dispatch } = useWorkbench();
   const scenes = useCapability("lighting.scenes");
   const rulesTable = useCapability("lighting.rules");
   const layer = state.uiLayer;
   const layers = Array.from({ length: bundle.caps.num_layers }, (_, index) => index);
   const draft = lightingDraftFor(state, layer);
-  const base = lightingBaseFor(state, layer);
   const rules = state.runtimeConditionalDraft;
   const preview = useMemo(() => targetPreviewEffects(layer, draft, state.compiledScenes), [layer, draft, state.compiledScenes]);
-
-  const stagedLeds = useMemo(() => stagedBetween(draft, base), [draft, base]);
-  const rulesChanged = useMemo(() => {
-    const byLed = (table: typeof rules) => {
-      const out = new Map<number, string>();
-      for (const rule of table) out.set(rule.cell.led_id, (out.get(rule.cell.led_id) ?? "") + JSON.stringify(rule));
-      return out;
-    };
-    const now = byLed(rules);
-    const stored = byLed(state.runtimeConditionalScenes);
-    return new Set([...now.keys(), ...stored.keys()].filter((led) => now.get(led) !== stored.get(led)));
-  }, [rules, state.runtimeConditionalScenes]);
-  const changes = new Set([...stagedLeds, ...rulesChanged]).size;
 
   // A lock or battery light watches the half of a split board its key is on.
   const nodeOf = (led: number) => {
@@ -59,7 +45,6 @@ export function useKeyLights() {
     statusLights: rulesTable !== undefined,
     preview,
     lightOf: (led: number): KeyLight => keyLightOf(preview.get(led), statusLightOf(rules, layer, led)),
-    changes,
 
     /** Gives keys a light on the layer shown (staged). */
     set(light: KeyLight, leds: readonly number[]) {
@@ -68,18 +53,6 @@ export function useKeyLights() {
       if (plan.erase.length) dispatch({ type: "erase", ledIds: plan.erase, target: layer });
       if (plan.rules) dispatch({ type: "conditionalDraft", cells: plan.rules });
     },
-    async apply() {
-      if (stagedLeds.size > 0) {
-        const result = await io.applyScenes(sceneTableWithLayer(state.scenes, layer, draft));
-        if (!result.ok) return;
-      }
-      if (rulesChanged.size > 0) await io.applyConditionalScenes(rules);
-    },
-    discard() {
-      dispatch({ type: "draftReset", target: layer });
-      dispatch({ type: "conditionalDraftReset" });
-    },
-
     /** Your colours: those lit in the layout's scenes and rules, most used first. */
     yours: colorsInUse([...everyCell().map((cell) => cell.effect), ...rules.map((rule) => rule.cell.effect)]),
     usage(color: LightingRgb8) {

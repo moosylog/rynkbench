@@ -18,6 +18,8 @@ import {
 import { TopBar } from "./TopBar";
 import { KeymapCenter } from "./keymap/KeymapCenter";
 import { KeymapInspector } from "./keymap/SideInspector";
+import { DraftKeeper } from "./draft/DraftKeeper";
+import { useDraftHistory } from "./draft/useDraftHistory";
 import { ComboEditor } from "./keymap/ComboEditor";
 import { ComboFocusCanvas } from "./keymap/ComboFocusCanvas";
 import { useComboFocus } from "./keymap/useComboFocus";
@@ -244,7 +246,7 @@ export function Workbench({
   const historyOperation = state.keyEditHistory.operation;
   const undoEntry = state.keyEditHistory.past.at(-1);
   const redoEntry = state.keyEditHistory.future.at(-1);
-  const history = useMemo(
+  const deviceHistory = useMemo(
     () => ({
       canUndo: canTravelKeyEditHistory(state, "undo"),
       canRedo: canTravelKeyEditHistory(state, "redo"),
@@ -264,17 +266,43 @@ export function Workbench({
     }),
     [historyBusy, historyOperation, redoEntry, state, travel, undoEntry],
   );
+  // In Draft, undo and redo walk the draft's own steps (draft/draftHistory.ts).
+  const draftHistory = useDraftHistory();
+  const { canUndo, canRedo, undoLabel, redoLabel, undo: undoDraft, redo: redoDraft } = draftHistory;
+  const history = useMemo(
+    () =>
+      state.batchMode
+        ? {
+            ...deviceHistory,
+            error: null,
+            canUndo,
+            canRedo,
+            undoLabel,
+            redoLabel,
+            undo: async () => undoDraft(),
+            redo: async () => redoDraft(),
+          }
+        : deviceHistory,
+    // The draft's undo and redo read its history when called.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state.batchMode, deviceHistory, canUndo, canRedo, undoLabel, redoLabel],
+  );
+  const historyRef = useRef(history);
+  useEffect(() => {
+    historyRef.current = history;
+  });
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const shortcut = historyShortcut(event);
-      if (!shortcut || !canTravelKeyEditHistory(stateRef.current, shortcut)) return;
+      const current = historyRef.current;
+      if (!shortcut || !(shortcut === "undo" ? current.canUndo : current.canRedo)) return;
       event.preventDefault();
-      void travel(shortcut);
+      void current[shortcut]();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [travel]);
+  }, []);
 
   // Server-push topics.
   useEffect(() => {
@@ -315,6 +343,7 @@ export function Workbench({
   return (
     <WorkbenchContext value={ctx}>
       <DocumentTransferProvider>
+      <DraftKeeper />
       <div className="relative flex h-full flex-col" aria-busy={state.layerBusy}>
         {state.layerBusy && (
           <div
