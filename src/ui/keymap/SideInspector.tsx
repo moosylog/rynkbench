@@ -162,8 +162,8 @@ function PointingInspector({ id }: { id: number }) {
 
 export function KeymapInspector() {
   const { state, dispatch } = useWorkbench();
-  // Keys are edited below the keyboard (KeyEditor.tsx), not here.
-  if (state.selection?.type === "key") return null;
+  // Keys and combos are edited below the keyboard (KeyEditor, ComboEditor), not here.
+  if (state.selection?.type === "key" || state.selection?.type === "combo") return null;
 
   if (!state.selection) {
     return (
