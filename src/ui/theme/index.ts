@@ -58,5 +58,5 @@ export function setTheme(theme: Theme): void {
 }
 
 export function useTheme(): Theme {
-  return useSyncExternalStore(subscribeTheme, getTheme);
+  return useSyncExternalStore(subscribeTheme, getTheme, getTheme);
 }

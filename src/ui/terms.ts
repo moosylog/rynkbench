@@ -84,7 +84,7 @@ export function setWording(wording: Wording): void {
 }
 
 export function useWording(): Wording {
-  return useSyncExternalStore(subscribeWording, getWording);
+  return useSyncExternalStore(subscribeWording, getWording, () => DEFAULT_WORDING);
 }
 
 /** The lookup screens use: `const term = useTerms(); term("mode.keymap")`. */
