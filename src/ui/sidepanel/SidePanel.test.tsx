@@ -1,10 +1,11 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { WorkbenchContext, type WorkbenchContextValue } from "../state";
+import { testWorkbench } from "../../test/workbench";
+import { WorkbenchContext } from "../state";
 import { SidePanel } from "./SidePanel";
 
 function panel(overrides: Record<string, unknown> = {}) {
-  const workbench = {
+  const workbench = testWorkbench({
     bundle: { caps: { num_layers: 4, num_cols: 2, max_combos: 8 }, session: { kind: "offline" } },
     state: {
       layerMetadata: [
@@ -27,7 +28,7 @@ function panel(overrides: Record<string, unknown> = {}) {
     },
     dispatch: () => {},
     io: {},
-  } as unknown as WorkbenchContextValue;
+  });
   return renderToStaticMarkup(
     <WorkbenchContext value={workbench}>
       <SidePanel />

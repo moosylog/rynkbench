@@ -1,18 +1,18 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { testWorkbench } from "../../test/workbench";
 import type { KeyAction } from "../../vendor/rynk-wasm/rynk_wasm";
-import { WorkbenchContext, type WorkbenchContextValue } from "../state";
+import { WorkbenchContext } from "../state";
 import { KeyEditor } from "./KeyEditor";
 
 const A = { Single: { Key: { Hid: "A" } } } as unknown as KeyAction;
 const TAP_HOLD = { TapHold: [{ Key: { Hid: "A" } }, { Modifier: { left_shift: true } }, 255] } as unknown as KeyAction;
 
 function editor(binding: KeyAction | null) {
-  const workbench = {
+  const workbench = testWorkbench({
     bundle: {
       caps: { num_cols: 2, num_layers: 2 },
       model: { keys: [{ row: 0, col: 0, address: "LH-C1R1" }] },
-      boardProfile: null,
       session: { kind: "offline" },
       lightingState: null,
       sceneStatus: null,
@@ -33,7 +33,7 @@ function editor(binding: KeyAction | null) {
     },
     dispatch: () => {},
     io: {},
-  } as unknown as WorkbenchContextValue;
+  });
   return renderToStaticMarkup(
     <WorkbenchContext value={workbench}>
       <KeyEditor />

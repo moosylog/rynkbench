@@ -1,8 +1,9 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { testWorkbench } from "../../test/workbench";
 import type { LightingSceneCell } from "../../vendor/rynk-wasm/rynk_wasm";
 import { WorkbenchContext } from "../state";
-import type { WorkbenchContextValue } from "../state";
+
 import { LayerLighting } from "./LayerLighting";
 import { KeymapCenter } from "./KeymapCenter";
 import { openBundle } from "../bundle";
@@ -18,7 +19,7 @@ const compiledScenes: LightingSceneCell[] = [
 ];
 
 function markup(ledId: number, writable = true): string {
-  const value = {
+  const value = testWorkbench({
     bundle: { sceneStatus: writable ? { capacity: 100 } : null },
     state: {
       uiLayer: 0,
@@ -31,7 +32,7 @@ function markup(ledId: number, writable = true): string {
     },
     dispatch: () => {},
     io: {},
-  } as unknown as WorkbenchContextValue;
+  });
 
   return renderToStaticMarkup(
     <WorkbenchContext value={value}>
@@ -66,7 +67,7 @@ describe("layer lighting summary", () => {
     }).connect();
     try {
       const bundle = await openBundle(session);
-      const value = { bundle, state: initialWorkbenchState(bundle), io: {}, dispatch: () => {} } as unknown as WorkbenchContextValue;
+      const value = testWorkbench({ bundle, state: initialWorkbenchState(bundle) });
       const html = renderToStaticMarkup(
         <WorkbenchContext value={value}><KeymapCenter /></WorkbenchContext>,
       );

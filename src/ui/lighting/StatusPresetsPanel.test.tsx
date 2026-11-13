@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { WorkbenchContext, type WorkbenchContextValue } from "../state";
+import { testWorkbench } from "../../test/workbench";
+import { WorkbenchContext } from "../state";
 import { StatusPresetsPanel } from "./StatusPresetsPanel";
 import { resolveBoardProfile } from "../../model/boards/profiles";
 import type { DeviceInfo } from "../../vendor/rynk-wasm/rynk_wasm";
@@ -17,7 +18,7 @@ const keys = [4, 5, 6].map((ledId, index) => ({
 }));
 
 function render(selection: number[], pick = null as typeof CONNECTION_KEY_PICK | null) {
-  const value = {
+  const value = testWorkbench({
     bundle: {
       caps: { num_cols: 1, num_layers: 3, num_split_peripherals: 1, num_ble_profiles: 3 },
       model: { name: "test", keys, zones: [] },
@@ -41,7 +42,7 @@ function render(selection: number[], pick = null as typeof CONNECTION_KEY_PICK |
       batchBusy: false,
     },
     dispatch: () => {},
-  } as unknown as WorkbenchContextValue;
+  });
   return renderToStaticMarkup(
     <WorkbenchContext value={value}>
       <StatusPresetsPanel pick={pick} onPick={() => {}} />
@@ -87,7 +88,7 @@ describe("Glove80 presets", () => {
   });
 
   function renderGlove80(name: string, features = (1 << 15) | (1 << 16)) {
-    const value = {
+    const value = testWorkbench({
       bundle: {
         boardProfile: resolveBoardProfile(
           { product_name: name, vendor_id: 0x16c0, product_id: 0x27db } as DeviceInfo,
@@ -116,7 +117,7 @@ describe("Glove80 presets", () => {
         batchBusy: false,
       },
       dispatch: () => {},
-    } as unknown as WorkbenchContextValue;
+    });
     return renderToStaticMarkup(
       <WorkbenchContext value={value}>
         <StatusPresetsPanel pick={null} onPick={() => {}} />

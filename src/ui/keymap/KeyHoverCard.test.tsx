@@ -1,17 +1,18 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { testWorkbench } from "../../test/workbench";
 import type { KeyAction } from "../../vendor/rynk-wasm/rynk_wasm";
 import type { KeyView } from "../../model/keyboard";
-import { WorkbenchContext, type WorkbenchContextValue } from "../state";
+import { WorkbenchContext } from "../state";
 import { KeyHoverCard } from "./KeyHoverCard";
 
 const key = { row: 0, col: 1, address: "LH-C5R1" } as unknown as KeyView;
 
 function card(binding: KeyAction, combos: unknown[] = []) {
-  const workbench = {
+  const workbench = testWorkbench({
     bundle: { caps: { num_cols: 2 } },
     state: { uiLayer: 0, layers: [["No", binding]], combos },
-  } as unknown as WorkbenchContextValue;
+  });
   return renderToStaticMarkup(
     <WorkbenchContext value={workbench}>
       <KeyHoverCard keyView={key} />

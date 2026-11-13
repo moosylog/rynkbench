@@ -1,11 +1,12 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { WorkbenchContext, type WorkbenchContextValue } from "../state";
+import { testWorkbench } from "../../test/workbench";
+import { WorkbenchContext } from "../state";
 import { LightingKeyPresetPanel } from "./LightingKeyPresetPanel";
 import { replaceLightingKeyRules } from "./lightingKeyPresets";
 
 function render(batchMode: boolean, current: unknown = "No") {
-  const value = {
+  const value = testWorkbench({
     // Capabilities resolve from the connect bundle: extension effects present,
     // output-mode policy absent.
     bundle: {
@@ -34,7 +35,7 @@ function render(batchMode: boolean, current: unknown = "No") {
       pending: {},
     },
     dispatch: () => {},
-  } as unknown as WorkbenchContextValue;
+  });
   return renderToStaticMarkup(
     <WorkbenchContext value={value}>
       <LightingKeyPresetPanel

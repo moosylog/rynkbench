@@ -1,28 +1,14 @@
-import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { renderInWorkbench } from "../test/workbench";
 import { profileById } from "../model/boards/profiles";
-import { WorkbenchContext, type WorkbenchContextValue } from "./state";
-import { DocumentTransferContext, type DocumentTransfer } from "./transfer-actions";
 import { FileMenus } from "./FileMenus";
 
-function menus(board?: string, kind = "webhid") {
+function menus(board?: string, kind: "webhid" | "offline" = "webhid") {
   const documentTools = board ? profileById(board)?.documents : undefined;
-  const workbench = {
-    bundle: { session: { kind } },
-    history: { phase: "idle" },
-  } as unknown as WorkbenchContextValue;
-  const transfer = {
-    phase: null,
-    report: null,
-    documentTools,
-    migrationTarget: documentTools?.migrationTarget?.name ?? null,
-  } as unknown as DocumentTransfer;
-  return renderToStaticMarkup(
-    <WorkbenchContext value={workbench}>
-      <DocumentTransferContext value={transfer}>
-        <FileMenus />
-      </DocumentTransferContext>
-    </WorkbenchContext>,
+  return renderInWorkbench(
+    <FileMenus />,
+    { bundle: { session: { kind } } },
+    { phase: null, report: null, documentTools, migrationTarget: documentTools?.migrationTarget?.name ?? null },
   );
 }
 
