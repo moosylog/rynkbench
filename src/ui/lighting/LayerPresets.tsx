@@ -6,10 +6,11 @@
 //   tab (see LightingMode); this panel keeps only the device-wide policy,
 //   capacity readout, and the one-time local-preset migration.
 // - Local presets (older firmware): Rynkbench stores named overlay snapshots
-//   per layer (localStorage, keyed by device serial) and, when "follow" is on,
+//   per layer (browser settings, keyed by device serial) and, when "follow" is on,
 //   pushes the matching preset via replaceOverlay whenever the live layer
 //   changes. Honest by design: this only works while Rynkbench is connected.
 
+import { SETTING_KEYS, readSetting, writeSetting } from "../settings";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   LightingLayerPolicy,
@@ -34,16 +35,12 @@ interface Stored {
   follow: boolean;
 }
 
-function storageKey(serial: string): string {
-  return `rynkbench:layer-lighting:${serial || "unknown"}`;
-}
-
 function load(serial: string): Stored {
+  const raw = readSetting(SETTING_KEYS.layerLighting(serial));
   try {
-    const raw = localStorage.getItem(storageKey(serial));
     if (raw) return JSON.parse(raw) as Stored;
   } catch {
-    // fall through to defaults
+    // A damaged entry: start again from the defaults.
   }
   return { presets: {}, follow: false };
 }
@@ -227,11 +224,7 @@ function LocalPresets() {
   const save = useCallback(
     (next: Stored) => {
       setStored(next);
-      try {
-        localStorage.setItem(storageKey(serial), JSON.stringify(next));
-      } catch {
-        // storage full/unavailable — presets simply won't persist
-      }
+      writeSetting(SETTING_KEYS.layerLighting(serial), JSON.stringify(next));
     },
     [serial],
   );

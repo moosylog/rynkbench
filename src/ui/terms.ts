@@ -7,11 +7,11 @@
 // proposals, meant to be edited here and nowhere else.
 
 import { useSyncExternalStore } from "react";
+import { SETTING_KEYS, createSetting } from "./settings";
 
 export type Wording = "technical" | "friendly";
 
 export const DEFAULT_WORDING: Wording = "technical";
-const STORAGE_KEY = "rynk:wording";
 
 export interface Term {
   technical: string;
@@ -51,36 +51,18 @@ export function termFor(id: TermId, wording: Wording): string {
   return TERMS[id][wording];
 }
 
-function storedWording(): Wording {
-  try {
-    return normalizeWording(typeof localStorage !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null);
-  } catch {
-    // Storage access can throw in privacy modes; fall back to the default.
-    return DEFAULT_WORDING;
-  }
-}
-
-let active: Wording = storedWording();
-const listeners = new Set<() => void>();
+const wordingSetting = createSetting(SETTING_KEYS.wording, normalizeWording);
 
 export function getWording(): Wording {
-  return active;
+  return wordingSetting.get();
 }
 
 export function subscribeWording(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
+  return wordingSetting.subscribe(listener);
 }
 
 export function setWording(wording: Wording): void {
-  if (wording === active) return;
-  active = wording;
-  try {
-    if (typeof localStorage !== "undefined") localStorage.setItem(STORAGE_KEY, wording);
-  } catch {
-    // Best-effort persistence only.
-  }
-  for (const listener of listeners) listener();
+  wordingSetting.set(wording);
 }
 
 export function useWording(): Wording {

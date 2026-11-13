@@ -28,6 +28,7 @@ import { ProfilesMode } from "./ProfilesMode";
 import { DeviceMode } from "./device/DeviceMode";
 import { SidePanel } from "./sidepanel/SidePanel";
 import { ResizeHandle, usePaneSize } from "./panes";
+import { SETTING_KEYS } from "./settings";
 import { InspectorShell, cx } from "./kit";
 import { historyShortcut, keyEditHistoryLabel } from "../model/history";
 import { firmwareFactsOf, resolveCapabilities } from "../capabilities";
@@ -84,7 +85,7 @@ function KeymapScreen() {
   const capabilities = useCapabilities();
   const selected = state.selection?.type;
   const side = selected === "encoder" || selected === "pointing" || (!selected && capabilities.has("pointing"));
-  const editorPane = usePaneSize("rynk:key-editor-height", 310, 180, 640);
+  const editorPane = usePaneSize(SETTING_KEYS.keyEditorHeight, 310, 180, 640);
   return (
     <>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -182,7 +183,7 @@ export function Workbench({
   const area = currentArea ?? areas[0];
   // The phone's side-panel drawer, and the side panel's width elsewhere.
   const [drawer, setDrawer] = useState(false);
-  const sidePane = usePaneSize("rynk:side-panel-width", 256, 200, 420);
+  const sidePane = usePaneSize(SETTING_KEYS.sidePanelWidth, 256, 200, 420);
   // Each area remembers the section last shown in it.
   const lastSection = useRef<Partial<Record<AreaId, SectionId>>>({});
   useEffect(() => {

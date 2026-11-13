@@ -5,16 +5,13 @@
 import { useCallback, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from "react";
 import { cx } from "./kit";
+import { readSetting, writeSetting } from "./settings";
 
 const KEY_STEP = 16;
 
 function stored(key: string): number | null {
-  try {
-    const value = Number(localStorage.getItem(key));
-    return Number.isFinite(value) && value > 0 ? value : null;
-  } catch {
-    return null;
-  }
+  const value = Number(readSetting(key));
+  return Number.isFinite(value) && value > 0 ? value : null;
 }
 
 /** A pane size in px, kept between `min` and `max` and remembered under `key`. */
@@ -25,11 +22,7 @@ export function usePaneSize(key: string, initial: number, min: number, max: numb
     (value: number) => {
       const next = clamp(value);
       setSizeState(next);
-      try {
-        localStorage.setItem(key, String(next));
-      } catch {
-        // Private modes may refuse storage; the size still applies now.
-      }
+      writeSetting(key, String(next));
     },
     [clamp, key],
   );
