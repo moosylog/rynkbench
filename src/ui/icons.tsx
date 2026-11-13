@@ -157,6 +157,15 @@ export function SparkleIcon(props: IconProps) {
   );
 }
 
+/** A pencil: change this. */
+export function PencilIcon(props: IconProps) {
+  return (
+    <svg {...base(props)} strokeWidth={1.8}>
+      <path d="M10.8 2.8 13.2 5.2 5.6 12.8 2.6 13.4 3.2 10.4Z" />
+    </svg>
+  );
+}
+
 /** A paint brush: Paint gives keys a look by clicking or dragging over them. */
 export function BrushIcon(props: IconProps) {
   return (

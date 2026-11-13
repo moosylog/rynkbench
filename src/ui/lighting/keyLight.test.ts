@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { LightingEffect } from "../../vendor/rynk-wasm/rynk_wasm";
 import { DEFAULT_TIMING } from "./effect";
-import { colorsInUse, keyLightOf, lightWrite, recolorCells } from "./keyLight";
+import { colorsInUse, keyLightOf, planLight, recolorCells, statusLightOf, withStatusLight } from "./keyLight";
 import { BLACK_EFFECT } from "./preview";
+import { newRule } from "./rules";
 
 const RED = { r: 255, g: 0, b: 0 };
 const BLUE = { r: 0, g: 0, b: 255 };
@@ -20,13 +21,50 @@ describe("a key's light", () => {
   });
 
   it("writes Off as a black cell, a colour as its effect, Layer below as no cell", () => {
-    expect(lightWrite({ kind: "off" }, [3])).toEqual({ paint: [{ led_id: 3, effect: BLACK_EFFECT, ttl_ms: undefined }] });
-    expect(lightWrite({ kind: "color", color: RED, effect: "Solid", timing: DEFAULT_TIMING }, [3, 4])).toEqual({
-      paint: [3, 4].map((led_id) => ({ led_id, effect: solid(), ttl_ms: undefined })),
+    expect(planLight({ kind: "off" }, [3], 0, [])).toEqual({
+      paint: [{ led_id: 3, effect: BLACK_EFFECT, ttl_ms: undefined }],
+      erase: [],
+      rules: null,
     });
-    expect(lightWrite({ kind: "below" }, [3])).toEqual({ erase: [3] });
+    expect(planLight({ kind: "color", color: RED, effect: "Solid", timing: DEFAULT_TIMING }, [3, 4], 0, []).paint).toEqual(
+      [3, 4].map((led_id) => ({ led_id, effect: solid(), ttl_ms: undefined })),
+    );
+    expect(planLight({ kind: "below" }, [3], 0, [])).toEqual({ paint: [], erase: [3], rules: null });
+  });
+});
+
+describe("lock and battery lights", () => {
+  const lock = { kind: "lock" as const, lock: "caps_lock" as const, on: RED, off: null };
+  const battery = { kind: "battery" as const, level: 40, below: RED, above: BLUE };
+
+  it("write two rules on the key's LED and layer, and read back the same light", () => {
+    const rules = withStatusLight([], 2, 7, lock);
+    expect(rules).toHaveLength(2);
+    expect(rules.every((rule) => rule.cell.led_id === 7 && rule.cell.conditions.layer?.layer === 2)).toBe(true);
+    expect(statusLightOf(rules, 2, 7)).toEqual(lock);
+    expect(statusLightOf(withStatusLight([], 2, 7, battery), 2, 7)).toEqual(battery);
   });
 
+  it("replace a key's own rules, and leave the Lighting screen's rules alone", () => {
+    const other = newRule(7, solid(BLUE));
+    const rules = withStatusLight([other], 2, 7, lock);
+    const replaced = withStatusLight(rules, 2, 7, battery);
+    expect(replaced[0]).toBe(other);
+    expect(replaced).toHaveLength(3);
+    expect(withStatusLight(replaced, 2, 7, null)).toEqual([other]);
+  });
+
+  it("take the key's scene cell away, and a colour takes the rules away", () => {
+    const plan = planLight(lock, [7], 2, []);
+    expect(plan.erase).toEqual([7]);
+    expect(plan.rules).toHaveLength(2);
+    const back = planLight({ kind: "off" }, [7], 2, plan.rules ?? []);
+    expect(back.rules).toEqual([]);
+    expect(keyLightOf(undefined, statusLightOf(plan.rules ?? [], 2, 7))).toEqual(lock);
+  });
+});
+
+describe("colours", () => {
   it("lists the colours in use, most used first, without black", () => {
     expect(colorsInUse([solid(BLUE), solid(), BLACK_EFFECT, solid(BLUE)])).toEqual([BLUE, RED]);
   });

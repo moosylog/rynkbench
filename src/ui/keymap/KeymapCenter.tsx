@@ -29,7 +29,9 @@ import { CanvasPill } from "./CanvasPill";
 import { CarriedKey } from "./CarriedKey";
 import { useKeyMoves } from "./useKeyMoves";
 import { useLightView } from "./lightView";
-import { keyLightOf, lightWrite, type KeyLight } from "../lighting/keyLight";
+import { shownColor, type KeyLight } from "../lighting/keyLight";
+import { useKeyLights } from "./useKeyLights";
+import { cssEmissiveRgb } from "../color";
 import { cx } from "../kit";
 import { LightingIcon } from "../icons";
 import { useKeyClipboard } from "./useKeyClipboard";
@@ -77,6 +79,7 @@ export function KeymapCenter() {
   // The layer's staged scene, previewed under the legends so bindings and
   // lighting can be judged together. Lighting mode remains the place to paint.
   const light = useLightView();
+  const lights = useKeyLights();
   // The lit board shows the layer's lighting whatever the switch says.
   const lit = light.open || (layerLightingAvailable && showLighting);
   // The compiled firmware cells are part of what the layer shows, so the
@@ -143,10 +146,7 @@ export function KeymapCenter() {
       error: pending?.status === "error",
       ...(light.open
         ? {
-            lit: {
-              led: sceneEffect && keyLightOf(sceneEffect).kind === "color" ? effectColor(sceneEffect) : undefined,
-              anim: sceneEffect && effectAnim(sceneEffect),
-            },
+            lit: litKey(key),
           }
         : { fill: sceneEffect ? effectColor(sceneEffect) : undefined, fillAnim: sceneEffect ? effectAnim(sceneEffect) : undefined }),
       staged:
@@ -157,11 +157,17 @@ export function KeymapCenter() {
 
   /** Paint gives a key the Lighting tab's light, on the layer shown. */
   const paintKey = (key: KeyView, brush: KeyLight) => {
-    if (key.ledId === undefined) return;
-    const write = lightWrite(brush, [key.ledId]);
-    if ("paint" in write) dispatch({ type: "paint", cells: write.paint, target: state.uiLayer });
-    else dispatch({ type: "erase", ledIds: write.erase, target: state.uiLayer });
+    if (key.ledId !== undefined) lights.set(brush, [key.ledId]);
   };
+
+  /** A key on the lit board: its LED's colour (a lock light lit, a battery above its level) and effect. */
+  function litKey(key: KeyView): KeyDecor["lit"] {
+    if (key.ledId === undefined) return {};
+    const shown = lights.lightOf(key.ledId);
+    const color = shownColor(shown);
+    const effect = lights.preview.get(key.ledId);
+    return { led: color ? cssEmissiveRgb(color) : undefined, anim: shown.kind === "color" && effect ? effectAnim(effect) : undefined };
+  }
 
   // The key's quick menu, as in GLIDE: what it is, then copy, paste and clear.
   const keyMenuItems = (key: KeyView): MenuEntry[] => {
