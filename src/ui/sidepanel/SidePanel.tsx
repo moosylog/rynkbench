@@ -1,20 +1,19 @@
 // The left side panel, as in GLIDE: the keymap's contents as lists. Layers
 // (pick one, and from its ⋮ menu or a right-click: rename, duplicate, move,
-// make default, delete) and Combos (see them, open the combo editor). The
+// make default, delete) and Combos (ComboList.tsx; a row opens Focus Mode). The
 // panel never edits a key; it chooses what the canvas and the editor show.
 
 import { useEffect, useState } from "react";
 import { layerName } from "../layer-names";
-import { comboLayer, comboOutput, comboTriggerCount } from "../../model/combos";
 import { pointingDraftDirty, useWorkbench } from "../state";
 import { useCapabilities } from "../use-capabilities";
 import { askConfirm, showToast } from "../messages/store";
 import { deletionBlockedMessage, layerDeletionBlockers } from "../keymap/layerImpact";
-import { keyActionGlyph } from "../labels";
 import { useTerms } from "../terms";
 import { cx } from "../kit";
-import { MoreIcon, StarIcon, PlusIcon } from "../icons";
+import { MoreIcon, StarIcon } from "../icons";
 import { RowMenu, useRowMenu, type MenuEntry } from "../RowMenu";
+import { ComboList } from "./ComboList";
 
 type List = "layers" | "combos";
 
@@ -252,63 +251,6 @@ function LayerList({ onPicked }: { onPicked?: () => void }) {
           {state.layerError}
         </p>
       )}
-    </div>
-  );
-}
-
-function ComboList() {
-  const { bundle, state, dispatch } = useWorkbench();
-  const term = useTerms();
-  const capacity = bundle.caps.max_combos;
-  const combos = state.combos
-    .map((combo, index) => ({ combo, index }))
-    .filter(({ combo }) => comboTriggerCount(combo) > 0);
-  const open = () => dispatch({ type: "mode", mode: "combos" });
-
-  if (capacity === 0) {
-    return <p className="px-1 text-small leading-relaxed text-faint">This keyboard has no combos.</p>;
-  }
-  return (
-    <div className="flex flex-col gap-1.5">
-      <button
-        type="button"
-        onClick={open}
-        className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-line-strong py-2.5 text-body font-semibold text-mute transition-all duration-150 hover:-translate-y-px hover:border-mute hover:bg-raised hover:text-ink"
-      >
-        <PlusIcon size={12} /> Create {term("section.combos").toLowerCase().replace(/s$/, "")}
-      </button>
-      {combos.length === 0 && (
-        <p className="px-1 pt-2 text-small leading-relaxed text-faint">
-          No combos yet. A combo does something when several keys are pressed together.
-        </p>
-      )}
-      {combos.map(({ combo, index }) => {
-        const layer = comboLayer(combo);
-        return (
-          <button
-            key={index}
-            type="button"
-            onClick={open}
-            className="flex w-full cursor-pointer items-center gap-2.5 rounded-xl border border-transparent px-3 py-2 text-left transition-all duration-150 hover:border-line-strong hover:bg-panel"
-          >
-            <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-raised font-mono text-caption text-mute">
-              C{index}
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-body font-semibold text-ink">
-                {keyActionGlyph(comboOutput(combo)).text || "No action"}
-              </span>
-              <span className="block truncate text-small text-faint">
-                {comboTriggerCount(combo)} keys
-                {layer !== undefined ? ` · ${layerName(state.layerMetadata, layer)} only` : ""}
-              </span>
-            </span>
-          </button>
-        );
-      })}
-      <p className="px-1 pt-1 text-caption text-faint">
-        {combos.length} of {capacity} used
-      </p>
     </div>
   );
 }

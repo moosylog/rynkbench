@@ -18,6 +18,9 @@ import {
 import { TopBar } from "./TopBar";
 import { KeymapCenter } from "./keymap/KeymapCenter";
 import { KeymapInspector } from "./keymap/SideInspector";
+import { ComboEditor } from "./keymap/ComboEditor";
+import { ComboFocusCanvas } from "./keymap/ComboFocusCanvas";
+import { useComboFocus } from "./keymap/useComboFocus";
 import { KeyEditor } from "./keymap/KeyEditor";
 import { useCapabilities } from "./use-capabilities";
 import { LightingMode } from "./lighting/LightingMode";
@@ -79,23 +82,29 @@ function SectionTabs({
 }
 
 /** The keymap, as GLIDE lays it out: the keyboard, the key editor below it.
+ *  A combo open in Focus Mode swaps both for its canvas and its editor.
  *  Trackpads, encoders and the layer's pointing settings keep a side panel. */
 function KeymapScreen() {
   const { state } = useWorkbench();
   const capabilities = useCapabilities();
+  const combo = useComboFocus();
   const selected = state.selection?.type;
   const side = selected === "encoder" || selected === "pointing" || (!selected && capabilities.has("pointing"));
   const editorPane = usePaneSize(SETTING_KEYS.keyEditorHeight, 310, 180, 640);
   return (
     <>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <KeymapCenter />
+        {combo ? <ComboFocusCanvas focus={combo} /> : <KeymapCenter />}
         {selected !== "encoder" && selected !== "pointing" && (
           <>
             <div className="max-lg:hidden">
-              <ResizeHandle edge="top" label="Key editor height" pane={editorPane} />
+              <ResizeHandle edge="top" label="Editor height" pane={editorPane} />
             </div>
-            <KeyEditor height={editorPane.size} />
+            {combo ? (
+              <ComboEditor focus={combo} height={editorPane.size} />
+            ) : (
+              <KeyEditor height={editorPane.size} />
+            )}
           </>
         )}
       </div>

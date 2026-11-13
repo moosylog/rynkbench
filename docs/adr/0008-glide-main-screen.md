@@ -16,4 +16,5 @@ GLIDE, the MoErgo layout editor by the same author, is organized and drawn in a 
 ## Consequences
 
 - No area rail and no Library screen.
-- Next: the key editor below the keyboard with GLIDE's slots and Pick Key, and a right-click menu on keys.
+- The key editor sits below the keyboard with GLIDE's slots and Pick Key; keys have a right-click menu.
+- A combo is edited on the canvas in GLIDE's Focus Mode: the selection can be a combo, and the keymap screen then shows `ComboFocusCanvas` and `ComboEditor` in place of the canvas and the key editor (both in `EditorPanel`'s frame).

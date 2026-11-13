@@ -81,7 +81,9 @@ export type LightingTarget = "overlay" | number;
 export type Selection =
   | { type: "key"; row: number; col: number }
   | { type: "encoder"; id: number }
-  | { type: "pointing"; id: number };
+  | { type: "pointing"; id: number }
+  /** A combo open in Focus Mode: key clicks add or remove its keys. */
+  | { type: "combo"; index: number };
 
 /** Everything loaded during the connect flow, before the workbench mounts. */
 export interface ConnectedBundle {
