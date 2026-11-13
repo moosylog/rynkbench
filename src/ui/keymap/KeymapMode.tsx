@@ -39,197 +39,25 @@ import {
   serializeKeyAction,
 } from "./keyManipulation";
 import type { ClipboardBoard } from "./keyManipulation";
-import { Button, SectionLabel, TextInput, UnderlineTabs, cx } from "../kit";
+import { Button, SectionLabel, cx } from "../kit";
 import { useCapabilities } from "../use-capabilities";
-import { askConfirm, showToast } from "../messages/store";
-import { deletionBlockedMessage, layerDeletionBlockers } from "./layerImpact";
-import { StarIcon, WarningIcon, CloseIcon, PlusIcon, TrashIcon, SpinnerIcon } from "../icons";
+import { WarningIcon, CloseIcon, SpinnerIcon } from "../icons";
 
 function clipboardBoard(state: WorkbenchState, cols: number): ClipboardBoard {
   return { layers: state.layers, cols, pending: state.pending };
 }
 
-function LayerTabs() {
-  const { bundle, state, dispatch, io } = useWorkbench();
-  const capabilities = useCapabilities();
-  const numLayers = bundle.caps.num_layers;
-  const occupiedLayers = state.layerMetadata
-    ? state.layerMetadata.flatMap((metadata, layer) => (metadata.occupied ? [layer] : []))
-    : Array.from({ length: numLayers }, (_, layer) => layer);
-  const [renaming, setRenaming] = useState(false);
-  const [name, setName] = useState("");
-
-  useEffect(() => {
-    setRenaming(false);
-    setName(layerName(state.layerMetadata, state.uiLayer));
-  }, [state.uiLayer, state.layerMetadata]);
-
-  const selectedName = layerName(state.layerMetadata, state.uiLayer);
-  const structureSupported =
-    state.layerMetadata !== null &&
-    capabilities.has("pointing") &&
-    state.behaviorOptions !== null &&
-    (!capabilities.has("lighting.state") || capabilities.has("lighting.output"));
-  const pointingStaged = pointingDraftDirty(state);
-  // Why every layer-structure button is unavailable right now, if one reason covers them all.
-  const layerBlock = state.layerBusy
-    ? "Wait for the layer change in progress"
-    : pointingStaged
-      ? "Apply or discard the staged pointing changes first"
-      : null;
-
+/** Which layer the canvas shows; picking and changing layers is the side panel's job. */
+function LayerHeading() {
+  const { state } = useWorkbench();
+  const shown = layerName(state.layerMetadata, state.uiLayer);
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-1">
-      <UnderlineTabs
-        items={occupiedLayers.map((n) => {
-          const isDefault = n === state.defaultLayer;
-          const label = layerName(state.layerMetadata, n);
-          return {
-            id: n,
-            title: `${label} · physical layer ${n}${isDefault ? " · default" : ""}`,
-            label: (
-              <>
-                <span>{label}</span>
-                {isDefault && (
-                  <span title="Default layer" className="inline-flex">
-                    <StarIcon size={11} filled className="text-warn" />
-                  </span>
-                )}
-              </>
-            ),
-          };
-        })}
-        value={state.uiLayer}
-        onChange={(layer) => dispatch({ type: "uiLayer", layer })}
-      />
+    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-1">
+      <h2 className="text-title font-bold text-ink">{shown}</h2>
+      {state.uiLayer === state.defaultLayer && <span className="text-small text-faint">Default layer</span>}
       {state.uiLayer !== state.currentLayer && (
         <span className="whitespace-nowrap text-small text-faint">
-          Editing {selectedName} · {layerName(state.layerMetadata, state.currentLayer)} is live
-        </span>
-      )}
-      <div className="flex-1" />
-      {state.layerMetadata !== null &&
-        (renaming ? (
-          <form
-            className="flex items-center gap-1.5"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void io.renameLayer(state.uiLayer, name).then((result) => {
-                if (result.ok) setRenaming(false);
-              });
-            }}
-          >
-            <TextInput
-              autoFocus
-              value={name}
-              maxLength={32}
-              className="w-40 py-1"
-              aria-label="Layer name"
-              onChange={(event) => setName(event.target.value)}
-            />
-            <Button type="submit" variant="primary" className="py-1" disabled={state.layerBusy}>
-              Save
-            </Button>
-            <Button variant="ghost" className="py-1" onClick={() => setRenaming(false)}>
-              Cancel
-            </Button>
-          </form>
-        ) : (
-          <Button variant="ghost" className="text-body" onClick={() => setRenaming(true)}>
-            Rename
-          </Button>
-        ))}
-      {structureSupported && !renaming && (
-        <div className="flex items-center gap-0.5">
-          <Button
-            variant="ghost"
-            className="px-2 text-body"
-            title="Move layer left"
-            aria-label="Move layer left"
-            disabled={state.layerBusy || pointingStaged || state.uiLayer === 0}
-            reason={layerBlock ?? "This is already the first layer"}
-            onClick={() => void io.moveLayer(state.uiLayer, state.uiLayer - 1)}
-          >
-            ←
-          </Button>
-          <Button
-            variant="ghost"
-            className="px-2 text-body"
-            title="Move layer right"
-            aria-label="Move layer right"
-            disabled={
-              state.layerBusy || pointingStaged || state.uiLayer === occupiedLayers.length - 1
-            }
-            reason={layerBlock ?? "This is already the last layer"}
-            onClick={() => void io.moveLayer(state.uiLayer, state.uiLayer + 1)}
-          >
-            →
-          </Button>
-          <Button
-            variant="ghost"
-            className="px-2 text-body"
-            title="Duplicate layer"
-            disabled={state.layerBusy || pointingStaged || occupiedLayers.length >= numLayers}
-            reason={layerBlock ?? `All ${numLayers} layers are in use`}
-            onClick={() => void io.duplicateLayer(state.uiLayer)}
-          >
-            <PlusIcon size={12} /> Duplicate
-          </Button>
-          <Button
-            variant="ghost"
-            className="px-2 text-body text-danger"
-            title="Delete layer"
-            aria-label="Delete layer"
-            disabled={state.layerBusy || pointingStaged || occupiedLayers.length <= 1}
-            reason={layerBlock ?? "A keyboard needs at least one layer"}
-            onClick={() => {
-              // Say what still uses the layer now, before reading the keyboard to find out.
-              const blockers = layerDeletionBlockers(
-                {
-                  layers: state.layers,
-                  cols: bundle.caps.num_cols,
-                  layerMetadata: state.layerMetadata,
-                  combos: state.combos,
-                  morse: state.morse,
-                  forks: state.forks,
-                },
-                state.uiLayer,
-              );
-              if (blockers.length > 0) {
-                dispatch({ type: "layerOperationError", message: deletionBlockedMessage(selectedName, blockers) });
-                return;
-              }
-              const layer = state.uiLayer;
-              void askConfirm({
-                title: `Delete layer “${selectedName}”?`,
-                body: "Its keys are removed and the layers after it move up one place; keys that switch to those layers follow them. This cannot be undone.",
-                confirmLabel: "Delete layer",
-                danger: true,
-              }).then(async (yes) => {
-                if (!yes) return;
-                const result = await io.deleteLayer(layer);
-                if (result.ok) showToast(`Layer “${selectedName}” deleted`, { tone: "ok" });
-              });
-            }}
-          >
-            <TrashIcon size={12} />
-          </Button>
-        </div>
-      )}
-      {state.uiLayer !== state.defaultLayer && (
-        <Button
-          variant="ghost"
-          className="whitespace-nowrap text-body"
-          title="Make this the layer the keyboard starts on"
-          onClick={() => io.setDefaultLayer(state.uiLayer)}
-        >
-          <StarIcon size={12} />
-          Make default
-        </Button>
-      )}
-      {state.layerError && (
-        <span className="max-w-64 text-small text-danger" title={state.layerError}>
-          {state.layerError}
+          {layerName(state.layerMetadata, state.currentLayer)} is active on the keyboard
         </span>
       )}
     </div>
@@ -540,7 +368,7 @@ export function KeymapCenter() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 max-lg:min-h-[380px]">
-      <LayerTabs />
+      <LayerHeading />
       <div className="flex min-h-5 items-center justify-between gap-4 px-1 text-small text-faint">
         <span className="flex items-center gap-3">
           {layerLightingAvailable && (
@@ -554,11 +382,7 @@ export function KeymapCenter() {
               Show layer lighting
             </label>
           )}
-          <span>
-            Drag a bound key to move it; dropping replaces the destination.
-            Ctrl/Cmd+C and Ctrl/Cmd+V copy or paste the selected binding. With a
-            keyboard, press Space to pick up or drop.
-          </span>
+          <span>Click a key to edit · Drag to move · Ctrl/⌘ C and V to copy and paste · Space to pick up</span>
         </span>
         <span
           className="max-w-[46%] truncate text-right text-mute"

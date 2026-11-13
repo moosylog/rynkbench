@@ -1,12 +1,14 @@
-// The app's six areas, organized by what the person is doing rather than by
-// protocol surface (docs/ux-brief.md §4). Each area holds sections; a section
+// The app's areas, organized by what the person is doing rather than by
+// protocol surface (docs/ux-brief.md §4): the keymap (the main screen, as in
+// GLIDE) and the screens the top bar opens over it. Files are the top bar's
+// Open and Save. Each area holds sections; a section
 // is one screen. Which areas and sections exist comes from what the keyboard
 // and the session offer, never from a fixed list on screen.
 
 import type { Mode } from "../model/workbench-state";
 import type { TermId } from "./terms";
 
-export type AreaId = "layout" | "behaviors" | "lighting" | "device" | "library" | "insights";
+export type AreaId = "layout" | "behaviors" | "lighting" | "device" | "insights";
 
 /** A section is one screen; the workbench state names the one on show. */
 export type SectionId = Mode;
@@ -24,7 +26,6 @@ export const ALL_SECTIONS: readonly SectionId[] = [
   "lighting",
   "effects",
   "device",
-  "library",
   "usage",
   "live",
 ];
@@ -84,7 +85,6 @@ export function areasFor(facts: AreaFacts): Area[] {
       ]),
     },
     { id: "device", term: "area.device", sections: pick([["device", facts.connected]]) },
-    { id: "library", term: "area.library", sections: ["library"] },
     {
       id: "insights",
       term: "area.insights",

@@ -1,6 +1,8 @@
-// The workbench: top bar, area rail, section tabs, and the section on show.
+// The workbench, laid out as GLIDE's main screen: the top bar (files, the
+// other screens, history, settings), the side panel of layers and combos, and
+// the keymap; the other screens open in its place with their own tabs.
 
-import { useCallback, useEffect, useMemo, useReducer, useRef, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
 import type { ConnectedBundle } from "./state";
 import {
@@ -20,7 +22,7 @@ import { LiveMode } from "./live/LiveMode";
 import { AdvancedSection } from "./advanced/AdvancedMode";
 import { ProfilesMode } from "./ProfilesMode";
 import { DeviceMode } from "./device/DeviceMode";
-import { LibraryMode } from "./library/LibraryMode";
+import { SidePanel } from "./sidepanel/SidePanel";
 import { InspectorShell, cx } from "./kit";
 import { historyShortcut, keyEditHistoryLabel } from "../model/history";
 import { firmwareFactsOf, resolveCapabilities } from "../capabilities";
@@ -29,73 +31,6 @@ import { getLocaleId, subscribeLocale } from "./locale";
 import { areaOfSection, areasFor, sectionTerm, type Area, type AreaId, type SectionId } from "./areas";
 import { DocumentTransferContext, useDocumentTransfer } from "./transfer-actions";
 import { showToast } from "./messages/store";
-import {
-  CombinatorIcon,
-  DeviceIcon,
-  InsightsIcon,
-  KeymapIcon,
-  LibraryIcon,
-  LightingIcon,
-} from "./icons";
-
-const AREA_ICON: Record<AreaId, typeof KeymapIcon> = {
-  layout: KeymapIcon,
-  behaviors: CombinatorIcon,
-  lighting: LightingIcon,
-  device: DeviceIcon,
-  library: LibraryIcon,
-  insights: InsightsIcon,
-};
-
-/** The areas, one button each. On a phone the rail is a bar along the bottom. */
-function AreaRail({
-  areas,
-  current,
-  onArea,
-}: {
-  areas: Area[];
-  current: AreaId | undefined;
-  onArea: (area: Area) => void;
-}) {
-  const term = useTerms();
-  return (
-    <nav
-      aria-label="Areas"
-      className={cx(
-        "flex w-[76px] shrink-0 flex-col items-stretch gap-1 border-r border-line-soft bg-panel px-2 py-3",
-        "max-sm:w-full max-sm:flex-row max-sm:justify-around max-sm:border-r-0 max-sm:border-t max-sm:px-1 max-sm:py-1",
-      )}
-    >
-      {areas.map((area) => {
-        const Icon = AREA_ICON[area.id];
-        const active = area.id === current;
-        return (
-          <button
-            key={area.id}
-            type="button"
-            onClick={() => onArea(area)}
-            className={cx(
-              "relative flex h-14 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl transition-colors duration-150",
-              "max-sm:h-12 max-sm:flex-1",
-              active ? "bg-raised text-accent" : "text-faint hover:bg-raised/60 hover:text-mute",
-            )}
-            aria-current={active ? "page" : undefined}
-          >
-            {active && (
-              <span
-                aria-hidden
-                className="absolute -left-2 top-2 bottom-2 w-0.5 rounded-r bg-accent max-sm:hidden"
-              />
-            )}
-            <Icon size={18} />
-            <span className="text-caption font-medium">{term(area.term)}</span>
-          </button>
-        );
-      })}
-    </nav>
-  );
-}
-
 /** The sections of the current area, when it has more than one. */
 function SectionTabs({
   sections,
@@ -165,14 +100,12 @@ function SectionView({ section }: { section: SectionId }) {
       return <EffectsMode />;
     case "device":
       return <DeviceMode />;
-    case "library":
-      return <LibraryMode />;
     case "live":
       return <LiveMode />;
   }
 }
 
-/** Shares the workbench's one document transfer with the top bar and Library. */
+/** Shares the workbench's one document transfer with the top bar's Open, Save and name. */
 function DocumentTransferProvider({ children }: { children: ReactNode }) {
   const transfer = useDocumentTransfer();
   return <DocumentTransferContext value={transfer}>{children}</DocumentTransferContext>;
@@ -219,6 +152,8 @@ export function Workbench({
   const currentArea = areaOfSection(areas, state.mode);
   const section: SectionId = currentArea ? state.mode : "keymap";
   const area = currentArea ?? areas[0];
+  // The phone's side-panel drawer.
+  const [drawer, setDrawer] = useState(false);
   // Each area remembers the section last shown in it.
   const lastSection = useRef<Partial<Record<AreaId, SectionId>>>({});
   useEffect(() => {
@@ -354,9 +289,26 @@ export function Workbench({
             </div>
           </div>
         )}
-        <TopBar />
-        <div className="flex min-h-0 flex-1 max-sm:flex-col-reverse">
-          <AreaRail areas={areas} current={area.id} onArea={showArea} />
+        <TopBar
+          areas={areas}
+          current={area.id}
+          onArea={showArea}
+          onDrawer={section === "keymap" ? () => setDrawer(true) : undefined}
+        />
+        <div className="flex min-h-0 flex-1">
+          {section === "keymap" && (
+            <div className="max-sm:hidden">
+              <SidePanel />
+            </div>
+          )}
+          {section === "keymap" && drawer && (
+            <div className="fixed inset-0 z-[60] sm:hidden" onClick={() => setDrawer(false)}>
+              <div className="absolute inset-0 bg-well/70" />
+              <div className="absolute inset-y-0 left-0 w-[86vw] max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                <SidePanel onPicked={() => setDrawer(false)} />
+              </div>
+            </div>
+          )}
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             <SectionTabs
               sections={area.sections}

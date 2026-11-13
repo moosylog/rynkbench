@@ -71,7 +71,6 @@ export type Mode =
   | "lighting"
   | "effects"
   | "device"
-  | "library"
   | "usage"
   | "live";
 

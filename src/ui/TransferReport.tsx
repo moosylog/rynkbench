@@ -74,20 +74,16 @@ function Notes({ notes }: { notes: ImportNote[] }) {
 export function TransferReportPanel({
   report,
   onDismiss,
-  inline = false,
 }: {
   report: TransferReport;
   onDismiss: () => void;
-  /** In the page flow (the Library) rather than floating under the top bar. */
-  inline?: boolean;
 }) {
   const tone = TONE[report.outcome];
 
   return (
     <div
       className={cx(
-        "overflow-y-auto rounded-xl border bg-panel p-4",
-        inline ? "w-full" : "absolute right-4 top-full z-20 mt-2 max-h-[60vh] w-[32rem] shadow-lg",
+        "absolute right-4 top-full z-20 mt-2 max-h-[60vh] w-[32rem] overflow-y-auto rounded-xl border bg-panel p-4 shadow-lg",
         tone.border,
       )}
       role={report.outcome === "error" ? "alert" : "status"}

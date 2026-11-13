@@ -1,10 +1,28 @@
-// Workbench top bar: identity, history, batch, live status, settings, disconnect.
+// The top bar, as in GLIDE: the wordmark (back to the keymap) and the layout's
+// name, Open and Save, the screens that open over the keymap, then history,
+// batch, live status, display settings and Close.
 
 import type { BatteryStatus } from "../vendor/rynk-wasm/rynk_wasm";
 import { stagedEditCount, useWorkbench } from "./state";
 import { useSharedDocumentTransfer } from "./transfer-actions";
-import { Chip, Button } from "./kit";
-import { BatteryGlyph, PowerIcon, RedoIcon, UndoIcon, Wordmark } from "./icons";
+import { Chip, Button, cx } from "./kit";
+import {
+  BatteryGlyph,
+  CombinatorIcon,
+  DeviceIcon,
+  InsightsIcon,
+  KeymapIcon,
+  LightingIcon,
+  MenuIcon,
+  PowerIcon,
+  RedoIcon,
+  UndoIcon,
+  Wordmark,
+} from "./icons";
+import { FileMenus } from "./FileMenus";
+import { useTerms } from "./terms";
+import { layerName } from "./layer-names";
+import type { Area, AreaId } from "./areas";
 import { KIND_LABEL } from "./session-labels";
 import { SettingsMenu } from "./SettingsMenu";
 
@@ -29,7 +47,55 @@ function BatteryReadout({ battery, split }: { battery: BatteryStatus; split: boo
   );
 }
 
-export function TopBar() {
+const AREA_ICON: Record<AreaId, typeof KeymapIcon> = {
+  layout: KeymapIcon,
+  behaviors: CombinatorIcon,
+  lighting: LightingIcon,
+  device: DeviceIcon,
+  insights: InsightsIcon,
+};
+
+/** The keymap and the screens that open over it. */
+function ScreenNav({ areas, current, onArea }: { areas: Area[]; current: AreaId; onArea: (area: Area) => void }) {
+  const term = useTerms();
+  return (
+    <nav aria-label="Screens" className="flex items-center gap-0.5">
+      {areas.map((area) => {
+        const Icon = AREA_ICON[area.id];
+        const active = area.id === current;
+        return (
+          <button
+            key={area.id}
+            type="button"
+            onClick={() => onArea(area)}
+            aria-current={active ? "page" : undefined}
+            title={term(area.term)}
+            className={cx(
+              "flex cursor-pointer items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-body font-semibold transition-all duration-150",
+              active ? "bg-raised text-accent" : "text-ink hover:bg-hover",
+            )}
+          >
+            <Icon size={15} />
+            <span className="max-xl:hidden">{term(area.term)}</span>
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+export function TopBar({
+  areas,
+  current,
+  onArea,
+  onDrawer,
+}: {
+  areas: Area[];
+  current: AreaId;
+  onArea: (area: Area) => void;
+  /** Opens the side panel on a phone; absent where there is no panel. */
+  onDrawer?: () => void;
+}) {
   const { bundle, state, dispatch, io, history } = useWorkbench();
   const offline = bundle.session.kind === "offline";
   const { workspaceName } = useSharedDocumentTransfer();
@@ -40,17 +106,38 @@ export function TopBar() {
     .join(" | ");
 
   return (
-    <header className="relative flex h-14 shrink-0 items-center gap-4 border-b border-line-soft bg-panel px-4 max-sm:gap-2 max-sm:px-2">
-      <div className="flex items-center gap-3">
-        <Wordmark size={26} />
-        <div className="flex flex-col leading-tight">
-          <span className="max-w-52 truncate text-ui font-semibold text-ink">
-            {workspaceName}
-          </span>
-          <span className="text-caption text-faint max-sm:hidden">Rynkbench</span>
-        </div>
-        <Chip tone="neutral" className="max-sm:hidden">{KIND_LABEL[bundle.session.kind] ?? bundle.session.kind}</Chip>
+    <header className="relative z-40 flex h-14 shrink-0 items-center gap-3 border-b border-line bg-bg px-4 max-sm:gap-2 max-sm:overflow-x-auto max-sm:px-2">
+      <div className="flex min-w-0 shrink-0 items-center gap-3">
+        <button
+          type="button"
+          onClick={() => onArea(areas[0])}
+          title="Back to the keymap"
+          className="flex shrink-0 cursor-pointer items-center gap-2 rounded-lg px-1.5 -mx-1.5 py-1 transition-colors hover:bg-hover"
+        >
+          <Wordmark size={22} />
+          <span className="text-title font-bold uppercase tracking-widest text-ink max-md:hidden">Rynkbench</span>
+        </button>
+        {onDrawer && (
+          <button
+            type="button"
+            onClick={onDrawer}
+            title="Layers and combos"
+            className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-line bg-raised px-2 py-1.5 text-body font-semibold text-ink sm:hidden"
+          >
+            <MenuIcon size={14} />
+            <span className="max-w-[72px] truncate">{layerName(state.layerMetadata, state.uiLayer)}</span>
+          </button>
+        )}
+        <div className="h-5 w-px shrink-0 bg-line max-sm:hidden" />
+        <span className="max-w-[220px] truncate text-body font-semibold text-mute max-sm:hidden" title={workspaceName}>
+          {workspaceName}
+        </span>
+        <Chip tone="neutral" className="max-lg:hidden">{KIND_LABEL[bundle.session.kind] ?? bundle.session.kind}</Chip>
       </div>
+
+      <FileMenus />
+      <div className="h-5 w-px shrink-0 bg-line max-sm:hidden" />
+      <ScreenNav areas={areas} current={current} onArea={onArea} />
 
       <div className="flex-1" />
 

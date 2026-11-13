@@ -1,4 +1,4 @@
-// Document import/export orchestration (the Library, and the top bar's name): the staged-edit guard,
+// Document import/export orchestration (the top bar's Open, Save and name): the staged-edit guard,
 // the history suspension around a bulk write, the retained source text an
 // export reuses as its template, and the phrasing of the result report.
 
@@ -224,7 +224,7 @@ export function useDocumentTransfer(): DocumentTransfer {
 }
 
 /** One transfer per workbench, shared by the top bar (the workspace name) and
- *  the Library (the actions and their report). Provided by the workbench. */
+ *  its Open and Save (the actions and their report). Provided by the workbench. */
 export const DocumentTransferContext = createContext<DocumentTransfer | null>(null);
 
 export function useSharedDocumentTransfer(): DocumentTransfer {

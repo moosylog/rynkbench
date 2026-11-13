@@ -24,7 +24,6 @@ export const TERMS = {
   "area.behaviors": { technical: "Behaviors", friendly: "Behaviors" },
   "area.lighting": { technical: "Lighting", friendly: "Lighting" },
   "area.device": { technical: "Device", friendly: "Keyboard" },
-  "area.library": { technical: "Library", friendly: "Library" },
   "area.insights": { technical: "Insights", friendly: "Insights" },
   "section.keymap": { technical: "Keymap", friendly: "Keys" },
   "section.combos": { technical: "Combos", friendly: "Combos" },
@@ -37,7 +36,6 @@ export const TERMS = {
   "section.lighting": { technical: "Lighting", friendly: "Colors" },
   "section.effects": { technical: "Effects", friendly: "Effects" },
   "section.device": { technical: "Device", friendly: "Keyboard" },
-  "section.library": { technical: "Files", friendly: "Files" },
   "section.usage": { technical: "Usage", friendly: "What\u2019s used" },
   "section.live": { technical: "Live", friendly: "Live view" },
 } as const satisfies Record<string, Term>;

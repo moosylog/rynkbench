@@ -89,17 +89,6 @@ export function InsightsIcon(props: IconProps) {
   );
 }
 
-/** Library: layouts kept as files. */
-export function LibraryIcon(props: IconProps) {
-  return (
-    <svg {...base(props)}>
-      <path d="M2 2.6h3.2v10.8H2zM6.2 2.6h3.2v10.8H6.2z" />
-      <path d="M10.4 3.6l2.9-.8 2.2 10-2.9.8z" />
-      <path d="M2 5.2h3.2M6.2 5.2h3.2" />
-    </svg>
-  );
-}
-
 /** Settings: a slider pair. */
 export function SettingsIcon(props: IconProps) {
   return (
@@ -107,6 +96,53 @@ export function SettingsIcon(props: IconProps) {
       <path d="M2.2 4.8h6.2M11.6 4.8h2.2M2.2 11.2h2.2M7.6 11.2h6.2" />
       <circle cx="10" cy="4.8" r="1.6" />
       <circle cx="6" cy="11.2" r="1.6" />
+    </svg>
+  );
+}
+
+/** Row actions: three dots, stacked. */
+export function MoreIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="8" cy="3.4" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="8" cy="8" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="8" cy="12.6" r="0.9" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+/** A small downward chevron, for split buttons and menus. */
+export function ChevronDownIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M4 6.2l4 4 4-4" />
+    </svg>
+  );
+}
+
+/** Open: a folder. */
+export function FolderIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M1.8 4.6a1.2 1.2 0 011.2-1.2h3l1.3 1.4h5.7a1.2 1.2 0 011.2 1.2v6.4a1.2 1.2 0 01-1.2 1.2H3a1.2 1.2 0 01-1.2-1.2z" />
+    </svg>
+  );
+}
+
+/** Save: down into a tray. */
+export function DownloadIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M8 2.4v8M4.8 7.4L8 10.6l3.2-3.2M2.6 13.4h10.8" />
+    </svg>
+  );
+}
+
+/** The phone drawer: three lines. */
+export function MenuIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M2.6 4h10.8M2.6 8h10.8M2.6 12h10.8" />
     </svg>
   );
 }

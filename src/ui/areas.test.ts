@@ -26,7 +26,7 @@ const ids = (facts: AreaFacts) => areasFor(facts).map((area) => area.id);
 
 describe("areas", () => {
   it("shows a plain RMK board everything but Lighting", () => {
-    expect(ids(plainRmk)).toEqual(["layout", "behaviors", "device", "library", "insights"]);
+    expect(ids(plainRmk)).toEqual(["layout", "behaviors", "device", "insights"]);
     expect(areasFor(plainRmk).find((a) => a.id === "behaviors")?.sections).toEqual(["behavior", "transforms"]);
   });
 
@@ -52,7 +52,7 @@ describe("areas", () => {
 
   it("drops Device and Live for a file opened without a keyboard", () => {
     const offline = { ...everything, connected: false };
-    expect(ids(offline)).toEqual(["layout", "behaviors", "lighting", "library", "insights"]);
+    expect(ids(offline)).toEqual(["layout", "behaviors", "lighting", "insights"]);
     expect(areasFor(offline).find((a) => a.id === "insights")?.sections).toEqual(["usage"]);
   });
 
