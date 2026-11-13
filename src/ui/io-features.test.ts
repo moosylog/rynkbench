@@ -35,6 +35,7 @@ describe("ioFeaturesFor", () => {
                   pointingConfig,
                   lightingState,
                   lightingOutputMode,
+                  caps: { max_morse: 0, max_patterns_per_key: 0 },
                 } as unknown as ConnectedBundle;
                 expect(ioFeaturesFor(bundle)).toEqual(legacy(bundle));
                 checked += 1;
