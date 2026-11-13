@@ -183,12 +183,18 @@ export function BoardWell({
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const panning = useRef<{ id: number; x: number; y: number; from: { x: number; y: number } } | null>(null);
   const wellRef = useRef<HTMLDivElement>(null);
-  const setZoomTo = (next: number) => {
-    const clamped = Math.round(Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, next)) * 100) / 100;
-    setZoom(clamped);
-    if (clamped <= 1) setPan({ x: 0, y: 0 });
-  };
+  // Each step works from the zoom as it is now, so quick clicks all count.
+  const zoomBy = (step: number) =>
+    setZoom((current) => {
+      const next = Math.round(Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, current + step)) * 100) / 100;
+      if (next <= 1) setPan({ x: 0, y: 0 });
+      return next;
+    });
 
+  const zoomByRef = useRef(zoomBy);
+  useEffect(() => {
+    zoomByRef.current = zoomBy;
+  });
   // Ctrl/⌘ + wheel zooms (a plain wheel keeps scrolling the page).
   useEffect(() => {
     const well = wellRef.current;
@@ -196,11 +202,7 @@ export function BoardWell({
     const onWheel = (event: WheelEvent) => {
       if (!event.ctrlKey && !event.metaKey) return;
       event.preventDefault();
-      setZoom((current) => {
-        const next = Math.round(Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, current - Math.sign(event.deltaY) * ZOOM_STEP)) * 100) / 100;
-        if (next <= 1) setPan({ x: 0, y: 0 });
-        return next;
-      });
+      zoomByRef.current(-Math.sign(event.deltaY) * ZOOM_STEP);
     };
     well.addEventListener("wheel", onWheel, { passive: false });
     return () => well.removeEventListener("wheel", onWheel);
@@ -240,7 +242,7 @@ export function BoardWell({
           type="button"
           aria-label="Zoom out"
           title="Zoom out"
-          onClick={() => setZoomTo(zoom - ZOOM_STEP)}
+          onClick={() => zoomBy(-ZOOM_STEP)}
           className="flex h-full cursor-pointer items-center px-2.5 text-mute transition-transform hover:-translate-y-px hover:text-ink"
         >
           −
@@ -261,7 +263,7 @@ export function BoardWell({
           type="button"
           aria-label="Zoom in"
           title="Zoom in"
-          onClick={() => setZoomTo(zoom + ZOOM_STEP)}
+          onClick={() => zoomBy(ZOOM_STEP)}
           className="flex h-full cursor-pointer items-center px-2.5 text-mute transition-transform hover:-translate-y-px hover:text-ink"
         >
           +
