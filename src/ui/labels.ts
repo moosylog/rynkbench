@@ -259,20 +259,35 @@ export interface KeyGlyph {
   text: string;
   /** Secondary line (hold action for tap-holds). */
   sub?: string;
+  /** The character Shift gives, drawn small on top (the "@" over "2"). */
+  top?: string;
   /** Render dimmed (Transparent). */
   dim?: boolean;
 }
+
+/** The character a plain key types with Shift, when it is not just its own
+ *  capital: what GLIDE prints small at the top of the keycap. */
+function shiftedOnTop(action: Action): string | undefined {
+  if (typeof action !== "object" || !("Key" in action)) return undefined;
+  const key = action.Key;
+  if (typeof key !== "object" || !("Hid" in key)) return undefined;
+  const shifted = characterFor(activeLocale(), key.Hid, true);
+  return shifted !== null && shifted !== hidLabel(key.Hid) ? shifted : undefined;
+}
+
+/** On a keycap a modifier shows its symbol alone, as in GLIDE: "⇧", not "L⇧". */
+const capText = (label: string) => label.replace(/^[LR](?=[⌃⇧⌥⌘]+$)/, "");
 
 /** `morse` is the keyboard's morse table: a key whose entry is tap, hold and
  *  double tap shows its tap, and its hold or double tap below it. */
 export function keyActionGlyph(action: KeyAction, morse: readonly Morse[] = []): KeyGlyph {
   if (action === "No") return { text: "" };
   if (action === "Transparent") return { text: "▽", dim: true };
-  if ("Single" in action) return { text: actionLabel(action.Single) };
-  if ("Tap" in action) return { text: actionLabel(action.Tap) };
+  if ("Single" in action) return { text: capText(actionLabel(action.Single)), top: shiftedOnTop(action.Single) };
+  if ("Tap" in action) return { text: capText(actionLabel(action.Tap)), top: shiftedOnTop(action.Tap) };
   if ("TapHold" in action) {
     const [tap, hold] = action.TapHold;
-    return { text: actionLabel(tap), sub: actionLabel(hold) };
+    return { text: capText(actionLabel(tap)), sub: capText(actionLabel(hold)) };
   }
   if ("Morse" in action) {
     const slots = slotsOf(action, morse);

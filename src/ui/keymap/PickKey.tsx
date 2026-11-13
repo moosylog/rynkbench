@@ -23,10 +23,10 @@ import { layerTiles, pickKeyGroups, searchTiles, type Tile, type TileGroup } fro
 /* ------------------------------------------------------------------ */
 
 const MODIFIER_CHIPS: Array<{ id: "ctrl" | "alt" | "shift" | "gui"; symbol: string; name: string }> = [
-  { id: "gui", symbol: "⌘", name: "Command / Windows" },
+  { id: "ctrl", symbol: "⌃", name: "Ctrl" },
   { id: "alt", symbol: "⌥", name: "Alt / Option" },
   { id: "shift", symbol: "⇧", name: "Shift" },
-  { id: "ctrl", symbol: "⌃", name: "Ctrl" },
+  { id: "gui", symbol: "⌘", name: "Command / Windows" },
 ];
 
 function armedModifiers(side: "left" | "right", armed: Set<string>): ModifierCombination {

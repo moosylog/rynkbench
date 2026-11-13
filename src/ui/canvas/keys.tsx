@@ -3,7 +3,7 @@
 // ring and label are separate passes (see KeyboardCanvas.tsx), each memoized on
 // the key's decoration.
 
-import { memo } from "react";
+import { memo, useContext } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, SVGProps } from "react";
 import type { Key } from "../../model/keyboard";
 import type { KeyView } from "../../model/keyboard";
@@ -13,6 +13,7 @@ import { same } from "../../model/deep-equal";
 
 import type { KeyDecor } from "./decor";
 import { legendLayout } from "./legend";
+import { UnitsPerPixel } from "./scale";
 import { CORNER, CAP_INSET, CAP_GRADIENT, CAP_RELIEF, CAP_SHADOW, rectAttrs } from "./geometry";
 
 export function CapDefs() {
@@ -302,65 +303,64 @@ function KeyRingImpl({ view, decor }: { view: KeyView; decor: KeyDecor }) {
  * key's legend — "Esc" turning into "sc".
  */
 function KeyLabelImpl({ view, decor }: { view: KeyView; decor: KeyDecor }) {
+  const unitsPerPixel = useContext(UnitsPerPixel);
   const { shape } = view;
   const glyph = decor.glyph;
   if (!glyph?.text) return null;
 
-  const deg = shape.r;
-  const legend = legendLayout(glyph.text, shape.rect.w, glyph.sub);
-  const cxc = shape.rect.x;
-  const cyc = shape.rect.y;
+  const legend = legendLayout(glyph.text, shape.rect.w, unitsPerPixel, { sub: glyph.sub, top: glyph.top });
+  const cx = shape.rect.x;
+  const cy = shape.rect.y;
+  const block = (legend.lines.length - 1) * legend.size * 1.1;
+  // As in GLIDE: a shifted character sits in the upper part of the cap with the
+  // legend below it; a hold sits under the legend; otherwise the legend is centred.
+  const mainY = glyph.top
+    ? cy + shape.rect.h * 0.14
+    : cy - block / 2 - (glyph.sub ? legend.subSize * 0.7 : 0);
+  const halo = decor.fill
+    ? { stroke: "var(--color-legend-halo)", strokeWidth: 0.04, paintOrder: "stroke fill" as const, strokeLinejoin: "round" as const }
+    : {};
+  const text = (props: SVGProps<SVGTextElement>) => (
+    <text textAnchor="middle" dominantBaseline="central" fontFamily="var(--font-sans)" {...halo} {...props} />
+  );
 
   return (
     <g
-      transform={`rotate(${deg} ${cxc} ${cyc})`}
+      transform={`rotate(${shape.r} ${cx} ${cy})`}
       opacity={decor.lifted ? 0.35 : decor.disabled ? 0.38 : 1}
       style={{ pointerEvents: "none", userSelect: "none" }}
     >
-      <g
-        className="key-lift"
-        style={{
-          transform: decor.selected ? "translateY(-0.045px)" : undefined,
-        }}
-      >
-        <text
-          x={cxc}
-          y={cyc - (legend.lines.length - 1) * legend.size * 0.55 - (glyph.sub ? legend.subSize * 0.7 : 0)}
-          fontSize={legend.size}
-          textAnchor="middle"
-          dominantBaseline="central"
-          fill={glyph.dim ? "var(--color-cap-ink-dim)" : "var(--color-cap-ink)"}
-          stroke={decor.fill ? "var(--color-legend-halo)" : undefined}
-          strokeWidth={decor.fill ? 0.045 : undefined}
-          paintOrder={decor.fill ? "stroke fill" : undefined}
-          strokeLinejoin="round"
-          fontFamily="var(--font-sans)"
-          fontWeight={700}
-        >
-          {legend.lines.map((line, i) => (
-            <tspan key={i} x={cxc} dy={i === 0 ? 0 : legend.size * 1.1}>
+      <g className="key-lift" style={{ transform: decor.selected ? "translateY(-0.045px)" : undefined }}>
+        {glyph.top &&
+          text({
+            x: cx,
+            y: cy - shape.rect.h * 0.2,
+            fontSize: legend.topSize,
+            fontWeight: 600,
+            fill: "var(--color-mute)",
+            children: glyph.top,
+          })}
+        {text({
+          x: cx,
+          y: mainY,
+          fontSize: legend.size,
+          fontWeight: 700,
+          fill: glyph.dim ? "var(--color-cap-ink-dim)" : "var(--color-cap-ink)",
+          children: legend.lines.map((line, i) => (
+            <tspan key={i} x={cx} dy={i === 0 ? 0 : legend.size * 1.1}>
               {line}
             </tspan>
-          ))}
-        </text>
-        {glyph.sub && (
-          <text
-            x={cxc}
-            y={cyc + (legend.lines.length - 1) * legend.size * 0.55 + legend.size * 0.5 + legend.subSize * 0.4}
-            fontSize={legend.subSize}
-            fontWeight={600}
-            textAnchor="middle"
-            dominantBaseline="central"
-            fill="var(--color-mute)"
-            stroke={decor.fill ? "var(--color-legend-halo)" : undefined}
-            strokeWidth={decor.fill ? 0.035 : undefined}
-            paintOrder={decor.fill ? "stroke fill" : undefined}
-            strokeLinejoin="round"
-            fontFamily="var(--font-sans)"
-          >
-            {glyph.sub}
-          </text>
-        )}
+          )),
+        })}
+        {glyph.sub &&
+          text({
+            x: cx,
+            y: mainY + block + legend.size * 0.5 + legend.subSize * 0.75,
+            fontSize: legend.subSize,
+            fontWeight: 600,
+            fill: "var(--color-mute)",
+            children: glyph.sub,
+          })}
       </g>
     </g>
   );
