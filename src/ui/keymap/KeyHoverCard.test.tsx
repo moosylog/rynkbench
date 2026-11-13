@@ -8,7 +8,7 @@ import { KeyHoverCard } from "./KeyHoverCard";
 
 const key = { row: 0, col: 1, address: "LH-C5R1" } as unknown as KeyView;
 
-function card(binding: KeyAction, combos: unknown[] = []) {
+function card(binding: KeyAction, combos: Array<{ Positions: { positions: Array<{ row: number; col: number }>; output: "No" } }> = []) {
   const workbench = testWorkbench({
     bundle: { caps: { num_cols: 2 } },
     state: { uiLayer: 0, layers: [["No", binding]], combos },
@@ -34,7 +34,7 @@ describe("key hover card", () => {
   });
 
   it("counts the combos the key is part of", () => {
-    const combos = [
+    const combos: Parameters<typeof card>[1] = [
       { Positions: { positions: [{ row: 0, col: 1 }, { row: 0, col: 0 }], output: "No" } },
       { Positions: { positions: [{ row: 0, col: 0 }], output: "No" } },
     ];
