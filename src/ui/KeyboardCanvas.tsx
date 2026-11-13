@@ -14,6 +14,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import type {
   KeyboardEvent as ReactKeyboardEvent,
+  MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
   ReactNode,
   SVGProps,
@@ -74,6 +75,10 @@ export interface KeyboardCanvasProps {
   pointingDeviceDecorFor?: (device: PointingDeviceView) => PointingDeviceDecor;
   onKeyPointerDown?: (key: KeyView, ev: ReactPointerEvent) => void;
   onKeyPointerEnter?: (key: KeyView, ev: ReactPointerEvent) => void;
+  /** Right-click (or long press) on a key: its quick menu. */
+  onKeyContextMenu?: (key: KeyView, ev: ReactMouseEvent) => void;
+  /** The key under the pointer, or null when it leaves the keys. */
+  onKeyHover?: (key: KeyView | null) => void;
   onKeyKeyboardActivate?: (key: KeyView, ev: ReactKeyboardEvent) => void;
   onKeyFocus?: (key: KeyView) => void;
   /** Pointer drag gesture. Callers define the operation (keymap uses move). */
@@ -277,6 +282,8 @@ function KeyShapeImpl({
   interactive,
   onPointerDown,
   onPointerEnter,
+  onContextMenu,
+  onHover,
   onKeyboardActivate,
   onFocus,
 }: {
@@ -285,6 +292,8 @@ function KeyShapeImpl({
   interactive: boolean;
   onPointerDown?: (key: KeyView, ev: ReactPointerEvent) => void;
   onPointerEnter?: (key: KeyView, ev: ReactPointerEvent) => void;
+  onContextMenu?: (key: KeyView, ev: ReactMouseEvent) => void;
+  onHover?: (key: KeyView | null) => void;
   onKeyboardActivate?: (key: KeyView, ev: ReactKeyboardEvent) => void;
   onFocus?: (key: KeyView) => void;
 }) {
@@ -325,7 +334,21 @@ function KeyShapeImpl({
       aria-keyshortcuts={clickable ? decor.ariaKeyShortcuts : undefined}
       onPointerDown={clickable ? (ev) => onPointerDown?.(view, ev) : undefined}
       onPointerEnter={
-        clickable ? (ev) => onPointerEnter?.(view, ev) : undefined
+        clickable
+          ? (ev) => {
+              onPointerEnter?.(view, ev);
+              onHover?.(view);
+            }
+          : undefined
+      }
+      onPointerLeave={clickable ? () => onHover?.(null) : undefined}
+      onContextMenu={
+        clickable && onContextMenu
+          ? (ev) => {
+              ev.preventDefault();
+              onContextMenu(view, ev);
+            }
+          : undefined
       }
       onFocus={keyboardInteractive ? () => onFocus?.(view) : undefined}
       onKeyDown={
@@ -725,6 +748,8 @@ export function KeyboardCanvas({
   pointingDeviceDecorFor,
   onKeyPointerDown,
   onKeyPointerEnter,
+  onKeyContextMenu,
+  onKeyHover,
   onKeyKeyboardActivate,
   onKeyFocus,
   onKeyDrop,
@@ -773,6 +798,8 @@ export function KeyboardCanvas({
 
   const keyPointerDown = useLatestHandler(onKeyPointerDown);
   const keyPointerEnter = useLatestHandler(onKeyPointerEnter);
+  const keyContextMenu = useLatestHandler(onKeyContextMenu);
+  const keyHover = useLatestHandler(onKeyHover);
   const keyKeyboardActivate = useLatestHandler(onKeyKeyboardActivate);
   const keyFocus = useLatestHandler(onKeyFocus);
   const draggable = useLatestHandler(keyDraggable);
@@ -848,6 +875,8 @@ export function KeyboardCanvas({
           interactive={interactive}
           onPointerDown={beginKeyDrag}
           onPointerEnter={keyPointerEnter}
+          onContextMenu={onKeyContextMenu ? keyContextMenu : undefined}
+          onHover={onKeyHover ? keyHover : undefined}
           onKeyboardActivate={keyKeyboardActivate}
           onFocus={keyFocus}
         />

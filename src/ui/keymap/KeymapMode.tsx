@@ -27,6 +27,8 @@ import { LayerPointing } from "./LayerPointing";
 import { effectAnim, effectColor } from "../lighting/decor";
 import { targetPreviewEffects } from "../lighting/preview";
 import { layerName } from "../layer-names";
+import { RowMenu, type MenuEntry } from "../RowMenu";
+import { KeyHoverCard } from "./KeyHoverCard";
 import {
   activePointingDevices,
   activePointingOverrides,
@@ -85,6 +87,8 @@ export function KeymapCenter() {
     null,
   );
   const dragLayerRef = useRef<number | null>(null);
+  const [keyMenu, setKeyMenu] = useState<{ x: number; y: number; key: KeyView } | null>(null);
+  const [hovered, setHovered] = useState<KeyView | null>(null);
   const latestStateRef = useRef(state);
   const localClipboardRef = useRef<KeyAction | null>(null);
   useEffect(() => {
@@ -115,87 +119,97 @@ export function KeymapCenter() {
     setKeyboardMove(null);
   }, [state.uiLayer]);
 
+  // Copy and paste of one key's binding: the Ctrl/⌘ C and V shortcuts and the
+  // key's quick menu run the same steps. Returns whether it acted.
+  const runClipboard = (shortcut: "copy" | "paste", selection: WorkbenchState["selection"]): boolean => {
+    const snapshot = latestStateRef.current;
+    const plan = planClipboardAction(
+      shortcut,
+      selection,
+      snapshot.uiLayer,
+      clipboardBoard(snapshot, cols),
+    );
+    if (plan.kind === "ignore") return false;
+    if (plan.kind === "blocked") {
+      setManipulationMessage(plan.message);
+      return true;
+    }
+    const target = plan.target;
+    const { layer: selectedLayer, row, col, action } = target;
+
+    if (plan.kind === "copy") {
+      localClipboardRef.current = structuredClone(action);
+      if (!navigator.clipboard?.writeText) {
+        setManipulationMessage(
+          "Copied within Rynkbench; system clipboard access is unavailable.",
+        );
+        return true;
+      }
+      void navigator.clipboard.writeText(serializeKeyAction(action)).then(
+        () =>
+          setManipulationMessage(
+            `Copied ${keyActionDescription(action)} from Layer ${selectedLayer}, r${row} c${col}.`,
+          ),
+        () =>
+          setManipulationMessage(
+            "Copied within Rynkbench; the browser did not allow system clipboard access.",
+          ),
+      );
+      return true;
+    }
+
+    const paste = async (pasted: KeyAction | null) => {
+      if (!pasted) {
+        setManipulationMessage(
+          "The clipboard does not contain a Rynkbench key binding.",
+        );
+        return;
+      }
+      // Reading the clipboard is asynchronous, so the key may have moved on.
+      if (!pasteStillTargets(target, clipboardBoard(latestStateRef.current, cols))) {
+        setManipulationMessage(
+          "Paste cancelled because the selected key changed.",
+        );
+        return;
+      }
+      const result = await io.setKey(selectedLayer, row, col, pasted);
+      setManipulationMessage(
+        result.ok
+          ? `Pasted ${keyActionDescription(pasted)} to Layer ${selectedLayer}, r${row} c${col}.`
+          : `Paste failed: ${result.message}`,
+      );
+    };
+    if (!navigator.clipboard?.readText) {
+      void paste(
+        localClipboardRef.current &&
+          structuredClone(localClipboardRef.current),
+      );
+      return true;
+    }
+    void navigator.clipboard.readText().then(
+      (text) => paste(parseKeyActionClipboard(text)),
+      () =>
+        paste(
+          localClipboardRef.current &&
+            structuredClone(localClipboardRef.current),
+        ),
+    );
+    return true;
+  };
+  const runClipboardRef = useRef(runClipboard);
+  useEffect(() => {
+    runClipboardRef.current = runClipboard;
+  });
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const shortcut = keyClipboardShortcut(event);
       if (shortcut === null || window.getSelection()?.isCollapsed === false) return;
-      const snapshot = latestStateRef.current;
-      const plan = planClipboardAction(
-        shortcut,
-        snapshot.selection,
-        snapshot.uiLayer,
-        clipboardBoard(snapshot, cols),
-      );
-      if (plan.kind === "ignore") return;
-      event.preventDefault();
-      if (plan.kind === "blocked") {
-        setManipulationMessage(plan.message);
-        return;
-      }
-      const target = plan.target;
-      const { layer: selectedLayer, row, col, action } = target;
-
-      if (plan.kind === "copy") {
-        localClipboardRef.current = structuredClone(action);
-        if (!navigator.clipboard?.writeText) {
-          setManipulationMessage(
-            "Copied within Rynkbench; system clipboard access is unavailable.",
-          );
-          return;
-        }
-        void navigator.clipboard.writeText(serializeKeyAction(action)).then(
-          () =>
-            setManipulationMessage(
-              `Copied ${keyActionDescription(action)} from Layer ${selectedLayer}, r${row} c${col}.`,
-            ),
-          () =>
-            setManipulationMessage(
-              "Copied within Rynkbench; the browser did not allow system clipboard access.",
-            ),
-        );
-        return;
-      }
-
-      const paste = async (pasted: KeyAction | null) => {
-        if (!pasted) {
-          setManipulationMessage(
-            "The clipboard does not contain a Rynkbench key binding.",
-          );
-          return;
-        }
-        // Reading the clipboard is asynchronous, so the key may have moved on.
-        if (!pasteStillTargets(target, clipboardBoard(latestStateRef.current, cols))) {
-          setManipulationMessage(
-            "Paste cancelled because the selected key changed.",
-          );
-          return;
-        }
-        const result = await io.setKey(selectedLayer, row, col, pasted);
-        setManipulationMessage(
-          result.ok
-            ? `Pasted ${keyActionDescription(pasted)} to Layer ${selectedLayer}, r${row} c${col}.`
-            : `Paste failed: ${result.message}`,
-        );
-      };
-      if (!navigator.clipboard?.readText) {
-        void paste(
-          localClipboardRef.current &&
-            structuredClone(localClipboardRef.current),
-        );
-        return;
-      }
-      void navigator.clipboard.readText().then(
-        (text) => paste(parseKeyActionClipboard(text)),
-        () =>
-          paste(
-            localClipboardRef.current &&
-              structuredClone(localClipboardRef.current),
-          ),
-      );
+      if (runClipboardRef.current(shortcut, latestStateRef.current.selection)) event.preventDefault();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [cols, io]);
+  }, []);
 
   const dropKey = (
     source: KeyView,
@@ -367,8 +381,26 @@ export function KeymapCenter() {
     };
   };
 
+  // The key's quick menu, as in GLIDE: what it is, then copy, paste and clear.
+  const keyMenuItems = (key: KeyView): MenuEntry[] => {
+    const bound = layer?.[key.row * cols + key.col] ?? "No";
+    return [
+      { heading: `${keyAddressLabel(key)} · ${keyActionDescription(bound)}` },
+      { id: "copy", label: "Copy key", hint: "Ctrl/⌘ C" },
+      { id: "paste", label: "Paste", hint: "Ctrl/⌘ V" },
+      "-",
+      {
+        id: "transparent",
+        label: "Same as layer below",
+        disabled: bound === "Transparent",
+        reason: "It already is",
+      },
+      { id: "clear", label: "Clear key", danger: true, disabled: bound === "No", reason: "It does nothing already" },
+    ];
+  };
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3 max-lg:min-h-[380px]">
+    <div className="relative flex min-h-0 flex-1 flex-col gap-3 max-lg:min-h-[380px]">
       <LayerHeading />
       <div className="flex min-h-5 items-center justify-between gap-4 px-1 text-small text-faint">
         <span className="flex items-center gap-3">
@@ -383,7 +415,7 @@ export function KeymapCenter() {
               Show layer lighting
             </label>
           )}
-          <span>Click a key to edit · Drag to move · Ctrl/⌘ C and V to copy and paste · Space to pick up</span>
+          <span>Click a key to edit · Right-click for options · Drag to move · Ctrl/⌘ C and V to copy and paste</span>
         </span>
         <span
           className="max-w-[46%] truncate text-right text-mute"
@@ -435,6 +467,16 @@ export function KeymapCenter() {
               mode: mode ? pointingModeKind(mode) : "Unavailable",
             };
           }}
+          onKeyContextMenu={(key, event) => {
+            dispatch({ type: "select", selection: { type: "key", row: key.row, col: key.col } });
+            // From the keyboard (the menu key, Shift+F10) there is no pointer: open by the key.
+            const fromKeyboard = event.clientX === 0 && event.clientY === 0;
+            const box = (event.currentTarget as Element).getBoundingClientRect();
+            setKeyMenu(
+              fromKeyboard ? { x: box.left, y: box.bottom + 4, key } : { x: event.clientX, y: event.clientY, key },
+            );
+          }}
+          onKeyHover={setHovered}
           onKeyPointerDown={(key, event) => {
             const action = layer?.[key.row * cols + key.col];
             if (
@@ -503,6 +545,23 @@ export function KeymapCenter() {
           }}
         />
       </BoardWell>
+      {hovered && !drag && <KeyHoverCard keyView={hovered} />}
+      {keyMenu && (
+        <RowMenu
+          x={keyMenu.x}
+          y={keyMenu.y}
+          label={`Key ${keyAddressLabel(keyMenu.key)}`}
+          items={keyMenuItems(keyMenu.key)}
+          onClose={() => setKeyMenu(null)}
+          onAction={(id) => {
+            const target = keyMenu.key;
+            const selection = { type: "key" as const, row: target.row, col: target.col };
+            if (id === "copy" || id === "paste") runClipboard(id, selection);
+            else if (id === "transparent") void io.setKey(state.uiLayer, target.row, target.col, "Transparent");
+            else if (id === "clear") void io.setKey(state.uiLayer, target.row, target.col, "No");
+          }}
+        />
+      )}
     </div>
   );
 }
