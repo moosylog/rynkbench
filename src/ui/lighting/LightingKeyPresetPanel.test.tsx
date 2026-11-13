@@ -6,9 +6,17 @@ import { replaceLightingKeyRules } from "./lightingKeyPresets";
 
 function render(batchMode: boolean, current: unknown = "No") {
   const value = {
+    // Capabilities resolve from the connect bundle: extension effects present,
+    // output-mode policy absent.
     bundle: {
       runtimeConditionalStatus: { capacity: 32 },
       lightingCaps: { features: 1 << 15 },
+      lightingState: {},
+      lightingExtension: { state: { value: 1 } },
+      lightingOutputMode: null,
+      sceneStatus: null,
+      compiledSceneStatus: null,
+      pointingConfig: null,
     },
     state: {
       batchMode,
