@@ -229,7 +229,7 @@ function LayerList({ onPicked }: { onPicked?: () => void }) {
                 "mr-1.5 flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-mute transition-[opacity,visibility] hover:bg-hover hover:text-ink",
                 active || menu.openFor === layer
                   ? "opacity-100"
-                  : "sm:invisible sm:opacity-0 sm:group-hover:visible sm:group-hover:opacity-100",
+                  : "sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100",
               )}
             >
               <MoreIcon size={15} />
