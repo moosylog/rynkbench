@@ -13,9 +13,12 @@ import {
   ioFeaturesFor,
   makeIo,
   makeWorkbenchReducer,
+  useWorkbench,
 } from "./state";
 import { TopBar } from "./TopBar";
 import { KeymapCenter, KeymapInspector } from "./keymap/KeymapMode";
+import { KeyEditor } from "./keymap/KeyEditor";
+import { useCapabilities } from "./use-capabilities";
 import { LightingMode } from "./lighting/LightingMode";
 import { EffectsMode } from "./effects/EffectsMode";
 import { LiveMode } from "./live/LiveMode";
@@ -72,18 +75,33 @@ function SectionTabs({
   );
 }
 
+/** The keymap, as GLIDE lays it out: the keyboard, the key editor below it.
+ *  Trackpads, encoders and the layer's pointing settings keep a side panel. */
+function KeymapScreen() {
+  const { state } = useWorkbench();
+  const capabilities = useCapabilities();
+  const selected = state.selection?.type;
+  const side = selected === "encoder" || selected === "pointing" || (!selected && capabilities.has("pointing"));
+  return (
+    <>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
+        <KeymapCenter />
+        {selected !== "encoder" && selected !== "pointing" && <KeyEditor />}
+      </div>
+      {side && (
+        <InspectorShell>
+          <KeymapInspector />
+        </InspectorShell>
+      )}
+    </>
+  );
+}
+
 /** One section's screen. */
 function SectionView({ section }: { section: SectionId }) {
   switch (section) {
     case "keymap":
-      return (
-        <>
-          <KeymapCenter />
-          <InspectorShell>
-            <KeymapInspector />
-          </InspectorShell>
-        </>
-      );
+      return <KeymapScreen />;
     case "combos":
     case "morse":
     case "macros":

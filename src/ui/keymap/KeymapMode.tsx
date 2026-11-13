@@ -1,4 +1,5 @@
-// Keymap mode: layer tabs over the canvas; binding editor in the inspector.
+// The keymap: the canvas with its layer heading, the side inspector for
+// trackpads, encoders and pointing; keys are edited in KeyEditor.tsx below.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type {
@@ -748,12 +749,9 @@ export function KeymapInspector() {
           <div className="flex size-12 items-center justify-center rounded-xl border border-line bg-raised text-faint">
             <span className="font-mono text-title">⌨</span>
           </div>
-          <div className="text-ui font-medium text-mute">
-            Select a key or trackpad to edit it
-          </div>
+          <div className="text-ui font-medium text-mute">Trackpads and encoders</div>
           <div className="text-body leading-relaxed text-faint">
-            Click or focus a key or trackpad and press Enter to select it. Switch
-            layers with the tabs above the board.
+            Click a trackpad or encoder to edit it. Keys are edited below the keyboard.
           </div>
         </div>
         <LayerPointing />
