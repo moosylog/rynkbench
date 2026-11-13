@@ -157,6 +157,15 @@ export function SparkleIcon(props: IconProps) {
   );
 }
 
+export function SearchIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="7" cy="7" r="4.3" />
+      <path d="M10.2 10.2 13.5 13.5" />
+    </svg>
+  );
+}
+
 /** Six dots: a handle to drag a row by. */
 export function GripIcon(props: IconProps) {
   return (

@@ -7,7 +7,6 @@ import type { KeyboardModel } from "../../model/keyboard";
 
 import { cx } from "../kit";
 import { boardViewBox } from "./geometry";
-import { UnitsPerPixel } from "./scale";
 
 /* ------------------------------------------------------------------ */
 /* Fit-to-container canvas                                             */
@@ -50,18 +49,6 @@ export function BoardWell({
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const panning = useRef<{ id: number; x: number; y: number; from: { x: number; y: number } } | null>(null);
   const wellRef = useRef<HTMLDivElement>(null);
-  const boardRef = useRef<HTMLDivElement>(null);
-  // The board's fitted width, so legends can be sized in pixels; the zoom then
-  // scales them with the keys, as GLIDE's zoom does.
-  const [boardPx, setBoardPx] = useState(0);
-  useEffect(() => {
-    const board = boardRef.current;
-    if (!board || typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(([entry]) => setBoardPx(entry.contentRect.width));
-    observer.observe(board);
-    return () => observer.disconnect();
-  }, []);
-  const unitsPerPixel = boardPx > 0 ? vb.w / boardPx : 1 / 45;
   // Each step works from the zoom as it is now, so quick clicks all count.
   const zoomBy = (step: number) =>
     setZoom((current) => {
@@ -111,7 +98,6 @@ export function BoardWell({
       onPointerCancel={() => (panning.current = null)}
     >
       <div
-        ref={boardRef}
         className="pointer-events-none absolute left-1/2 top-1/2"
         style={{
           width: `min(95cqw, ${capPx}px, 95cqh * ${ratio.toFixed(4)})`,
@@ -119,9 +105,7 @@ export function BoardWell({
           transform: `translate(-50%, -50%) translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
         }}
       >
-        <div className="pointer-events-auto h-full w-full">
-          <UnitsPerPixel value={unitsPerPixel}>{children}</UnitsPerPixel>
-        </div>
+        <div className="pointer-events-auto h-full w-full">{children}</div>
       </div>
       {top && (
         <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex justify-center">

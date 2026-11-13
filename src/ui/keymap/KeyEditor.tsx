@@ -10,7 +10,6 @@ import { keyActionGlyph, keyActionDescription } from "../labels";
 import { keyAddressLabel, keyPlaceName } from "../key-address";
 import { keyPendingId, useWorkbench } from "../state";
 import { useCapabilities } from "../use-capabilities";
-import { layerName } from "../layer-names";
 
 import { WarningIcon } from "../icons";
 import { showToast } from "../messages/store";
@@ -92,7 +91,7 @@ export function KeyEditor({ height = 310 }: { height?: number }) {
       <EditorHeading
         glyph={glyph.text}
         title={keyPlaceName(addressable)}
-        detail={`Key ${keyAddressLabel(addressable)} · ${layerName(state.layerMetadata, layer)}`}
+        detail={`Key ${keyAddressLabel(addressable).replace("-", " ")}`}
         onDone={() => dispatch({ type: "select", selection: null })}
         doneLabel="Done with this key"
       />

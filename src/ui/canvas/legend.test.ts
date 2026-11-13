@@ -1,22 +1,24 @@
 import { describe, expect, it } from "vitest";
 import { legendLayout, legendLines } from "./legend";
 
-/** A canvas where a key unit is 60 px on screen. */
-const U = 1 / 60;
+/** GLIDE's px sizes at its 70 px key pitch. */
+const px = (size: number) => size * 70;
 
 describe("key legends", () => {
-  it("sizes a symbol, a short word and longer text in GLIDE's pixels", () => {
-    const symbol = legendLayout("W", 1, U);
-    const short = legendLayout("Home", 1, U);
-    const text = legendLayout("Mouse Button", 1.5, U);
+  it("sizes a symbol, a short word and longer text as GLIDE does", () => {
+    const symbol = legendLayout("W", 1);
+    const short = legendLayout("Home", 1);
+    const text = legendLayout("Mouse Button", 1.5);
     expect([symbol.kind, short.kind, text.kind]).toEqual(["symbol", "short", "text"]);
-    expect(symbol.size / U).toBeCloseTo(15);
-    expect(short.size / U).toBeCloseTo(13);
-    expect(text.size / U).toBeCloseTo(11);
+    expect(px(symbol.size)).toBeCloseTo(15);
+    expect(px(short.size)).toBeCloseTo(13);
+    expect(px(text.size)).toBeCloseTo(11);
   });
 
-  it("keeps the same pixel size on a bigger canvas", () => {
-    expect(legendLayout("W", 1, 1 / 90).size * 90).toBeCloseTo(15);
+  it("draws a shifted character on top, and the key's own a little smaller", () => {
+    const two = legendLayout("2", 1, { top: "@" });
+    expect(px(two.topSize)).toBeCloseTo(11.52);
+    expect(px(two.size)).toBeCloseTo(13.44);
   });
 
   it("breaks longer text into two lines where the longer line is shortest", () => {
@@ -27,14 +29,13 @@ describe("key legends", () => {
   });
 
   it("shrinks a legend too wide for its cap, but keeps it readable", () => {
-    const narrow = legendLayout("Backspace", 1, 1 / 30);
-    expect(narrow.size).toBeLessThan((11 / 30));
-    expect(narrow.size).toBeGreaterThanOrEqual(8 / 30);
+    const narrow = legendLayout("Backspace", 0.8);
+    expect(px(narrow.size)).toBeLessThan(11);
+    expect(px(narrow.size)).toBeGreaterThanOrEqual(8);
   });
 
-  it("sizes the line below and the character on top only when there is one", () => {
-    expect(legendLayout("2", 1, U)).toMatchObject({ subSize: 0, topSize: 0 });
-    expect(legendLayout("2", 1, U, { top: "@" }).topSize / U).toBeCloseTo(11);
-    expect(legendLayout("A", 1, U, { sub: "Shift" }).subSize).toBeGreaterThan(0);
+  it("sizes the line below only when there is one", () => {
+    expect(legendLayout("A", 1).subSize).toBe(0);
+    expect(legendLayout("A", 1, { sub: "Shift" }).subSize).toBeGreaterThan(0);
   });
 });

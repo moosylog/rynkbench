@@ -54,13 +54,13 @@ export function EditorPanel({
 }) {
   return (
     <Frame height={height} className="min-h-0 overflow-hidden max-lg:flex-col">
-      <div className="flex w-[340px] shrink-0 flex-col gap-3 overflow-y-auto border-r border-line p-4 max-lg:w-full max-lg:border-r-0 max-lg:border-b">
+      <div className="flex w-[360px] shrink-0 flex-col gap-4 overflow-y-auto border-r border-line p-6 max-lg:w-full max-lg:border-r-0 max-lg:border-b">
         {side}
       </div>
       <div
         role="tablist"
         aria-orientation="vertical"
-        className="flex w-[96px] shrink-0 flex-col gap-1.5 border-r border-line p-2 max-lg:w-full max-lg:flex-row max-lg:overflow-x-auto max-lg:border-r-0 max-lg:border-b"
+        className="flex w-[84px] shrink-0 flex-col gap-2 border-r border-line bg-raised px-2 py-4 max-lg:w-full max-lg:flex-row max-lg:overflow-x-auto max-lg:border-r-0 max-lg:border-b"
       >
         {tabs.map((id) => {
           const { label, Icon } = TABS[id];
@@ -72,7 +72,7 @@ export function EditorPanel({
               aria-selected={tab === id}
               onClick={() => onTab(id)}
               className={cx(
-                "flex shrink-0 cursor-pointer flex-col items-center gap-1 rounded-xl px-1.5 py-2.5 text-center text-small leading-tight font-semibold transition-colors",
+                "flex min-h-[58px] shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-2.5 text-center text-caption leading-tight font-semibold transition-colors",
                 tab === id ? "bg-accent-fill text-on-accent shadow-lg" : "text-mute hover:bg-hover hover:text-ink",
               )}
             >
@@ -82,7 +82,7 @@ export function EditorPanel({
           );
         })}
       </div>
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-4 max-lg:max-h-[420px]">{children}</div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto px-6 pt-4 pb-4 max-lg:max-h-[420px]">{children}</div>
     </Frame>
   );
 }
@@ -102,13 +102,13 @@ export function EditorHeading({
   doneLabel: string;
 }) {
   return (
-    <div className="flex items-start gap-3">
-      <div className="flex h-12 min-w-12 items-center justify-center rounded-lg border-2 border-select bg-cap px-2 font-mono text-title text-cap-ink">
+    <div className="flex items-center gap-2.5">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-md border-2 border-accent px-1 text-title font-bold text-ink">
         {glyph || "·"}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="text-title leading-snug font-semibold text-ink">{title}</div>
-        <div className="text-small text-faint">{detail}</div>
+        <div className="text-ui leading-5 font-semibold text-ink">{title}</div>
+        <div className="text-small leading-4 font-medium text-mute">{detail}</div>
       </div>
       <button
         type="button"

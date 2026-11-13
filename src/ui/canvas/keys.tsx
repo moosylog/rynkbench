@@ -3,7 +3,7 @@
 // ring and label are separate passes (see KeyboardCanvas.tsx), each memoized on
 // the key's decoration.
 
-import { memo, useContext } from "react";
+import { memo } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, SVGProps } from "react";
 import type { Key } from "../../model/keyboard";
 import type { KeyView } from "../../model/keyboard";
@@ -13,7 +13,6 @@ import { same } from "../../model/deep-equal";
 
 import type { KeyDecor } from "./decor";
 import { legendLayout } from "./legend";
-import { UnitsPerPixel } from "./scale";
 import { CORNER, CAP_INSET, CAP_GRADIENT, CAP_RELIEF, CAP_SHADOW, rectAttrs } from "./geometry";
 
 export function CapDefs() {
@@ -303,12 +302,11 @@ function KeyRingImpl({ view, decor }: { view: KeyView; decor: KeyDecor }) {
  * key's legend — "Esc" turning into "sc".
  */
 function KeyLabelImpl({ view, decor }: { view: KeyView; decor: KeyDecor }) {
-  const unitsPerPixel = useContext(UnitsPerPixel);
   const { shape } = view;
   const glyph = decor.glyph;
   if (!glyph?.text) return null;
 
-  const legend = legendLayout(glyph.text, shape.rect.w, unitsPerPixel, { sub: glyph.sub, top: glyph.top });
+  const legend = legendLayout(glyph.text, shape.rect.w, { sub: glyph.sub, top: glyph.top });
   const cx = shape.rect.x;
   const cy = shape.rect.y;
   const block = (legend.lines.length - 1) * legend.size * 1.1;

@@ -1,15 +1,24 @@
 // How a key's legend sits on its cap, by GLIDE's rules (core/keycodes/keyFace.js
-// and the .kc-* sizes in its app.css): a single character reads at 15 px, a
-// word of up to five characters at 13 px (Esc, Home, Enter), longer text at
-// 11 px on up to two lines, broken where the longer line comes out shortest.
-// A key that types another character with Shift shows it small on top (the
-// "@" over "2"). Sizes are pixels on screen, turned into key units with the
-// canvas's scale, and never wider than the cap. Pure.
+// and the .kc-* sizes in its app.css): a single character reads largest, a word
+// of up to five characters a little smaller (Esc, Home, Enter), longer text
+// smaller again on up to two lines, broken where the longer line comes out
+// shortest. A key that types another character with Shift shows it small on
+// top (the "@" over "2") with its own character a little smaller below.
+// GLIDE sizes these in px for its 62 px key and its zoom scales them with the
+// keys, so here they are fractions of the key pitch (GLIDE's is 70 px). Pure.
 
-const PX = { symbol: 15, short: 13, text: 11 } as const;
-const SUB_PX = 9.5;
-const TOP_PX = 11;
-const MIN_PX = 8;
+const PITCH_PX = 70;
+const SIZE = {
+  symbol: 15 / PITCH_PX,
+  short: 13 / PITCH_PX,
+  text: 11 / PITCH_PX,
+  /** The character under a shifted one, and the shifted one on top. */
+  belowTop: 13.44 / PITCH_PX,
+  top: 11.52 / PITCH_PX,
+  /** A hold under the legend. */
+  sub: 9.5 / PITCH_PX,
+} as const;
+const MIN = 8 / PITCH_PX;
 /** Up to this many characters a line reads at the short size. */
 const SHORT = 5;
 /** Room the cap's edge and padding take from its width, in key units. */
@@ -44,16 +53,14 @@ export function legendLines(text: string): string[] {
   return best.map((line) => line.trimEnd());
 }
 
-/** `px` on screen in key units, shrunk until `chars` characters fit the cap. */
-function fit(px: number, chars: number, capWidth: number, unitsPerPixel: number): number {
-  const widest = (capWidth - MARGIN) / (Math.max(1, chars) * GLYPH_WIDTH);
-  return Math.max(MIN_PX * unitsPerPixel, Math.min(px * unitsPerPixel, widest));
+/** `size`, shrunk until `chars` characters fit the cap's width. */
+function fit(size: number, chars: number, capWidth: number): number {
+  return Math.max(MIN, Math.min(size, (capWidth - MARGIN) / (Math.max(1, chars) * GLYPH_WIDTH)));
 }
 
 export function legendLayout(
   text: string,
   capWidth: number,
-  unitsPerPixel: number,
   { sub = "", top = "" }: { sub?: string; top?: string } = {},
 ): LegendLayout {
   const lines = legendLines(text);
@@ -61,8 +68,8 @@ export function legendLayout(
   return {
     kind,
     lines,
-    size: fit(PX[kind], longest(lines), capWidth, unitsPerPixel),
-    subSize: sub ? fit(SUB_PX, width(sub), capWidth, unitsPerPixel) : 0,
-    topSize: top ? fit(TOP_PX, width(top), capWidth, unitsPerPixel) : 0,
+    size: fit(top && kind === "symbol" ? SIZE.belowTop : SIZE[kind], longest(lines), capWidth),
+    subSize: sub ? fit(SIZE.sub, width(sub), capWidth) : 0,
+    topSize: top ? fit(SIZE.top, width(top), capWidth) : 0,
   };
 }

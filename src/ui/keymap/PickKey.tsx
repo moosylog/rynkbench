@@ -12,6 +12,7 @@ import { useWorkbench } from "../state";
 import { layerName } from "../layer-names";
 import { LOCALES, activeLocale, getLocaleId, subscribeLocale } from "../locale";
 import { cx } from "../kit";
+import { SearchIcon } from "../icons";
 
 import { noModifiers } from "../../model/slots";
 
@@ -55,7 +56,7 @@ function TileButton({ tile, onPick }: { tile: Tile; onPick: (tile: Tile) => void
       onClick={() => onPick(tile)}
       title={tile.lilac ? `${tile.label} (needs Shift or AltGr)` : tile.label}
       className={cx(
-        "flex h-12 min-w-12 cursor-pointer items-center justify-center rounded-lg border px-3 text-ui font-semibold transition-all duration-150 hover:-translate-y-px hover:border-line-strong hover:bg-hover hover:shadow-md",
+        "flex h-12 min-w-12 cursor-pointer items-center justify-center rounded-lg border px-3 text-body font-semibold transition-all duration-150 hover:-translate-y-px hover:border-line-strong hover:bg-hover hover:shadow-md",
         tile.lilac ? "border-accent-deep/40 bg-accent-dim/30 text-ink" : "border-line bg-raised text-ink",
       )}
     >
@@ -168,7 +169,7 @@ export function PickKey({ onPick, disabled }: { onPick: (action: Action | "Trans
                 setArmed(next);
               }}
               className={cx(
-                "flex size-11 cursor-pointer items-center justify-center rounded-lg border text-title font-semibold transition-colors",
+                "flex size-12 cursor-pointer items-center justify-center rounded-lg border text-ui font-bold transition-colors",
                 on ? "border-accent bg-accent-dim/40 text-accent" : "border-line bg-raised text-mute hover:text-ink",
               )}
             >
@@ -177,6 +178,7 @@ export function PickKey({ onPick, disabled }: { onPick: (action: Action | "Trans
           );
         })}
         <div className="relative min-w-48 flex-1">
+          <SearchIcon size={15} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-mute" />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -188,7 +190,7 @@ export function PickKey({ onPick, disabled }: { onPick: (action: Action | "Trans
             }}
             placeholder="Search keys, symbols, layers…"
             aria-label="Search keys"
-            className="h-11 w-full rounded-xl border border-line bg-raised px-4 text-ui text-ink placeholder:text-faint focus:border-accent focus:outline-none"
+            className="h-[38px] w-full rounded-xl border border-line-strong bg-hover pr-4 pl-10 text-ui text-ink placeholder:text-mute focus:border-accent focus:outline-none"
           />
           {query.trim() && first && (
             <span className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-caption text-faint">
@@ -197,13 +199,13 @@ export function PickKey({ onPick, disabled }: { onPick: (action: Action | "Trans
           )}
         </div>
       </div>
-      <p className="text-small text-faint">
+      <p className="text-small text-mute">
         {armed.size > 0
           ? `Now click a key: ${modifierSymbols(mods)} goes with it (not with layers or actions).`
           : "For combinations like Shift+A: click a modifier first, then the key."}
       </p>
       {!query.trim() && (
-        <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+        <div className="flex gap-1.5 overflow-x-auto border-b border-line pb-4">
           {groups.main
             .filter((group) => group.chip)
             .map((group) => (
@@ -213,10 +215,10 @@ export function PickKey({ onPick, disabled }: { onPick: (action: Action | "Trans
                 onClick={() => jump(group.id)}
                 aria-current={(inView ?? groups.main[0]?.id) === group.id ? "true" : undefined}
                 className={cx(
-                  "shrink-0 cursor-pointer rounded-full border px-3 py-1 text-body font-semibold transition-colors",
+                  "flex h-6 shrink-0 cursor-pointer items-center rounded-full border px-2.5 text-small font-semibold transition-colors",
                   (inView ?? groups.main[0]?.id) === group.id
                     ? "border-accent bg-accent-fill text-on-accent"
-                    : "border-line text-mute hover:border-line-strong hover:text-ink",
+                    : "border-line-strong bg-hover text-mute hover:text-ink",
                 )}
               >
                 {group.chip}
@@ -233,8 +235,8 @@ export function PickKey({ onPick, disabled }: { onPick: (action: Action | "Trans
             <section key={group.id + group.name} data-group={group.id} className="flex flex-col gap-2">
               <h3
                 className={cx(
-                  "text-caption font-semibold uppercase tracking-widest transition-colors duration-300",
-                  lit === group.id ? "text-accent" : "text-faint",
+                  "text-small font-semibold uppercase tracking-widest transition-colors duration-300",
+                  lit === group.id ? "text-accent" : "text-mute",
                 )}
               >
                 {group.name}

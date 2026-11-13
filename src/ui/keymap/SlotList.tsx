@@ -8,7 +8,7 @@ import { DEFAULT_TAP_HOLD_PROFILE } from "../../model/morse";
 import type { ConnectedBundle } from "../../model/workbench-state";
 import { actionDescription, actionLabel } from "../labels";
 import { cx } from "../kit";
-import { PlusIcon, TrashIcon } from "../icons";
+import { GripIcon, TrashIcon } from "../icons";
 import { morseProfileSummary } from "../morse-profile";
 
 const SLOT_NAME: Record<Slot, string> = { tap: "On Tap", hold: "On Hold", doubleTap: "On Double Tap" };
@@ -44,18 +44,24 @@ function SlotRow({
   return (
     <div
       className={cx(
-        "flex items-center gap-2 rounded-xl border pr-1.5 transition-colors",
-        active ? "border-accent bg-accent-dim/25" : "border-line bg-raised hover:border-line-strong",
+        "flex h-[42px] items-center gap-1.5 rounded-xl border pr-3 transition-colors",
+        active ? "border-accent bg-accent-dim" : "border-line bg-raised hover:border-line-strong",
       )}
     >
       <button
         type="button"
         onClick={onSelect}
         aria-pressed={active}
-        className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 py-2.5 pl-4 text-left"
+        className="flex h-full min-w-0 flex-1 cursor-pointer items-center gap-1.5 pl-3 text-left"
       >
-        <span className="shrink-0 text-ui font-semibold text-ink">{SLOT_NAME[slot]}:</span>
-        <span className={cx("ml-auto truncate font-semibold", empty ? "text-body text-faint" : "text-ui text-ink")}>
+        <GripIcon size={12} className="shrink-0 text-ink opacity-70" />
+        <span className="shrink-0 pl-1.5 text-body font-semibold text-ink">{SLOT_NAME[slot]}:</span>
+        <span
+          className={cx(
+            "ml-auto truncate pr-2 font-semibold",
+            empty ? "text-small text-faint" : "font-mono text-small text-ink",
+          )}
+        >
           {empty ? "Pick an action →" : actionLabel(value) || actionDescription(value)}
         </span>
       </button>
@@ -64,9 +70,9 @@ function SlotRow({
         onClick={onClear}
         aria-label={`Clear ${SLOT_NAME[slot]}`}
         title={CLEAR_HINT[slot]}
-        className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md border border-line text-danger hover:bg-danger-dim/40"
+        className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded border border-accent/15 text-accent hover:bg-accent-dim"
       >
-        <TrashIcon size={12} />
+        <TrashIcon size={14} />
       </button>
     </div>
   );
@@ -135,11 +141,11 @@ export function SlotList({
               onClick={() => onSelect(slot)}
               aria-pressed={active === slot}
               className={cx(
-                "flex cursor-pointer items-center gap-1 rounded-full border border-dashed px-3 py-1 text-body font-semibold transition-colors",
+                "flex cursor-pointer items-center gap-1 rounded-full border border-dashed px-2.5 py-1 text-small leading-4 font-semibold transition-colors",
                 active === slot ? "border-accent text-accent" : "border-line-strong text-ink hover:border-mute",
               )}
             >
-              <PlusIcon size={10} className="text-accent" /> {SLOT_NAME[slot]}
+              <span className="text-accent">+</span> {SLOT_NAME[slot]}
             </button>
           ))}
         </div>
