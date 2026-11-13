@@ -4,6 +4,7 @@
 
 import type { BoardEnrichment } from "../keyboard";
 import { buildMoergoAddresses, type MatrixPosition } from "./moergo";
+import { GLOVE80_GLIDE_CENTERS } from "./glove80-geometry";
 
 export const GLOVE80_ROWS = 6;
 export const GLOVE80_COLS = 14;
@@ -147,8 +148,20 @@ function buildBoardKeys(): Map<number, Glove80Key> {
 /** Logical key index → real placement + LED chain for the mock device. */
 export const GLOVE80_BOARD_KEYS: Map<number, Glove80Key> = buildBoardKeys();
 
+/** GLIDE's drawing of the Glove80, keyed by matrix "row,col". */
+function buildGeometry(): NonNullable<BoardEnrichment["geometry"]> {
+  const geometry: NonNullable<BoardEnrichment["geometry"]> = {};
+  GLOVE80_GRID.forEach((logical, grid) => {
+    if (logical === null) return;
+    const [x, y, r] = GLOVE80_GLIDE_CENTERS[logical];
+    geometry[`${Math.floor(grid / GLOVE80_COLS)},${grid % GLOVE80_COLS}`] = { x, y, r };
+  });
+  return geometry;
+}
+
 export const glove80Enrichment: BoardEnrichment = {
   displayName: "Glove80",
   labels: buildLabels(),
   addresses: GLOVE80_ADDRESSES,
+  geometry: buildGeometry(),
 };

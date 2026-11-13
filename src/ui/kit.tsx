@@ -74,7 +74,7 @@ export function Button({
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant; reason?: string }) {
   const variants: Record<ButtonVariant, string> = {
     primary:
-      "bg-accent text-well font-semibold hover:brightness-110 disabled:opacity-40 disabled:hover:brightness-100 aria-disabled:opacity-40 aria-disabled:hover:brightness-100",
+      "bg-accent-fill text-on-accent font-semibold hover:brightness-110 disabled:opacity-40 disabled:hover:brightness-100 aria-disabled:opacity-40 aria-disabled:hover:brightness-100",
     ghost: "text-mute hover:text-ink hover:bg-hover disabled:opacity-40 aria-disabled:opacity-40 aria-disabled:hover:bg-transparent",
     outline:
       "border border-line text-ink hover:border-line-strong hover:bg-raised disabled:opacity-40 aria-disabled:opacity-40 aria-disabled:hover:bg-transparent",

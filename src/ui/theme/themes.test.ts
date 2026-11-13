@@ -44,8 +44,8 @@ const pairs: { fg: string; on: string[]; min: number }[] = [
   { fg: "warn", on: ["bg", "panel", "raised"], min: 4.5 },
   { fg: "cap-ink", on: ["cap"], min: 4.5 },
   { fg: "cap-ink-dim", on: ["cap"], min: 3 },
-  // Primary buttons set the page background color on the accent.
-  { fg: "bg", on: ["accent"], min: 4.5 },
+  // Primary buttons: on-accent text on the accent fill.
+  { fg: "on-accent", on: ["accent-fill"], min: 4.5 },
 ];
 
 for (const [name, values] of Object.entries(themes)) {

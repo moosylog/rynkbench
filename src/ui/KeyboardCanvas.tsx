@@ -4,8 +4,10 @@
 // layout.rs walk()): rect.x/y is the final visual center and r is clockwise
 // degrees about the main rect's center, matching the model's keyCorners.
 //
-// Rendering is layered board-wide, not per-key: cluster backplates, then cap
-// shapes, then a dedicated label pass. Keys on real boards may abut or even
+// Keys are drawn as GLIDE draws them: a cap with a top-to-bottom gradient, a
+// thin highlight on top, a shadow along the bottom edge and a soft drop shadow,
+// on a dot-grid canvas. Rendering is layered board-wide, not per-key: cap
+// shapes, then rings, then a dedicated label pass. Keys on real boards may abut or even
 // overlap slightly (Glove80 thumb clusters), so labels must never be painted
 // over by a neighbouring cap drawn later.
 
@@ -88,9 +90,37 @@ export interface KeyboardCanvasProps {
   className?: string;
 }
 
-const CORNER = 0.09;
-const CAP_DROP = 0.05; // how far the cap "side" extends below the cap
-const CAP_INSET = 0.03; // gap between abutting caps: drawn cap shrinks inside its 1u cell
+// GLIDE's proportions: a 62 px key on a 70 px pitch, 6 px corners.
+const CORNER = 0.086;
+const CAP_DROP = 0.05; // room below the board for the drop shadow
+const CAP_INSET = 0.057; // half the gap between abutting caps
+
+/** Shared paint servers, defined once per canvas (identical in every canvas,
+ *  so a duplicate id resolves to the same look). */
+const CAP_GRADIENT = "rb-cap-gradient";
+const CAP_RELIEF = "rb-cap-relief";
+const CAP_SHADOW = "rb-cap-shadow";
+
+function CapDefs() {
+  return (
+    <defs>
+      <linearGradient id={CAP_GRADIENT} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style={{ stopColor: "var(--color-cap)" }} />
+        <stop offset="1" style={{ stopColor: "var(--color-cap-low)" }} />
+      </linearGradient>
+      {/* the highlight along the top edge and the shadow along the bottom */}
+      <linearGradient id={CAP_RELIEF} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor="#fff" stopOpacity="0.08" />
+        <stop offset="0.035" stopColor="#fff" stopOpacity="0" />
+        <stop offset="0.94" style={{ stopColor: "var(--color-cap-shadow)" }} stopOpacity="0" />
+        <stop offset="1" style={{ stopColor: "var(--color-cap-shadow)" }} />
+      </linearGradient>
+      <filter id={CAP_SHADOW} x="-20%" y="-20%" width="140%" height="150%">
+        <feDropShadow dx="0" dy="0.043" stdDeviation="0.036" style={{ floodColor: "var(--color-cap-shadow)" }} />
+      </filter>
+    </defs>
+  );
+}
 const VIEW_PAD = 0.42;
 
 /** Board viewBox in key-units (keys + encoders + breathing room). */
@@ -156,164 +186,6 @@ export function BoardWell({
         {children}
       </div>
     </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Cluster backplates                                                  */
-/* ------------------------------------------------------------------ */
-
-interface Box {
-  minX: number;
-  minY: number;
-  maxX: number;
-  maxY: number;
-}
-
-function rotatedCorners(
-  rect: Rect,
-  deg: number,
-  inflate: number,
-  pivotX = rect.x,
-  pivotY = rect.y,
-): Array<[number, number]> {
-  const rad = deg * (Math.PI / 180);
-  const cos = Math.cos(rad);
-  const sin = Math.sin(rad);
-  const out: Array<[number, number]> = [];
-  for (const [sx, sy] of [
-    [-0.5, -0.5],
-    [0.5, -0.5],
-    [0.5, 0.5],
-    [-0.5, 0.5],
-  ] as const) {
-    const dx = rect.x + sx * (rect.w + inflate * 2) - pivotX;
-    const dy = rect.y + sy * (rect.h + inflate * 2) - pivotY;
-    out.push([pivotX + dx * cos - dy * sin, pivotY + dx * sin + dy * cos]);
-  }
-  return out;
-}
-
-function shapeCorners(shape: Key, inflate: number): Array<[number, number]> {
-  const rects = shape.rect2 ? [shape.rect, shape.rect2] : [shape.rect];
-  return rects.flatMap((r) =>
-    rotatedCorners(r, shape.r, inflate, shape.rect.x, shape.rect.y),
-  );
-}
-
-function boxOf(corners: Array<[number, number]>): Box {
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  for (const [x, y] of corners) {
-    minX = Math.min(minX, x);
-    minY = Math.min(minY, y);
-    maxX = Math.max(maxX, x);
-    maxY = Math.max(maxY, y);
-  }
-  return { minX, minY, maxX, maxY };
-}
-
-function boxesTouch(a: Box, b: Box): boolean {
-  return (
-    a.minX <= b.maxX && b.minX <= a.maxX && a.minY <= b.maxY && b.minY <= a.maxY
-  );
-}
-
-/** Andrew's monotone-chain convex hull. */
-function convexHull(points: Array<[number, number]>): Array<[number, number]> {
-  const pts = [...points].sort((p, q) => p[0] - q[0] || p[1] - q[1]);
-  if (pts.length <= 2) return pts;
-  const cross = (
-    o: [number, number],
-    a: [number, number],
-    b: [number, number],
-  ) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
-  const lower: Array<[number, number]> = [];
-  for (const p of pts) {
-    while (
-      lower.length >= 2 &&
-      cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0
-    )
-      lower.pop();
-    lower.push(p);
-  }
-  const upper: Array<[number, number]> = [];
-  for (let i = pts.length - 1; i >= 0; i--) {
-    const p = pts[i];
-    while (
-      upper.length >= 2 &&
-      cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0
-    )
-      upper.pop();
-    upper.push(p);
-  }
-  lower.pop();
-  upper.pop();
-  return lower.concat(upper);
-}
-
-/**
- * Group keys (and encoders) into spatially connected clusters and return a
- * convex-hull outline per cluster. This is deliberately board-agnostic: split
- * halves — including their thumb clusters — read as one plate because they
- * are physically contiguous, while the gap between halves keeps them apart.
- */
-function computePlates(model: KeyboardModel): string[] {
-  // Connect anything whose inflated bounding boxes touch (gaps < ~0.9u).
-  const CONNECT_INFLATE = 0.45;
-  const HULL_INFLATE = 0.18;
-
-  interface Item {
-    box: Box;
-    hullCorners: Array<[number, number]>;
-  }
-  const items: Item[] = [];
-  for (const key of model.keys) {
-    items.push({
-      box: boxOf(shapeCorners(key.shape, CONNECT_INFLATE)),
-      hullCorners: shapeCorners(key.shape, HULL_INFLATE),
-    });
-  }
-  for (const enc of model.encoders) {
-    const rect: Rect = { x: enc.x, y: enc.y, w: 0.95, h: 0.95 };
-    items.push({
-      box: boxOf(rotatedCorners(rect, 0, CONNECT_INFLATE)),
-      hullCorners: rotatedCorners(rect, 0, HULL_INFLATE),
-    });
-  }
-  if (items.length === 0) return [];
-
-  // Union-find over touching boxes.
-  const parent = items.map((_, i) => i);
-  const find = (i: number): number => {
-    while (parent[i] !== i) {
-      parent[i] = parent[parent[i]];
-      i = parent[i];
-    }
-    return i;
-  };
-  for (let i = 0; i < items.length; i++) {
-    for (let j = i + 1; j < items.length; j++) {
-      if (boxesTouch(items[i].box, items[j].box)) {
-        parent[find(i)] = find(j);
-      }
-    }
-  }
-
-  const clusters = new Map<number, Array<[number, number]>>();
-  items.forEach((item, i) => {
-    const root = find(i);
-    const arr = clusters.get(root) ?? [];
-    arr.push(...item.hullCorners);
-    clusters.set(root, arr);
-  });
-
-  return [...clusters.values()].map((corners) =>
-    convexHull(corners)
-      .map(([x, y]) => `${x.toFixed(3)},${y.toFixed(3)}`)
-      .join(" "),
   );
 }
 
@@ -423,7 +295,7 @@ function KeyShapeImpl({
 
   const hoverTitle = keyHoverTitle({ ...view, label: decor.glyph?.text ?? view.label });
 
-  const capFill = decor.fill ?? decor.backgroundFill ?? "var(--color-cap)";
+  const capFill = decor.fill ?? decor.backgroundFill ?? `url(#${CAP_GRADIENT})`;
 
   const anim = decor.fillAnim;
   const fillStyle = anim
@@ -474,30 +346,8 @@ function KeyShapeImpl({
           transform: decor.selected ? "translateY(-0.045px)" : undefined,
         }}
       >
-        {/* cap side (depth) */}
-        <KeyRects
-          shape={shape}
-          inset={CAP_INSET}
-          dy={CAP_DROP}
-          fill="var(--color-cap-side)"
-        />
-        {/* outline pass (drawn under the fill pass so unions stay clean) */}
-        <KeyRects
-          shape={shape}
-          inset={CAP_INSET}
-          fill="none"
-          stroke={
-            decor.error
-              ? "var(--color-danger)"
-              : decor.staged
-                ? "var(--color-accent-deep)"
-                : "var(--color-cap-edge)"
-          }
-          strokeWidth={decor.staged || decor.error ? 0.05 : 0.028}
-          strokeDasharray={
-            decor.staged && !decor.error ? "0.1 0.07" : undefined
-          }
-        />
+        {/* drop shadow */}
+        <KeyRects shape={shape} inset={CAP_INSET} fill="var(--color-cap-low)" filter={`url(#${CAP_SHADOW})`} />
         {/* Lighting is deliberately a flat color swatch. Effect timing, when
             present, animates the whole swatch rather than simulating a diode. */}
         <g
@@ -513,6 +363,26 @@ function KeyShapeImpl({
           />
         </g>
 
+        {/* relief: top highlight, bottom shadow */}
+        <KeyRects shape={shape} inset={CAP_INSET} fill={`url(#${CAP_RELIEF})`} style={{ pointerEvents: "none" }} />
+        {/* edge */}
+        <KeyRects
+          shape={shape}
+          inset={CAP_INSET}
+          fill="none"
+          className="key-edge"
+          stroke={
+            decor.error
+              ? "var(--color-danger)"
+              : decor.staged
+                ? "var(--color-accent-deep)"
+                : "var(--color-cap-edge)"
+          }
+          strokeWidth={decor.staged || decor.error ? 0.05 : 0.016}
+          strokeDasharray={
+            decor.staged && !decor.error ? "0.1 0.07" : undefined
+          }
+        />
         {/* pending / error status dot */}
         {(decor.pending || decor.error) && (
           <circle
@@ -556,7 +426,7 @@ function KeyRingImpl({ view, decor }: { view: KeyView; decor: KeyDecor }) {
             inset={CAP_INSET - 0.035}
             rx={0.13}
             fill="none"
-            stroke="var(--color-accent)"
+            stroke="var(--color-select)"
             strokeOpacity={decor.inSelection ? 0.9 : 0.5}
             strokeWidth={0.04}
           />
@@ -569,7 +439,7 @@ function KeyRingImpl({ view, decor }: { view: KeyView; decor: KeyDecor }) {
               inset={CAP_INSET - 0.09}
               rx={0.16}
               fill="none"
-              stroke="var(--color-accent)"
+              stroke="var(--color-select)"
               strokeOpacity={0.22}
               strokeWidth={0.13}
             />
@@ -578,7 +448,7 @@ function KeyRingImpl({ view, decor }: { view: KeyView; decor: KeyDecor }) {
               inset={CAP_INSET - 0.06}
               rx={0.14}
               fill="none"
-              stroke="var(--color-accent)"
+              stroke="var(--color-select)"
               strokeWidth={0.045}
             />
           </>
@@ -868,7 +738,6 @@ export function KeyboardCanvas({
 }: KeyboardCanvasProps) {
   const vb = boardViewBox(model);
   const viewBox = `${vb.x} ${vb.y} ${vb.w} ${vb.h}`;
-  const plates = useMemo(() => computePlates(model), [model]);
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<{
     pointerId: number;
@@ -969,20 +838,7 @@ export function KeyboardCanvas({
       onPointerUp={(ev) => finishDrag(ev.pointerId, false)}
       onPointerCancel={(ev) => finishDrag(ev.pointerId, true)}
     >
-      {/* faint backplates: each physically connected cluster (a split half
-          together with its thumbs) reads as one piece, statically */}
-      <g aria-hidden style={{ pointerEvents: "none" }}>
-        {plates.map((points, i) => (
-          <polygon
-            key={i}
-            points={points}
-            fill="var(--color-plate)"
-            stroke="var(--color-plate)"
-            strokeWidth={0.5}
-            strokeLinejoin="round"
-          />
-        ))}
-      </g>
+      <CapDefs />
 
       {decorated.map(({ key, decor }) => (
         <KeyShape
