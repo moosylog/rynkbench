@@ -960,11 +960,6 @@ export interface WorkbenchIo {
   /** Write every staged batch edit to the keyboard in one pass. Writes that
    *  fail stay staged, so apply can simply be retried. */
   applyBatch(): Promise<IoWriteResult>;
-  moveKey(
-    layer: number,
-    source: { row: number; col: number },
-    destination: { row: number; col: number },
-  ): Promise<IoWriteResult>;
   loadEncoder(layer: number, id: number): void;
   setEncoder(layer: number, id: number, action: EncoderAction): void;
   setDefaultLayer(layer: number): void;
@@ -1481,41 +1476,6 @@ export function makeIo(
           : null;
       dispatch({ type: "batchApplyDone", error: message });
       return message ? { ok: false, message } : { ok: true };
-    },
-    async moveKey(layer, source, destination) {
-      if (source.row === destination.row && source.col === destination.col) return { ok: true };
-      const state = getState();
-      const sourcePending = state.pending[keyPendingId(layer, source.row, source.col)];
-      const destinationPending = state.pending[
-        keyPendingId(layer, destination.row, destination.col)
-      ];
-      if (sourcePending?.status === "pending" || destinationPending?.status === "pending") {
-        return { ok: false, message: "Wait for both key writes to finish before moving." };
-      }
-
-      const action = state.layers[layer]?.[source.row * cols + source.col];
-      if (action === undefined || action === "No") {
-        return { ok: false, message: "The source key has no binding to move." };
-      }
-
-      // Land the binding before clearing its source. A destination failure
-      // therefore rolls back normally without ever losing the original.
-      const destinationResult = await setKey(
-        layer,
-        destination.row,
-        destination.col,
-        action,
-      );
-      if (!destinationResult.ok) return destinationResult;
-
-      const sourceResult = await setKey(layer, source.row, source.col, "No");
-      if (!sourceResult.ok) {
-        return {
-          ok: false,
-          message: `The binding was copied, but its source could not be cleared: ${sourceResult.message}`,
-        };
-      }
-      return { ok: true };
     },
     loadEncoder(layer, id) {
       session.keymap.getEncoder(id, layer).then(

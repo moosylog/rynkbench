@@ -39,7 +39,7 @@ export interface KeyboardCanvasProps {
   onKeyHover?: (key: KeyView | null) => void;
   onKeyKeyboardActivate?: (key: KeyView, ev: ReactKeyboardEvent) => void;
   onKeyFocus?: (key: KeyView) => void;
-  /** Pointer drag gesture. Callers define the operation (keymap uses move). */
+  /** Pointer drag gesture. Callers define the operation (the keymap swaps). */
   onKeyDrop?: (source: KeyView, destination: KeyView) => void;
   onKeyDragChange?: (
     source: KeyView | null,
@@ -168,7 +168,10 @@ export function KeyboardCanvas({
         ) {
           return;
         }
-        drag.started = true;
+        if (!drag.started) {
+          drag.started = true;
+          onKeyDragChange?.(drag.source, null);
+        }
         ev.preventDefault();
         const candidate = keyAtPoint(ev.clientX, ev.clientY);
         const destination =

@@ -152,7 +152,7 @@ function KeyShapeImpl({
       data-key-row={view.row}
       data-key-col={view.col}
       transform={`rotate(${deg} ${cx0} ${cy0})`}
-      opacity={decor.disabled ? 0.38 : 1}
+      opacity={decor.lifted ? 0.35 : decor.disabled ? 0.38 : 1}
       role={keyboardInteractive ? "button" : undefined}
       tabIndex={keyboardInteractive ? 0 : undefined}
       aria-label={decor.ariaLabel ?? hoverTitle}
@@ -258,7 +258,7 @@ function KeyRingImpl({ view, decor }: { view: KeyView; decor: KeyDecor }) {
   return (
     <g
       transform={`rotate(${shape.r} ${shape.rect.x} ${shape.rect.y})`}
-      opacity={decor.disabled ? 0.38 : 1}
+      opacity={decor.lifted ? 0.35 : decor.disabled ? 0.38 : 1}
       style={{ pointerEvents: "none" }}
     >
       <g
@@ -324,7 +324,7 @@ function KeyLabelImpl({ view, decor }: { view: KeyView; decor: KeyDecor }) {
   return (
     <g
       transform={`rotate(${deg} ${cxc} ${cyc})`}
-      opacity={decor.disabled ? 0.38 : 1}
+      opacity={decor.lifted ? 0.35 : decor.disabled ? 0.38 : 1}
       style={{ pointerEvents: "none", userSelect: "none" }}
     >
       <g

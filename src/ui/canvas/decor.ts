@@ -21,8 +21,10 @@ export interface KeyDecor {
   selected?: boolean;
   pending?: boolean;
   error?: boolean;
-  /** Zone-hover emphasis. */
+  /** Zone-hover emphasis; on the keymap, where a dragged key will land. */
   highlight?: boolean;
+  /** The key being carried away by a drag or a keyboard move: drawn faded. */
+  lifted?: boolean;
   /** Member of the current bulk selection. */
   inSelection?: boolean;
   /** Not paintable / not interactive right now. */

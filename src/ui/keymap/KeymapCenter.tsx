@@ -26,6 +26,8 @@ import { targetPreviewEffects } from "../lighting/preview";
 import { RowMenu, type MenuEntry } from "../RowMenu";
 import { KeyHoverCard } from "./KeyHoverCard";
 import { CanvasPill } from "./CanvasPill";
+import { CarriedKey } from "./CarriedKey";
+import { useKeyMoves } from "./useKeyMoves";
 import { cx } from "../kit";
 import { LightingIcon } from "../icons";
 import { useKeyClipboard } from "./useKeyClipboard";
@@ -44,19 +46,8 @@ export function KeymapCenter() {
   const layer = state.layers[state.uiLayer];
   const layerLightingAvailable = capabilities.has("lighting.scenes") || capabilities.has("lighting.compiled");
   const [showLighting, setShowLighting] = useState(true);
-  const [drag, setDrag] = useState<{
-    source: KeyView;
-    destination: KeyView | null;
-  } | null>(null);
-  const [keyboardMove, setKeyboardMove] = useState<{
-    layer: number;
-    source: KeyView;
-    destination: KeyView | null;
-  } | null>(null);
-  const [manipulationMessage, setManipulationMessage] = useState<string | null>(
-    null,
-  );
-  const dragLayerRef = useRef<number | null>(null);
+  const moves = useKeyMoves();
+  const { drag, keyboardMove } = moves;
   const [keyMenu, setKeyMenu] = useState<{ x: number; y: number; key: KeyView } | null>(null);
   const [hovered, setHovered] = useState<KeyView | null>(null);
   const latestStateRef = useRef(state);
@@ -74,117 +65,11 @@ export function KeymapCenter() {
       (entry) => entry.layer === state.uiLayer && entry.device_id === deviceId,
     )?.mode ?? pointingDevices.find((entry) => entry.device_id === deviceId)?.mode;
 
-  useEffect(() => {
-    if (
-      dragLayerRef.current !== null &&
-      dragLayerRef.current !== state.uiLayer
-    ) {
-      setManipulationMessage(
-        "Move cancelled because the selected layer changed.",
-      );
-    }
-    dragLayerRef.current = null;
-    setDrag(null);
-    setKeyboardMove(null);
-  }, [state.uiLayer]);
-
-  const runClipboard = useKeyClipboard(latestStateRef, setManipulationMessage);
-
-  const dropKey = (
-    source: KeyView,
-    destination: KeyView,
-    selectedLayer: number,
-  ) => {
-    if (selectedLayer !== state.uiLayer) {
-      setManipulationMessage(
-        "Move cancelled because the selected layer changed.",
-      );
-      return;
-    }
-    const sourceAction =
-      state.layers[selectedLayer]?.[source.row * cols + source.col];
-    if (sourceAction === undefined || sourceAction === "No") {
-      setManipulationMessage("That key has no binding to move.");
-      return;
-    }
-    if (
-      state.pending[keyPendingId(selectedLayer, source.row, source.col)]
-        ?.status === "pending" ||
-      state.pending[
-        keyPendingId(selectedLayer, destination.row, destination.col)
-      ]?.status === "pending"
-    ) {
-      setManipulationMessage(
-        "Wait for both keys' current writes to finish before moving.",
-      );
-      return;
-    }
-
-    dispatch({
-      type: "select",
-      selection: { type: "key", row: destination.row, col: destination.col },
-    });
-    void io.moveKey(selectedLayer, source, destination).then((result) => {
-      setManipulationMessage(
-        result.ok
-          ? `Moved ${keyActionDescription(sourceAction)} to Layer ${selectedLayer}, r${destination.row} c${destination.col}.`
-          : `Move incomplete: ${result.message}`,
-      );
-    });
-  };
+  const runClipboard = useKeyClipboard(latestStateRef, moves.setMessage);
 
   const keyboardActivateKey = (key: KeyView, event: React.KeyboardEvent) => {
-    if (event.key === "Escape") {
-      if (keyboardMove) {
-        setKeyboardMove(null);
-        setManipulationMessage("Keyboard move cancelled.");
-      }
-      return;
-    }
-    if (event.key === "Enter") {
-      dispatch({
-        type: "select",
-        selection: { type: "key", row: key.row, col: key.col },
-      });
-      return;
-    }
-
-    if (!keyboardMove) {
-      const action = layer?.[key.row * cols + key.col];
-      const pending =
-        state.pending[keyPendingId(state.uiLayer, key.row, key.col)];
-      if (action === undefined || action === "No") {
-        setManipulationMessage("That key has no binding to move.");
-        return;
-      }
-      if (pending?.status === "pending") {
-        setManipulationMessage(
-          "Wait for that key's current write to finish before moving.",
-        );
-        return;
-      }
-      dispatch({
-        type: "select",
-        selection: { type: "key", row: key.row, col: key.col },
-      });
-      setKeyboardMove({ layer: state.uiLayer, source: key, destination: null });
-      setManipulationMessage(
-        `Picked up ${keyActionDescription(action)}. Tab to a destination and press Space to move it, or Escape to cancel.`,
-      );
-      return;
-    }
-
-    if (
-      keyboardMove.source.row === key.row &&
-      keyboardMove.source.col === key.col
-    ) {
-      setKeyboardMove(null);
-      setManipulationMessage("Keyboard move cancelled.");
-      return;
-    }
-    const { layer: moveLayer, source } = keyboardMove;
-    setKeyboardMove(null);
-    dropKey(source, key, moveLayer);
+    if (event.key === "Enter") dispatch({ type: "select", selection: { type: "key", row: key.row, col: key.col } });
+    else moves.keyboardStep(key, event);
   };
 
   // The layer's staged scene, previewed under the legends so bindings and
@@ -232,14 +117,13 @@ export function KeymapCenter() {
     const moveDestination = drag?.destination ?? keyboardMove?.destination;
     const dropTarget =
       moveDestination?.row === key.row && moveDestination.col === key.col;
+    const source = drag?.source ?? keyboardMove?.source;
+    const lifted = source?.row === key.row && source.col === key.col;
     const keyboardMoveHint = keyboardMove
-      ? keyboardMove.source.row === key.row &&
-        keyboardMove.source.col === key.col
-        ? " Move source; press Space to cancel."
-        : " Press Space to move here and replace this binding."
-      : action === undefined || action === "No"
-        ? " No binding to move."
-        : " Press Space to pick up this binding for a keyboard move.";
+      ? lifted
+        ? " Picked up; press Space to put it back."
+        : " Press Space to swap it with this key."
+      : " Press Space to pick it up and swap it with another key.";
     return {
       glyph,
       ariaLabel: `Layer ${state.uiLayer}, row ${key.row}, column ${key.col}: ${
@@ -250,6 +134,7 @@ export function KeymapCenter() {
         : "Enter Space Escape",
       selected,
       highlight: dropTarget,
+      lifted,
       pending: pending?.status === "pending",
       error: pending?.status === "error",
       fill: sceneEffect ? effectColor(sceneEffect) : undefined,
@@ -258,14 +143,6 @@ export function KeymapCenter() {
         stagedBinding ||
         (key.ledId !== undefined && (sceneStaged?.has(key.ledId) ?? false)),
     };
-  };
-
-  /** What a drag or keyboard move under way will do, for the canvas pill. */
-  const moveStatus = (): string | null => {
-    const at = (key: { row: number; col: number }) => keyActionDescription(layer?.[key.row * cols + key.col] ?? "No");
-    if (drag?.destination) return `Release to move ${at(drag.source)} here, replacing ${at(drag.destination)}`;
-    if (keyboardMove?.destination) return `Press Space to move here, replacing ${at(keyboardMove.destination)}`;
-    return null;
   };
 
   // The key's quick menu, as in GLIDE: what it is, then copy, paste and clear.
@@ -291,7 +168,7 @@ export function KeymapCenter() {
       <BoardWell
         model={bundle.model}
         flush
-        top={<CanvasPill message={moveStatus() ?? manipulationMessage} />}
+        top={<CanvasPill message={moves.status() ?? moves.message} />}
         tools={
           <>
             {hovered && !drag && <KeyHoverCard keyView={hovered} />}
@@ -350,56 +227,15 @@ export function KeymapCenter() {
             );
           }}
           onKeyHover={setHovered}
-          onKeyPointerDown={(key, event) => {
-            const action = layer?.[key.row * cols + key.col];
-            if (
-              event.button === 0 &&
-              action !== undefined &&
-              action !== "No" &&
-              state.pending[keyPendingId(state.uiLayer, key.row, key.col)]
-                ?.status !== "pending"
-            ) {
-              dragLayerRef.current = state.uiLayer;
-            }
-            setKeyboardMove(null);
-            dispatch({
-              type: "select",
-              selection: { type: "key", row: key.row, col: key.col },
-            });
+          onKeyPointerDown={(key) => {
+            moves.cancelKeyboardMove();
+            dispatch({ type: "select", selection: { type: "key", row: key.row, col: key.col } });
           }}
           onKeyKeyboardActivate={keyboardActivateKey}
-          onKeyFocus={(key) => {
-            if (!keyboardMove) return;
-            const destination =
-              keyboardMove.source.row === key.row &&
-              keyboardMove.source.col === key.col
-                ? null
-                : key;
-            setKeyboardMove({ ...keyboardMove, destination });
-          }}
-          onKeyDragChange={(source, destination) => {
-            setDrag(source ? { source, destination } : null);
-            if (!source) dragLayerRef.current = null;
-          }}
-          keyDraggable={(key) => {
-            const action = layer?.[key.row * cols + key.col];
-            return (
-              action !== undefined &&
-              action !== "No" &&
-              state.pending[keyPendingId(state.uiLayer, key.row, key.col)]
-                ?.status !== "pending"
-            );
-          }}
-          onKeyDrop={(source, destination) => {
-            const dragLayer = dragLayerRef.current;
-            if (dragLayer === null) {
-              setManipulationMessage(
-                "Move cancelled because its source layer is unavailable.",
-              );
-              return;
-            }
-            dropKey(source, destination, dragLayer);
-          }}
+          onKeyFocus={moves.keyboardFocus}
+          onKeyDragChange={moves.dragChange}
+          keyDraggable={(key) => state.pending[keyPendingId(state.uiLayer, key.row, key.col)]?.status !== "pending"}
+          onKeyDrop={moves.dragDrop}
           onEncoderPointerDown={(enc) =>
             dispatch({
               type: "select",
@@ -413,11 +249,18 @@ export function KeymapCenter() {
             })
           }
           onBackgroundPointerDown={() => {
-            setKeyboardMove(null);
+            moves.cancelKeyboardMove();
             dispatch({ type: "select", selection: null });
           }}
         />
       </BoardWell>
+      {drag && moves.carry && (
+        <CarriedKey
+          carry={moves.carry}
+          glyph={keyActionGlyph(layer?.[drag.source.row * cols + drag.source.col] ?? "No", state.morse)}
+          over={drag.destination !== null}
+        />
+      )}
       {keyMenu && (
         <RowMenu
           x={keyMenu.x}
