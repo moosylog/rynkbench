@@ -1,82 +1,40 @@
 // The key editor, below the keyboard, as in GLIDE. Left: which key it is and
-// its actions as slots (On Tap, and On Hold, which makes it a tap-hold). Right:
+// its actions as slots (On Tap; On Hold, a tap-hold; On Double Tap, a morse
+// entry of its own, written by model/key-slots' plan). Right:
 // the tabs that fill the active slot — Pick Key (search, quick links, every key
 // in groups, modifiers), Switch Layer, Lighting, and Every action (the full
 // editor, for macros, morse patterns and the rest).
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import type { Action, KeyAction } from "../../model/action-types";
-import { keyActionGlyph, keyActionDescription, actionDescription } from "../labels";
+import { keyActionGlyph, keyActionDescription } from "../labels";
 import { keyAddressLabel, matrixKeyLabel } from "../key-address";
 import { keyPendingId, useWorkbench } from "../state";
 import { useCapabilities } from "../use-capabilities";
 import { layerName } from "../layer-names";
 
-import { cx, SectionLabel } from "../kit";
-import { CloseIcon, PlusIcon, WarningIcon } from "../icons";
-import { slotsOf, withProfile, withSlot, withoutSlot, type Slot } from "../../model/key-slots";
-import { DEFAULT_TAP_HOLD_PROFILE } from "../../model/morse";
-import { morseProfileSummary } from "../morse-profile";
+import { cx } from "../kit";
+import { CloseIcon, WarningIcon } from "../icons";
+import { showToast } from "../messages/store";
+import {
+  morseUses,
+  planSlotWrites,
+  putSlot,
+  slotsOf,
+  withProfile,
+  type Slot,
+  type SlotValues,
+} from "../../model/key-slots";
 
 import { ActionEditor } from "./ActionEditor";
 import { LayerLighting } from "./LayerLighting";
 
 import { PickKey } from "./PickKey";
+import { SlotList } from "./SlotList";
 import { SwitchLayer, type LayerKind } from "./SwitchLayer";
 
 type Tab = "pick" | "layer" | "lighting" | "all";
-
-const SLOT_NAME: Record<Slot, string> = { tap: "On Tap", hold: "On Hold" };
-
-/* ------------------------------------------------------------------ */
-/* The panel                                                           */
-/* ------------------------------------------------------------------ */
-
-function SlotRow({
-  slot,
-  value,
-  active,
-  onSelect,
-  onClear,
-}: {
-  slot: Slot;
-  value: Action;
-  active: boolean;
-  onSelect: () => void;
-  onClear: () => void;
-}) {
-  const empty = value === "No";
-  return (
-    <div className="flex flex-col gap-1">
-      <SectionLabel>{SLOT_NAME[slot]}</SectionLabel>
-      <div className="flex items-center gap-1.5">
-        <button
-          type="button"
-          onClick={onSelect}
-          aria-pressed={active}
-          className={cx(
-            "flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-left transition-colors",
-            active ? "border-accent bg-accent-dim/25" : "border-line bg-raised hover:border-line-strong",
-          )}
-        >
-          <span className={cx("truncate text-body font-semibold", empty ? "text-faint" : "text-ink")}>
-            {empty ? "Pick an action →" : actionDescription(value)}
-          </span>
-        </button>
-        <button
-          type="button"
-          onClick={onClear}
-          aria-label={`Clear ${SLOT_NAME[slot]}`}
-          title={slot === "hold" ? "Remove the hold: a plain key again" : "Clear the tap"}
-          className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-faint hover:bg-hover hover:text-ink"
-        >
-          <CloseIcon size={11} />
-        </button>
-      </div>
-    </div>
-  );
-}
 
 export function KeyEditor({ height = 310 }: { height?: number }) {
   const { bundle, state, dispatch, io } = useWorkbench();
@@ -86,6 +44,7 @@ export function KeyEditor({ height = 310 }: { height?: number }) {
   const selection = state.selection?.type === "key" ? state.selection : null;
   const selectionId = selection ? `${state.uiLayer}:${selection.row}:${selection.col}` : null;
   useEffect(() => setSlot("tap"), [selectionId]);
+  const uses = useMemo(() => morseUses(state.layers), [state.layers]);
 
   const tabs: Array<{ id: Tab; label: string }> = [
     { id: "pick", label: "Pick Key" },
@@ -115,20 +74,31 @@ export function KeyEditor({ height = 310 }: { height?: number }) {
   const staged = state.stagedKeys[keyPendingId(layer, row, col)];
   const key = bundle.model.keys.find((candidate) => candidate.row === row && candidate.col === col);
   const addressable = key ?? { row, col };
-  const slots = slotsOf(action);
+  const slots = slotsOf(action, state.morse);
   const commit = (next: KeyAction) => io.setKey(layer, row, col, next);
-  const fill = (value: Action | "Transparent") => {
-    if (value === "Transparent") commit("Transparent");
-    else commit(withSlot(action, slot, value));
+  /** Writes the morse entry (when the plan has one) before the key, and stops at the first failure. */
+  const apply = async (next: SlotValues | "Transparent") => {
+    const writes = planSlotWrites(action, next, state.morse, uses);
+    if (!writes) {
+      showToast("No double tap added: every morse entry is in use", { tone: "danger" });
+      return;
+    }
+    for (const write of writes) {
+      const result =
+        write.kind === "morse" ? await io.setSlot("morse", write.index, write.entry) : await commit(write.binding);
+      if (!result.ok) return;
+    }
   };
+  const put = (target: Slot, value: Action | null) => apply(putSlot(slots, target, value));
+  const fill = (value: Action | "Transparent") => (value === "Transparent" ? apply("Transparent") : put(slot, value));
   const pickLayer = (kind: LayerKind, target: number) => {
     if (kind === "HoldTap") {
-      commit(withSlot(action, "hold", { LayerOn: target } as Action));
+      void put("hold", { LayerOn: target } as Action);
       setSlot("tap");
       setTab("pick");
       return;
     }
-    fill({ [kind]: target } as unknown as Action);
+    void fill({ [kind]: target } as unknown as Action);
   };
   const glyph = keyActionGlyph(action);
 
@@ -161,60 +131,18 @@ export function KeyEditor({ height = 310 }: { height?: number }) {
         </div>
 
         {slots.kind === "slots" ? (
-          <>
-            <SlotRow
-              slot="tap"
-              value={slots.tap}
-              active={slot === "tap"}
-              onSelect={() => setSlot("tap")}
-              onClear={() => commit(withoutSlot(action, "tap"))}
-            />
-            {slots.hold !== null ? (
-              <>
-                <SlotRow
-                  slot="hold"
-                  value={slots.hold}
-                  active={slot === "hold"}
-                  onSelect={() => setSlot("hold")}
-                  onClear={() => {
-                    setSlot("tap");
-                    commit(withoutSlot(action, "hold"));
-                  }}
-                />
-                <label className="flex flex-col gap-1 text-small text-faint">
-                  Hold timing
-                  <select
-                    value={slots.profile}
-                    onChange={(event) => commit(withProfile(action, Number(event.target.value)))}
-                    className="rounded-lg border border-line bg-raised px-2 py-1.5 text-body text-ink"
-                  >
-                    <option value={DEFAULT_TAP_HOLD_PROFILE}>The keyboard's default</option>
-                    {state.morseProfiles.map((entry) => (
-                      <option key={entry.index} value={entry.index}>
-                        {entry.name} · {morseProfileSummary(entry.profile)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </>
-            ) : (
-              <div className="flex flex-wrap gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setSlot("hold")}
-                  className={cx(
-                    "flex cursor-pointer items-center gap-1.5 rounded-full border border-dashed px-3 py-1 text-small font-semibold transition-colors",
-                    slot === "hold" ? "border-accent text-accent" : "border-line-strong text-mute hover:text-ink",
-                  )}
-                >
-                  <PlusIcon size={10} /> On Hold
-                </button>
-              </div>
-            )}
-            {slot === "hold" && slots.hold === null && (
-              <p className="text-small text-accent">Pick what the key does when held →</p>
-            )}
-          </>
+          <SlotList
+            slots={slots}
+            active={slot}
+            offerDoubleTap={capabilities.has("keys.doubleTap")}
+            profiles={state.morseProfiles}
+            onSelect={setSlot}
+            onClear={(target) => {
+              if (target !== "tap") setSlot("tap");
+              void put(target, null);
+            }}
+            onProfile={(profile) => commit(withProfile(action, profile))}
+          />
         ) : (
           <p className="text-body leading-relaxed text-mute">
             {slots.kind === "transparent"

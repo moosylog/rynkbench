@@ -9,6 +9,7 @@ const none: FactSource = {
   pointingConfig: null,
   lightingState: null,
   lightingOutputMode: null,
+  caps: { max_morse: 0, max_patterns_per_key: 0 },
 };
 
 describe("firmwareFactsOf", () => {
@@ -21,6 +22,8 @@ describe("firmwareFactsOf", () => {
       extensionEffects: false,
       pointing: false,
       outputMode: false,
+      morseSlots: 0,
+      morsePatterns: 0,
     });
   });
 
@@ -63,6 +66,8 @@ describe("resolveCapabilities", () => {
       extensionEffects: true,
       pointing: true,
       outputMode: true,
+      morseSlots: 32,
+      morsePatterns: 8,
     });
     expect(set.get("lighting.scenes")).toEqual({ id: "lighting.scenes", slots: 16, reach: "device", readOnly: false });
     expect(set.get("lighting.rules")).toEqual({ id: "lighting.rules", slots: 24, reach: "device", readOnly: false });
@@ -71,7 +76,15 @@ describe("resolveCapabilities", () => {
     expect(set.has("lighting.extension")).toBe(true);
     expect(set.has("lighting.output")).toBe(true);
     expect(set.has("pointing")).toBe(true);
-    expect(set.list()).toHaveLength(7);
+    expect(set.get("keys.doubleTap")).toEqual({ id: "keys.doubleTap", slots: 32, reach: "device", readOnly: false });
+    expect(set.list()).toHaveLength(8);
+  });
+
+  it("offers a double tap only when a morse entry fits tap, hold and tap-tap", () => {
+    const facts = firmwareFactsOf({ ...none, caps: { max_morse: 8, max_patterns_per_key: 3 } });
+    expect(resolveCapabilities(facts).get("keys.doubleTap")?.slots).toBe(8);
+    expect(resolveCapabilities({ ...facts, morsePatterns: 2 }).has("keys.doubleTap")).toBe(false);
+    expect(resolveCapabilities({ ...facts, morseSlots: 0 }).has("keys.doubleTap")).toBe(false);
   });
 
   it("gives table capabilities a slot count the type can rely on", () => {

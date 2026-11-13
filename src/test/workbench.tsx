@@ -50,6 +50,7 @@ function neutralBundle(): Record<string, unknown> {
       num_encoders: 0,
       max_combos: 0,
       max_morse: 0,
+      max_patterns_per_key: 0,
       max_forks: 0,
       macro_space_size: 0,
       num_split_peripherals: 0,

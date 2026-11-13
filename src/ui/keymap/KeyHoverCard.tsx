@@ -21,7 +21,7 @@ function Part({ word, text }: { word: string; text: string }) {
 export function KeyHoverCard({ keyView }: { keyView: KeyView }) {
   const { bundle, state } = useWorkbench();
   const action = state.layers[state.uiLayer]?.[keyView.row * bundle.caps.num_cols + keyView.col] ?? "No";
-  const slots = slotsOf(action);
+  const slots = slotsOf(action, state.morse);
   const combos = state.combos.filter(
     (combo) =>
       comboIsPositions(combo) &&
@@ -34,10 +34,11 @@ export function KeyHoverCard({ keyView }: { keyView: KeyView }) {
       className="pointer-events-none absolute bottom-3 left-3 z-10 flex max-w-[46rem] flex-wrap items-center gap-x-4 gap-y-1 rounded-xl border border-line-strong bg-raised px-3 py-1.5 shadow-2xl max-sm:hidden"
     >
       <span className="font-mono text-small font-semibold text-mute">{keyAddressLabel(keyView)}</span>
-      {slots.kind === "slots" && slots.hold !== null ? (
+      {slots.kind === "slots" && (slots.hold !== null || slots.doubleTap !== null) ? (
         <>
           <Part word="When tapped" text={actionDescription(slots.tap)} />
-          <Part word="When held" text={actionDescription(slots.hold)} />
+          {slots.hold !== null && <Part word="When held" text={actionDescription(slots.hold)} />}
+          {slots.doubleTap !== null && <Part word="When pressed twice" text={actionDescription(slots.doubleTap)} />}
         </>
       ) : (
         <span className="text-ui font-semibold text-ink">{keyActionDescription(action)}</span>

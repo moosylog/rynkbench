@@ -14,10 +14,12 @@ export type CapabilityId =
   | "lighting.compiled"
   | "lighting.extension"
   | "lighting.output"
-  | "pointing";
+  | "pointing"
+  /** On Double Tap in the key editor; its slots are the morse table's. */
+  | "keys.doubleTap";
 
 /** The capabilities that are tables with a fixed number of slots. */
-export type TableCapabilityId = "lighting.scenes" | "lighting.rules";
+export type TableCapabilityId = "lighting.scenes" | "lighting.rules" | "keys.doubleTap";
 
 export interface Capability {
   id: CapabilityId;

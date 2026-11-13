@@ -1,17 +1,22 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { testWorkbench } from "../../test/workbench";
-import type { KeyAction } from "../../vendor/rynk-wasm/rynk_wasm";
+import type { KeyAction, Morse } from "../../vendor/rynk-wasm/rynk_wasm";
+import { DOUBLE_TAP_PATTERN, TAP_PATTERN } from "../../model/key-slots";
+import { emptyMorse } from "../../model/slots";
 import { WorkbenchContext } from "../state";
 import { KeyEditor } from "./KeyEditor";
 
 const A = { Single: { Key: { Hid: "A" } } } as unknown as KeyAction;
 const TAP_HOLD = { TapHold: [{ Key: { Hid: "A" } }, { Modifier: { left_shift: true } }, 255] } as unknown as KeyAction;
 
-function editor(binding: KeyAction | null) {
+const B = { Key: { Hid: "B" } };
+const DOUBLE_TAP: Morse = { ...emptyMorse(), actions: [[TAP_PATTERN, { Key: { Hid: "A" } }], [DOUBLE_TAP_PATTERN, B]] } as Morse;
+
+function editor(binding: KeyAction | null, { morse = [] as Morse[], morseSlots = 0 } = {}) {
   const workbench = testWorkbench({
     bundle: {
-      caps: { num_cols: 2, num_layers: 2 },
+      caps: { num_cols: 2, num_layers: 2, max_morse: morseSlots, max_patterns_per_key: 8 },
       model: { keys: [{ row: 0, col: 0, address: "LH-C1R1" }] },
       session: { kind: "offline" },
       lightingState: null,
@@ -30,6 +35,7 @@ function editor(binding: KeyAction | null) {
       stagedKeys: {},
       layerMetadata: [{ occupied: true, name: "Base" }, { occupied: true, name: "Lower" }],
       morseProfiles: [],
+      morse,
     },
     dispatch: () => {},
     io: {},
@@ -59,6 +65,18 @@ describe("key editor", () => {
     expect(html).toContain("Clear On Hold");
     expect(html).toContain("Hold timing");
     expect(html).toContain("The keyboard&#x27;s default");
+  });
+
+  it("offers On Double Tap only on a keyboard that can do one", () => {
+    expect(editor(A)).not.toContain("On Double Tap");
+    expect(editor(A, { morseSlots: 4 })).toContain("On Double Tap");
+  });
+
+  it("shows a key bound to a morse entry of tap and tap-tap as its slots", () => {
+    const html = editor({ Morse: 0 } as KeyAction, { morse: [DOUBLE_TAP], morseSlots: 4 });
+    expect(html).toContain("Clear On Double Tap");
+    expect(html).toContain("Key · B");
+    expect(html).not.toContain("Behaviors → Morse");
   });
 
   it("opens on Pick Key with GLIDE's quick links", () => {
