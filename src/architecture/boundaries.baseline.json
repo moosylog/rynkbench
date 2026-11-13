@@ -17,7 +17,6 @@
   "ui-never-imports-wire-types src/ui/effects/EffectsMode.tsx -> src/vendor/rynk-wasm/rynk_wasm",
   "ui-never-imports-wire-types src/ui/hid.ts -> src/vendor/rynk-wasm/rynk_wasm",
   "ui-never-imports-wire-types src/ui/keymap/ActionEditor.tsx -> src/vendor/rynk-wasm/rynk_wasm",
-  "ui-never-imports-wire-types src/ui/keymap/LayerLighting.tsx -> src/vendor/rynk-wasm/rynk_wasm",
   "ui-never-imports-wire-types src/ui/keymap/LayerPointing.tsx -> src/vendor/rynk-wasm/rynk_wasm",
   "ui-never-imports-wire-types src/ui/keymap/actions.ts -> src/vendor/rynk-wasm/rynk_wasm",
   "ui-never-imports-wire-types src/ui/keymap/keyManipulation.ts -> src/vendor/rynk-wasm/rynk_wasm",

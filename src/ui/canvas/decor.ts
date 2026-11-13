@@ -29,6 +29,13 @@ export interface KeyDecor {
   inSelection?: boolean;
   /** Not paintable / not interactive right now. */
   disabled?: boolean;
+  /** Drawn as the real board under its lights (GLIDE's lit view): a light
+   *  keycap with grey legends, and its LED's colour as a glow, animated as the
+   *  LED's effect is. No `led`: an unlit cap. */
+  lit?: {
+    led?: string;
+    anim?: KeyDecor["fillAnim"];
+  };
   /** Bump to replay the paint pop animation. */
   popNonce?: number;
 }

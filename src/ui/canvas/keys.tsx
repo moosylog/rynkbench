@@ -13,7 +13,7 @@ import { same } from "../../model/deep-equal";
 
 import type { KeyDecor } from "./decor";
 import { legendLayout } from "./legend";
-import { CORNER, CAP_INSET, CAP_GRADIENT, CAP_RELIEF, CAP_SHADOW, rectAttrs } from "./geometry";
+import { CORNER, CAP_INSET, CAP_GRADIENT, CAP_RELIEF, CAP_SHADOW, LED_GLOW, rectAttrs } from "./geometry";
 
 export function CapDefs() {
   return (
@@ -31,6 +31,10 @@ export function CapDefs() {
       </linearGradient>
       <filter id={CAP_SHADOW} x="-20%" y="-20%" width="140%" height="150%">
         <feDropShadow dx="0" dy="0.043" stdDeviation="0.036" style={{ floodColor: "var(--color-cap-shadow)" }} />
+      </filter>
+      {/* the soft edge of a lit LED's spot */}
+      <filter id={LED_GLOW} x="-60%" y="-60%" width="220%" height="220%">
+        <feGaussianBlur stdDeviation="0.07" />
       </filter>
     </defs>
   );
@@ -119,9 +123,9 @@ function KeyShapeImpl({
 
   const hoverTitle = keyHoverTitle({ ...view, label: decor.glyph?.text ?? view.label });
 
-  const capFill = decor.fill ?? decor.backgroundFill ?? `url(#${CAP_GRADIENT})`;
+  const capFill = decor.lit ? "var(--color-pom)" : (decor.fill ?? decor.backgroundFill ?? `url(#${CAP_GRADIENT})`);
 
-  const anim = decor.fillAnim;
+  const anim = decor.lit ? decor.lit.anim : decor.fillAnim;
   const fillStyle = anim
     ? {
         animationName: anim.name,
@@ -191,7 +195,7 @@ function KeyShapeImpl({
         <g
           key={decor.popNonce}
           className={decor.fill ? "key-paint-pop" : undefined}
-          style={fillStyle}
+          style={decor.lit ? undefined : fillStyle}
         >
           <KeyRects
             shape={shape}
@@ -201,6 +205,16 @@ function KeyShapeImpl({
           />
         </g>
 
+        {/* The real board's light, as GLIDE draws it: a soft spot at the top of
+            the cap where the LED sits under the switch, deepest in the middle,
+            and a thin line of light escaping into the gap above the key. */}
+        {decor.lit?.led && (
+          <g style={fillStyle} filter={`url(#${LED_GLOW})`} pointerEvents="none">
+            <ellipse cx={cx0} cy={cy0 - shape.rect.h * 0.24} rx={shape.rect.w * 0.34} ry={shape.rect.h * 0.2} fill={decor.lit.led} opacity={0.75} />
+            <ellipse cx={cx0} cy={cy0 - shape.rect.h * 0.26} rx={shape.rect.w * 0.17} ry={shape.rect.h * 0.1} fill={decor.lit.led} />
+            <ellipse cx={cx0} cy={cy0 - shape.rect.h / 2 - 0.01} rx={shape.rect.w * 0.3} ry={0.025} fill={decor.lit.led} />
+          </g>
+        )}
         {/* relief: top highlight, bottom shadow */}
         <KeyRects shape={shape} inset={CAP_INSET} fill={`url(#${CAP_RELIEF})`} style={{ pointerEvents: "none" }} />
         {/* edge */}
@@ -214,7 +228,9 @@ function KeyShapeImpl({
               ? "var(--color-danger)"
               : decor.staged
                 ? "var(--color-accent-deep)"
-                : "var(--color-cap-edge)"
+                : decor.lit
+                  ? "var(--color-pom-edge)"
+                  : "var(--color-cap-edge)"
           }
           strokeWidth={decor.staged || decor.error ? 0.05 : 0.016}
           strokeDasharray={
@@ -315,7 +331,9 @@ function KeyLabelImpl({ view, decor }: { view: KeyView; decor: KeyDecor }) {
   const mainY = glyph.top
     ? cy + shape.rect.h * 0.14
     : cy - block / 2 - (glyph.sub ? legend.subSize * 0.7 : 0);
-  const halo = decor.fill
+  const ink = decor.lit ? "var(--color-pom-ink)" : glyph.dim ? "var(--color-cap-ink-dim)" : "var(--color-cap-ink)";
+  const quiet = decor.lit ? "var(--color-pom-ink)" : "var(--color-mute)";
+  const halo = decor.fill && !decor.lit
     ? { stroke: "var(--color-legend-halo)", strokeWidth: 0.04, paintOrder: "stroke fill" as const, strokeLinejoin: "round" as const }
     : {};
   const text = (props: SVGProps<SVGTextElement>) => (
@@ -335,7 +353,7 @@ function KeyLabelImpl({ view, decor }: { view: KeyView; decor: KeyDecor }) {
             y: cy - shape.rect.h * 0.2,
             fontSize: legend.topSize,
             fontWeight: 600,
-            fill: "var(--color-mute)",
+            fill: quiet,
             children: glyph.top,
           })}
         {text({
@@ -343,7 +361,7 @@ function KeyLabelImpl({ view, decor }: { view: KeyView; decor: KeyDecor }) {
           y: mainY,
           fontSize: legend.size,
           fontWeight: 700,
-          fill: glyph.dim ? "var(--color-cap-ink-dim)" : "var(--color-cap-ink)",
+          fill: ink,
           children: legend.lines.map((line, i) => (
             <tspan key={i} x={cx} dy={i === 0 ? 0 : legend.size * 1.1}>
               {line}
@@ -356,7 +374,7 @@ function KeyLabelImpl({ view, decor }: { view: KeyView; decor: KeyDecor }) {
             y: mainY + block + legend.size * 0.5 + legend.subSize * 0.75,
             fontSize: legend.subSize,
             fontWeight: 600,
-            fill: "var(--color-mute)",
+            fill: quiet,
             children: glyph.sub,
           })}
       </g>

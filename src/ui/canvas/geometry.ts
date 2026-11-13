@@ -13,6 +13,7 @@ export const CAP_INSET = 0.057; // half the gap between abutting caps
 export const CAP_GRADIENT = "rb-cap-gradient";
 export const CAP_RELIEF = "rb-cap-relief";
 export const CAP_SHADOW = "rb-cap-shadow";
+export const LED_GLOW = "rb-led-glow";
 
 export const VIEW_PAD = 0.42;
 

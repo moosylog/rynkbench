@@ -157,6 +157,17 @@ export function SparkleIcon(props: IconProps) {
   );
 }
 
+/** A paint brush: Paint gives keys a look by clicking or dragging over them. */
+export function BrushIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M13.2 2.8 7.4 8.6" />
+      <path d="M7.9 8.1 6.4 6.6" />
+      <path d="M6.2 8.3c-1.4-.4-2.6.5-2.8 1.9-.2 1.2-.6 2-1.6 2.6 2.4.6 4.9.3 5.6-1.6.4-1.1-.2-2.3-1.2-2.9Z" />
+    </svg>
+  );
+}
+
 export function SearchIcon(props: IconProps) {
   return (
     <svg {...base(props)}>

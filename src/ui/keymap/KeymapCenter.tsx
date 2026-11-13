@@ -28,6 +28,8 @@ import { KeyHoverCard } from "./KeyHoverCard";
 import { CanvasPill } from "./CanvasPill";
 import { CarriedKey } from "./CarriedKey";
 import { useKeyMoves } from "./useKeyMoves";
+import { useLightView } from "./lightView";
+import { keyLightOf, lightWrite, type KeyLight } from "../lighting/keyLight";
 import { cx } from "../kit";
 import { LightingIcon } from "../icons";
 import { useKeyClipboard } from "./useKeyClipboard";
@@ -74,7 +76,9 @@ export function KeymapCenter() {
 
   // The layer's staged scene, previewed under the legends so bindings and
   // lighting can be judged together. Lighting mode remains the place to paint.
-  const lit = layerLightingAvailable && showLighting;
+  const light = useLightView();
+  // The lit board shows the layer's lighting whatever the switch says.
+  const lit = light.open || (layerLightingAvailable && showLighting);
   // The compiled firmware cells are part of what the layer shows, so the
   // canvas previews the same composition Lighting mode does.
   const sceneEffects = useMemo(
@@ -137,12 +141,26 @@ export function KeymapCenter() {
       lifted,
       pending: pending?.status === "pending",
       error: pending?.status === "error",
-      fill: sceneEffect ? effectColor(sceneEffect) : undefined,
-      fillAnim: sceneEffect ? effectAnim(sceneEffect) : undefined,
+      ...(light.open
+        ? {
+            lit: {
+              led: sceneEffect && keyLightOf(sceneEffect).kind === "color" ? effectColor(sceneEffect) : undefined,
+              anim: sceneEffect && effectAnim(sceneEffect),
+            },
+          }
+        : { fill: sceneEffect ? effectColor(sceneEffect) : undefined, fillAnim: sceneEffect ? effectAnim(sceneEffect) : undefined }),
       staged:
         stagedBinding ||
         (key.ledId !== undefined && (sceneStaged?.has(key.ledId) ?? false)),
     };
+  };
+
+  /** Paint gives a key the Lighting tab's light, on the layer shown. */
+  const paintKey = (key: KeyView, brush: KeyLight) => {
+    if (key.ledId === undefined) return;
+    const write = lightWrite(brush, [key.ledId]);
+    if ("paint" in write) dispatch({ type: "paint", cells: write.paint, target: state.uiLayer });
+    else dispatch({ type: "erase", ledIds: write.erase, target: state.uiLayer });
   };
 
   // The key's quick menu, as in GLIDE: what it is, then copy, paste and clear.
@@ -229,12 +247,18 @@ export function KeymapCenter() {
           onKeyHover={setHovered}
           onKeyPointerDown={(key) => {
             moves.cancelKeyboardMove();
-            dispatch({ type: "select", selection: { type: "key", row: key.row, col: key.col } });
+            if (light.brush) paintKey(key, light.brush);
+            else dispatch({ type: "select", selection: { type: "key", row: key.row, col: key.col } });
+          }}
+          onKeyPointerEnter={(key, event) => {
+            if (light.brush && event.buttons & 1) paintKey(key, light.brush);
           }}
           onKeyKeyboardActivate={keyboardActivateKey}
           onKeyFocus={moves.keyboardFocus}
           onKeyDragChange={moves.dragChange}
-          keyDraggable={(key) => state.pending[keyPendingId(state.uiLayer, key.row, key.col)]?.status !== "pending"}
+          keyDraggable={(key) =>
+            !light.brush && state.pending[keyPendingId(state.uiLayer, key.row, key.col)]?.status !== "pending"
+          }
           onKeyDrop={moves.dragDrop}
           onEncoderPointerDown={(enc) =>
             dispatch({

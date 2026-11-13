@@ -84,3 +84,17 @@ export function emissiveRgb(c: LightingRgb8, minimumPeak = 96): LightingRgb8 {
 export function cssEmissiveRgb(c: LightingRgb8): string {
   return cssRgb(emissiveRgb(c));
 }
+
+/** GLIDE's colour presets for a key's light: red, orange, yellow, green, teal,
+ *  blue, purple, pink, white. */
+export const LED_PRESETS: readonly LightingRgb8[] = [
+  { r: 239, g: 68, b: 68 },
+  { r: 249, g: 115, b: 22 },
+  { r: 234, g: 179, b: 8 },
+  { r: 34, g: 197, b: 94 },
+  { r: 20, g: 184, b: 166 },
+  { r: 59, g: 130, b: 246 },
+  { r: 168, g: 85, b: 247 },
+  { r: 236, g: 72, b: 153 },
+  { r: 255, g: 255, b: 255 },
+];
