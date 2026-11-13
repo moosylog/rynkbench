@@ -55,7 +55,7 @@ function SlotRow({
         className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 py-2.5 pl-4 text-left"
       >
         <span className="shrink-0 text-ui font-semibold text-ink">{SLOT_NAME[slot]}:</span>
-        <span className={cx("ml-auto truncate text-body font-semibold", empty ? "text-faint" : "font-mono text-ink")}>
+        <span className={cx("ml-auto truncate font-semibold", empty ? "text-body text-faint" : "text-ui text-ink")}>
           {empty ? "Pick an action →" : actionLabel(value) || actionDescription(value)}
         </span>
       </button>

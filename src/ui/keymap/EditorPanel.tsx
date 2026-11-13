@@ -54,7 +54,7 @@ export function EditorPanel({
 }) {
   return (
     <Frame height={height} className="min-h-0 overflow-hidden max-lg:flex-col">
-      <div className="flex w-[300px] shrink-0 flex-col gap-3 overflow-y-auto border-r border-line p-4 max-lg:w-full max-lg:border-r-0 max-lg:border-b">
+      <div className="flex w-[340px] shrink-0 flex-col gap-3 overflow-y-auto border-r border-line p-4 max-lg:w-full max-lg:border-r-0 max-lg:border-b">
         {side}
       </div>
       <div
@@ -107,7 +107,7 @@ export function EditorHeading({
         {glyph || "·"}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="truncate text-title font-semibold text-ink">{title}</div>
+        <div className="text-title leading-snug font-semibold text-ink">{title}</div>
         <div className="text-small text-faint">{detail}</div>
       </div>
       <button
