@@ -62,13 +62,10 @@ export function TopBar() {
           variant="ghost"
           className="px-2"
           disabled={!history.canUndo}
+          reason={history.phase !== "idle" ? "Wait for the keyboard to finish saving" : "Nothing to undo"}
           onClick={() => void history.undo()}
           aria-label="Undo key binding edit"
-          title={
-            history.undoLabel
-              ? `Undo key binding edit · ${history.undoLabel} · Ctrl/⌘ Z`
-              : "No key binding edit to undo"
-          }
+          title={`Undo ${history.undoLabel ?? "key binding edit"} · Ctrl/⌘ Z`}
         >
           <UndoIcon size={15} />
         </Button>
@@ -76,13 +73,10 @@ export function TopBar() {
           variant="ghost"
           className="px-2"
           disabled={!history.canRedo}
+          reason={history.phase !== "idle" ? "Wait for the keyboard to finish saving" : "Nothing to redo"}
           onClick={() => void history.redo()}
           aria-label="Redo key binding edit"
-          title={
-            history.redoLabel
-              ? `Redo key binding edit · ${history.redoLabel} · Ctrl/⌘ Shift Z or Ctrl Y`
-              : "No key binding edit to redo"
-          }
+          title={`Redo ${history.redoLabel ?? "key binding edit"} · Ctrl/⌘ Shift Z or Ctrl Y`}
         >
           <RedoIcon size={15} />
         </Button>
@@ -118,6 +112,7 @@ export function TopBar() {
                   variant="primary"
                   className="py-1"
                   disabled={state.batchBusy || stagedCount === 0}
+                  reason={state.batchBusy ? "Applying the staged edits" : "Nothing staged yet"}
                   onClick={() => void io.applyBatch()}
                   title="Write every staged edit to the keyboard"
                 >

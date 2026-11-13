@@ -41,6 +41,7 @@ import {
 import type { ClipboardBoard } from "./keyManipulation";
 import { Button, SectionLabel, TextInput, UnderlineTabs, cx } from "../kit";
 import { useCapabilities } from "../use-capabilities";
+import { askConfirm, showToast } from "../messages/store";
 import { deletionBlockedMessage, layerDeletionBlockers } from "./layerImpact";
 import { StarIcon, WarningIcon, CloseIcon, PlusIcon, TrashIcon, SpinnerIcon } from "../icons";
 
@@ -70,6 +71,12 @@ function LayerTabs() {
     state.behaviorOptions !== null &&
     (!capabilities.has("lighting.state") || capabilities.has("lighting.output"));
   const pointingStaged = pointingDraftDirty(state);
+  // Why every layer-structure button is unavailable right now, if one reason covers them all.
+  const layerBlock = state.layerBusy
+    ? "Wait for the layer change in progress"
+    : pointingStaged
+      ? "Apply or discard the staged pointing changes first"
+      : null;
 
   return (
     <div className="flex items-center gap-3 px-1">
@@ -137,8 +144,10 @@ function LayerTabs() {
           <Button
             variant="ghost"
             className="px-2 text-body"
-            title={pointingStaged ? "Apply or discard staged pointing edits first" : "Move layer left"}
+            title="Move layer left"
+            aria-label="Move layer left"
             disabled={state.layerBusy || pointingStaged || state.uiLayer === 0}
+            reason={layerBlock ?? "This is already the first layer"}
             onClick={() => void io.moveLayer(state.uiLayer, state.uiLayer - 1)}
           >
             ←
@@ -146,10 +155,12 @@ function LayerTabs() {
           <Button
             variant="ghost"
             className="px-2 text-body"
-            title={pointingStaged ? "Apply or discard staged pointing edits first" : "Move layer right"}
+            title="Move layer right"
+            aria-label="Move layer right"
             disabled={
               state.layerBusy || pointingStaged || state.uiLayer === occupiedLayers.length - 1
             }
+            reason={layerBlock ?? "This is already the last layer"}
             onClick={() => void io.moveLayer(state.uiLayer, state.uiLayer + 1)}
           >
             →
@@ -157,8 +168,9 @@ function LayerTabs() {
           <Button
             variant="ghost"
             className="px-2 text-body"
-            title={pointingStaged ? "Apply or discard staged pointing edits first" : "Duplicate layer"}
+            title="Duplicate layer"
             disabled={state.layerBusy || pointingStaged || occupiedLayers.length >= numLayers}
+            reason={layerBlock ?? `All ${numLayers} layers are in use`}
             onClick={() => void io.duplicateLayer(state.uiLayer)}
           >
             <PlusIcon size={12} /> Duplicate
@@ -166,8 +178,10 @@ function LayerTabs() {
           <Button
             variant="ghost"
             className="px-2 text-body text-danger"
-            title={pointingStaged ? "Apply or discard staged pointing edits first" : "Delete and compact this layer"}
+            title="Delete layer"
+            aria-label="Delete layer"
             disabled={state.layerBusy || pointingStaged || occupiedLayers.length <= 1}
+            reason={layerBlock ?? "A keyboard needs at least one layer"}
             onClick={() => {
               // Say what still uses the layer now, before reading the keyboard to find out.
               const blockers = layerDeletionBlockers(
@@ -185,9 +199,17 @@ function LayerTabs() {
                 dispatch({ type: "layerOperationError", message: deletionBlockedMessage(selectedName, blockers) });
                 return;
               }
-              if (window.confirm(`Delete ${selectedName}? Layer references will be rewritten first.`)) {
-                void io.deleteLayer(state.uiLayer);
-              }
+              const layer = state.uiLayer;
+              void askConfirm({
+                title: `Delete layer “${selectedName}”?`,
+                body: "Its keys are removed and the layers after it move up one place; keys that switch to those layers follow them. This cannot be undone.",
+                confirmLabel: "Delete layer",
+                danger: true,
+              }).then(async (yes) => {
+                if (!yes) return;
+                const result = await io.deleteLayer(layer);
+                if (result.ok) showToast(`Layer “${selectedName}” deleted`, { tone: "ok" });
+              });
             }}
           >
             <TrashIcon size={12} />

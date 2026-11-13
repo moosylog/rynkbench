@@ -33,6 +33,7 @@ import {
 } from "../../model/pointing";
 import { layerName } from "../layer-names";
 import { useWorkbench } from "../state";
+import { askConfirm } from "../messages/store";
 import { KeycodeBrowser } from "./ActionEditor";
 
 const BASE_MODE_KINDS: PointingModeKind[] = ["Cursor", "Scroll", "Sniper", "Caret", "Drag", "Press"];
@@ -383,9 +384,14 @@ export function LayerPointing({ selectedDeviceId }: { selectedDeviceId?: number 
                       title={`Remove device ${device.device_id} and all of its overrides`}
                       className="cursor-pointer text-faint hover:text-danger"
                       onClick={() => {
-                        if (window.confirm(`Remove pointing device ${device.device_id} and all of its layer overrides?`)) {
-                          edit(() => removePointingDevice(draft, device.device_id));
-                        }
+                        void askConfirm({
+                          title: `Remove ${deviceLabel(device.device_id)}?`,
+                          body: "Its settings and every layer override for it are removed from the staged pointing changes.",
+                          confirmLabel: "Remove device",
+                          danger: true,
+                        }).then((yes) => {
+                          if (yes) edit(() => removePointingDevice(draft, device.device_id));
+                        });
                       }}
                     >
                       <TrashIcon size={12} />

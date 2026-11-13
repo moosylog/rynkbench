@@ -13,6 +13,9 @@ The workbench had seven modes named after protocol surfaces (Keymap, Lighting, E
 - Library holds opening, importing, saving and migrating layouts; the top bar keeps identity, history, batch, status, display settings (theme, wording, OS layout, behind one button) and disconnect.
 - Text uses seven named sizes (`caption` 10, `small` 11, `body` 12, `ui` 13, `title` 15, `heading` 20, `display` 30), defined in `src/index.css`. `src/ui/theme/typography.test.ts` fails on a free size. Inter and JetBrains Mono ship with the app.
 
+- Questions before something that cannot be taken back go through one dialog (`askConfirm`, `src/ui/messages`), never the browser's `confirm`; short notes that something happened are toasts (`showToast`). A greyed-out `Button` with a `reason` stays focusable and says why.
+- The connect screen lists the ways of connecting that work in this browser first; those that cannot are one line each saying what they need.
+
 ## Consequences
 
 - A plain RMK board shows five areas; an RGB board adds Lighting. A link from one screen to another names a section, and a section the board lacks falls back to the keymap.

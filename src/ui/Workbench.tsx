@@ -1,6 +1,6 @@
 // The workbench: top bar, area rail, section tabs, and the section on show.
 
-import { useEffect, useMemo, useReducer, useRef, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
 import type { ConnectedBundle } from "./state";
 import {
@@ -28,6 +28,7 @@ import { useTerms } from "./terms";
 import { getLocaleId, subscribeLocale } from "./locale";
 import { areaOfSection, areasFor, sectionTerm, type Area, type AreaId, type SectionId } from "./areas";
 import { DocumentTransferContext, useDocumentTransfer } from "./transfer-actions";
+import { showToast } from "./messages/store";
 import {
   CombinatorIcon,
   DeviceIcon,
@@ -244,6 +245,29 @@ export function Workbench({
     [bundle, onClose],
   );
 
+  // Undo and redo say what they did, with the way back on the toast.
+  const travel = useCallback(
+    async (direction: "undo" | "redo"): Promise<void> => {
+      const entry =
+        direction === "undo"
+          ? stateRef.current.keyEditHistory.past.at(-1)
+          : stateRef.current.keyEditHistory.future.at(-1);
+      const result = direction === "undo" ? await io.undoKeyEdit() : await io.redoKeyEdit();
+      if (!result.ok) return;
+      const label = entry ? keyEditHistoryLabel(entry) : "key edit";
+      const back = direction === "undo" ? "redo" : "undo";
+      showToast(`${direction === "undo" ? "Undone" : "Redone"}: ${label}`, {
+        action: {
+          label: back === "undo" ? "Undo" : "Redo",
+          run: () => {
+            if (canTravelKeyEditHistory(stateRef.current, back)) void travel(back);
+          },
+        },
+      });
+    },
+    [io],
+  );
+
   const historyBusy = hasPendingConfigurationWrite(state);
   const historyOperation = state.keyEditHistory.operation;
   const undoEntry = state.keyEditHistory.past.at(-1);
@@ -262,15 +286,11 @@ export function Workbench({
       error: state.keyEditHistory.error,
       undoLabel: undoEntry ? keyEditHistoryLabel(undoEntry) : null,
       redoLabel: redoEntry ? keyEditHistoryLabel(redoEntry) : null,
-      undo: async () => {
-        await io.undoKeyEdit();
-      },
-      redo: async () => {
-        await io.redoKeyEdit();
-      },
+      undo: () => travel("undo"),
+      redo: () => travel("redo"),
       clear: () => dispatch({ type: "keyHistoryClear" }),
     }),
-    [historyBusy, historyOperation, io, redoEntry, state, undoEntry],
+    [historyBusy, historyOperation, redoEntry, state, travel, undoEntry],
   );
 
   useEffect(() => {
@@ -278,12 +298,11 @@ export function Workbench({
       const shortcut = historyShortcut(event);
       if (!shortcut || !canTravelKeyEditHistory(stateRef.current, shortcut)) return;
       event.preventDefault();
-      if (shortcut === "undo") void io.undoKeyEdit();
-      else void io.redoKeyEdit();
+      void travel(shortcut);
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [io]);
+  }, [travel]);
 
   // Server-push topics.
   useEffect(() => {

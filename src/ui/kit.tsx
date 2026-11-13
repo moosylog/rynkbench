@@ -60,28 +60,40 @@ export function Chip({
 
 type ButtonVariant = "primary" | "ghost" | "outline" | "danger";
 
+/** A button. With `disabled` and a `reason`, it stays focusable and says why
+ *  it cannot be used (hover title and accessible description), rather than
+ *  going silently grey. */
 export function Button({
   variant = "outline",
   className,
+  reason,
+  disabled,
+  onClick,
+  title,
   ...rest
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant; reason?: string }) {
   const variants: Record<ButtonVariant, string> = {
     primary:
-      "bg-accent text-well font-semibold hover:brightness-110 disabled:opacity-40 disabled:hover:brightness-100",
-    ghost: "text-mute hover:text-ink hover:bg-hover disabled:opacity-40",
+      "bg-accent text-well font-semibold hover:brightness-110 disabled:opacity-40 disabled:hover:brightness-100 aria-disabled:opacity-40 aria-disabled:hover:brightness-100",
+    ghost: "text-mute hover:text-ink hover:bg-hover disabled:opacity-40 aria-disabled:opacity-40 aria-disabled:hover:bg-transparent",
     outline:
-      "border border-line text-ink hover:border-line-strong hover:bg-raised disabled:opacity-40",
+      "border border-line text-ink hover:border-line-strong hover:bg-raised disabled:opacity-40 aria-disabled:opacity-40 aria-disabled:hover:bg-transparent",
     danger:
-      "border border-danger/50 text-danger hover:bg-danger-dim/40 disabled:opacity-40",
+      "border border-danger/50 text-danger hover:bg-danger-dim/40 disabled:opacity-40 aria-disabled:opacity-40 aria-disabled:hover:bg-transparent",
   };
+  const explained = Boolean(disabled && reason);
   return (
     <button
       type="button"
       className={cx(
-        "inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-ui transition-colors duration-150 disabled:cursor-not-allowed",
+        "inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-ui transition-colors duration-150 disabled:cursor-not-allowed aria-disabled:cursor-not-allowed",
         variants[variant],
         className,
       )}
+      disabled={explained ? undefined : disabled}
+      aria-disabled={explained ? true : undefined}
+      title={explained ? reason : title}
+      onClick={explained ? (event) => event.preventDefault() : onClick}
       {...rest}
     />
   );

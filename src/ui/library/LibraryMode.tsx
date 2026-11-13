@@ -31,6 +31,7 @@ export function LibraryMode() {
   const { documentTools, phase, report, dismissReport, importFile, exportFile, migrationTarget, previewMigration } =
     transfer;
   const busy = phase !== null || history.phase !== "idle";
+  const busyReason = phase !== null ? "Wait for the file in progress" : "Wait for the keyboard to finish saving";
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
@@ -60,7 +61,7 @@ export function LibraryMode() {
               title={offline ? "Open a layout" : "Import a layout"}
               hint={offline ? "Open a layout file to edit it here." : documentTools.importHint}
             >
-              <Button variant="primary" disabled={busy} onClick={() => fileInput.current?.click()}>
+              <Button variant="primary" disabled={busy} reason={busyReason} onClick={() => fileInput.current?.click()}>
                 {phase === "importing" ? "Opening…" : offline ? "Open file" : "Import layout"}
               </Button>
             </Card>
@@ -70,7 +71,7 @@ export function LibraryMode() {
               hint={offline ? "Download this layout as a file." : "Download what the keyboard holds now as a file."}
             >
               {documentTools.formats.map((format) => (
-                <Button key={format} disabled={phase !== null} onClick={() => void exportFile(format)}>
+                <Button key={format} disabled={phase !== null} reason={busyReason} onClick={() => void exportFile(format)}>
                   {phase === "exporting" ? "Saving…" : FORMAT_LABEL[format]}
                 </Button>
               ))}
@@ -81,7 +82,7 @@ export function LibraryMode() {
                 title={`Move to ${migrationTarget}`}
                 hint={`See what carries over to a ${migrationTarget}, then download its layout.`}
               >
-                <Button disabled={busy} onClick={() => void previewMigration()}>
+                <Button disabled={busy} reason={busyReason} onClick={() => void previewMigration()}>
                   {phase === "migrating" ? "Preparing…" : `Preview for ${migrationTarget}`}
                 </Button>
               </Card>
