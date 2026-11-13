@@ -8,6 +8,9 @@ export type {
   HidKeyCode,
   KeyAction,
   KeyboardAction,
+  KeyCode,
   LightAction,
   ModifierCombination,
+  /** A morse (tap-dance) entry a key can be bound to. */
+  Morse,
 } from "../vendor/rynk-wasm/rynk_wasm";

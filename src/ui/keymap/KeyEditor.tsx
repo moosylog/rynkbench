@@ -100,7 +100,7 @@ export function KeyEditor({ height = 310 }: { height?: number }) {
     }
     void fill({ [kind]: target } as unknown as Action);
   };
-  const glyph = keyActionGlyph(action);
+  const glyph = keyActionGlyph(action, state.morse);
 
   return (
     <section

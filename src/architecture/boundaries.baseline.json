@@ -21,7 +21,6 @@
   "ui-never-imports-wire-types src/ui/keymap/LayerPointing.tsx -> src/vendor/rynk-wasm/rynk_wasm",
   "ui-never-imports-wire-types src/ui/keymap/actions.ts -> src/vendor/rynk-wasm/rynk_wasm",
   "ui-never-imports-wire-types src/ui/keymap/keyManipulation.ts -> src/vendor/rynk-wasm/rynk_wasm",
-  "ui-never-imports-wire-types src/ui/labels.ts -> src/vendor/rynk-wasm/rynk_wasm",
   "ui-never-imports-wire-types src/ui/lighting/BackgroundPanel.tsx -> src/vendor/rynk-wasm/rynk_wasm",
   "ui-never-imports-wire-types src/ui/lighting/ConditionalRulesPanel.tsx -> src/vendor/rynk-wasm/rynk_wasm",
   "ui-never-imports-wire-types src/ui/lighting/EffectEditor.tsx -> src/vendor/rynk-wasm/rynk_wasm",

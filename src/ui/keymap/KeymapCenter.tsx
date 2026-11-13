@@ -234,7 +234,7 @@ export function KeymapCenter() {
       state.stagedKeys[keyPendingId(state.uiLayer, key.row, key.col)] !== undefined;
     const sceneEffect =
       sceneEffects && key.ledId !== undefined ? sceneEffects.get(key.ledId) : undefined;
-    const glyph = action !== undefined ? keyActionGlyph(action) : { text: "" };
+    const glyph = action !== undefined ? keyActionGlyph(action, state.morse) : { text: "" };
     // Enrichment label as fallback for unbound keys.
     if (!glyph.text && key.label) {
       glyph.text = key.label;

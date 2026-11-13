@@ -7,9 +7,11 @@ import type {
   KeyAction,
   KeyCode,
   ModifierCombination,
-} from "../vendor/rynk-wasm/rynk_wasm";
+  Morse,
+} from "../model/action-types";
 import { activeLocale, characterFor, keycapCharacter } from "./locale";
 import { DEFAULT_TAP_HOLD_PROFILE } from "../model/morse";
+import { slotsOf } from "../model/key-slots";
 
 /** Compact keycap symbols for HID codes that deserve better than their name. */
 const HID_SYMBOLS: Partial<Record<HidKeyCode, string>> = {
@@ -261,7 +263,9 @@ export interface KeyGlyph {
   dim?: boolean;
 }
 
-export function keyActionGlyph(action: KeyAction): KeyGlyph {
+/** `morse` is the keyboard's morse table: a key whose entry is tap, hold and
+ *  double tap shows its tap, and its hold or double tap below it. */
+export function keyActionGlyph(action: KeyAction, morse: readonly Morse[] = []): KeyGlyph {
   if (action === "No") return { text: "" };
   if (action === "Transparent") return { text: "▽", dim: true };
   if ("Single" in action) return { text: actionLabel(action.Single) };
@@ -270,7 +274,12 @@ export function keyActionGlyph(action: KeyAction): KeyGlyph {
     const [tap, hold] = action.TapHold;
     return { text: actionLabel(tap), sub: actionLabel(hold) };
   }
-  if ("Morse" in action) return { text: `Mo${action.Morse}` };
+  if ("Morse" in action) {
+    const slots = slotsOf(action, morse);
+    if (slots.kind !== "slots") return { text: `Mo${action.Morse}` };
+    const sub = slots.hold !== null ? actionLabel(slots.hold) : `2×${actionLabel(slots.doubleTap ?? "No")}`;
+    return { text: actionLabel(slots.tap), sub };
+  }
   return { text: "?" };
 }
 
