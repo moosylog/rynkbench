@@ -11,9 +11,10 @@ import { askConfirm, showToast } from "../messages/store";
 import { deletionBlockedMessage, layerDeletionBlockers } from "../keymap/layerImpact";
 import { useTerms } from "../terms";
 import { cx } from "../kit";
-import { MoreIcon, StarIcon } from "../icons";
+import { GripIcon, MoreIcon, StarIcon } from "../icons";
 import { RowMenu, useRowMenu, type MenuEntry } from "../RowMenu";
 import { ComboList } from "./ComboList";
+import { useRowDrag } from "./useRowDrag";
 
 type List = "layers" | "combos";
 
@@ -48,6 +49,7 @@ function LayerList({ onPicked }: { onPicked?: () => void }) {
   const { bundle, state, dispatch, io } = useWorkbench();
   const capabilities = useCapabilities();
   const menu = useRowMenu<number>();
+  const rows = useRowDrag((from, to) => void io.moveLayer(from, to));
   const [renaming, setRenaming] = useState<number | null>(null);
   const [name, setName] = useState("");
   useEffect(() => setRenaming(null), [state.layerMetadata]);
@@ -186,9 +188,13 @@ function LayerList({ onPicked }: { onPicked?: () => void }) {
         return (
           <div
             key={layer}
+            data-row={layer}
             {...menu.rowProps(layer)}
             className={cx(
               "group relative flex items-center rounded-xl border transition-all duration-200",
+              rows.drag?.from === layer && "opacity-40",
+              rows.edge(layer) === "top" && "shadow-[0_-2px_0_0_var(--color-accent)]",
+              rows.edge(layer) === "bottom" && "shadow-[0_2px_0_0_var(--color-accent)]",
               active
                 ? "border-accent bg-raised shadow-sm"
                 : menu.openFor === layer
@@ -196,6 +202,16 @@ function LayerList({ onPicked }: { onPicked?: () => void }) {
                   : "border-transparent hover:border-line-strong hover:bg-panel",
             )}
           >
+            {block === null && layers.length > 1 && (
+              <span
+                {...rows.handle(layer)}
+                aria-hidden
+                title="Drag to reorder"
+                className="ml-1.5 flex h-7 w-4 shrink-0 cursor-grab items-center justify-center text-faint hover:text-ink"
+              >
+                <GripIcon size={13} />
+              </span>
+            )}
             <button
               type="button"
               aria-current={active ? "true" : undefined}
@@ -204,7 +220,7 @@ function LayerList({ onPicked }: { onPicked?: () => void }) {
                 onPicked?.();
               }}
               onDoubleClick={() => canRename && act(layer, "rename")}
-              className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 py-2.5 pl-3 pr-1 text-left"
+              className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 py-2.5 pl-1.5 pr-1 text-left"
             >
               <span className="w-4 shrink-0 text-right font-mono text-caption text-faint">{layer}</span>
               <span className={cx("min-w-0 flex-1 truncate text-body font-semibold", active ? "text-accent" : "text-ink")}>

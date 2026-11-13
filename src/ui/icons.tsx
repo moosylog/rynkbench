@@ -157,6 +157,15 @@ export function SparkleIcon(props: IconProps) {
   );
 }
 
+/** Six dots: a handle to drag a row by. */
+export function GripIcon(props: IconProps) {
+  return (
+    <svg {...base(props)} fill="currentColor" stroke="none">
+      {[5.5, 10.5].map((x) => [4, 8, 12].map((y) => <circle key={`${x},${y}`} cx={x} cy={y} r={1.1} />))}
+    </svg>
+  );
+}
+
 export function PlusIcon(props: IconProps) {
   return (
     <svg {...base(props)}>
