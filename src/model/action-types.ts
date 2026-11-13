@@ -4,6 +4,7 @@
 
 export type {
   Action,
+  EncoderAction,
   HidKeyCode,
   KeyAction,
   KeyboardAction,

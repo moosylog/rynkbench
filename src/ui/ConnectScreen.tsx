@@ -65,7 +65,7 @@ function ProviderCard({
         className={cx(
           "group w-full rounded-2xl border bg-panel p-4 text-left transition-all duration-150",
           clickable
-            ? "cursor-pointer border-line-soft hover:-translate-y-px hover:border-line-strong hover:bg-raised hover:shadow-[0_10px_30px_-12px_rgb(0_0_0/0.55)]"
+            ? "cursor-pointer border-line-soft hover:-translate-y-px hover:border-line-strong hover:bg-raised hover:shadow-xl"
             : "cursor-not-allowed border-line-soft opacity-100",
           error && "border-danger/40",
         )}
@@ -187,7 +187,7 @@ export function ConnectScreen({
 
       <div className="relative w-full max-w-md animate-fade-up">
         <div className="mb-10 flex flex-col items-center text-center">
-          <div className="mb-5 flex size-16 items-center justify-center rounded-2xl border border-line bg-panel shadow-[0_16px_40px_-18px_rgb(0_0_0/0.7)]">
+          <div className="mb-5 flex size-16 items-center justify-center rounded-2xl border border-line bg-panel shadow-2xl">
             <Wordmark size={38} />
           </div>
           <h1 className="text-display font-semibold leading-none tracking-[-0.02em] text-ink">

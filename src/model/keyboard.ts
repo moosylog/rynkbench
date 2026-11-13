@@ -6,6 +6,9 @@
 // layered on top when known, but never replaces device-reported geometry.
 
 import type { Key, LayoutInfo, Variant } from "../vendor/rynk-wasm/rynk_wasm";
+
+/** A key's, an encoder's and a rectangle's geometry, for screens that draw the board. */
+export type { Encoder, Key, Rect } from "../vendor/rynk-wasm/rynk_wasm";
 import type { LightingLedId } from "../vendor/rynk-wasm/rynk_wasm";
 import type { LightingTopology } from "../session/types";
 

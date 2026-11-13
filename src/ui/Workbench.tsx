@@ -16,7 +16,8 @@ import {
   useWorkbench,
 } from "./state";
 import { TopBar } from "./TopBar";
-import { KeymapCenter, KeymapInspector } from "./keymap/KeymapMode";
+import { KeymapCenter } from "./keymap/KeymapCenter";
+import { KeymapInspector } from "./keymap/SideInspector";
 import { KeyEditor } from "./keymap/KeyEditor";
 import { useCapabilities } from "./use-capabilities";
 import { LightingMode } from "./lighting/LightingMode";

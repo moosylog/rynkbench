@@ -4,7 +4,7 @@ import type { LightingSceneCell } from "../../vendor/rynk-wasm/rynk_wasm";
 import { WorkbenchContext } from "../state";
 import type { WorkbenchContextValue } from "../state";
 import { LayerLighting } from "./LayerLighting";
-import { KeymapCenter } from "./KeymapMode";
+import { KeymapCenter } from "./KeymapCenter";
 import { openBundle } from "../bundle";
 import { initialWorkbenchState } from "../state";
 import { mockProvider } from "../../session/mock/board";
