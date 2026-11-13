@@ -79,7 +79,7 @@ function LayerTabs() {
       : null;
 
   return (
-    <div className="flex items-center gap-3 px-1">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-1">
       <UnderlineTabs
         items={occupiedLayers.map((n) => {
           const isDefault = n === state.defaultLayer;
@@ -103,7 +103,7 @@ function LayerTabs() {
         onChange={(layer) => dispatch({ type: "uiLayer", layer })}
       />
       {state.uiLayer !== state.currentLayer && (
-        <span className="text-small text-faint">
+        <span className="whitespace-nowrap text-small text-faint">
           Editing {selectedName} · {layerName(state.layerMetadata, state.currentLayer)} is live
         </span>
       )}
@@ -219,7 +219,7 @@ function LayerTabs() {
       {state.uiLayer !== state.defaultLayer && (
         <Button
           variant="ghost"
-          className="text-body"
+          className="whitespace-nowrap text-body"
           title="Make this the layer the keyboard starts on"
           onClick={() => io.setDefaultLayer(state.uiLayer)}
         >

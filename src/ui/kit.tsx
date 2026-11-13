@@ -255,7 +255,7 @@ export function UnderlineTabs<T extends string | number>({
           title={item.title}
           onClick={() => onChange(item.id)}
           className={cx(
-            "relative flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-ui font-medium transition-colors duration-150",
+            "relative flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-ui font-medium transition-colors duration-150",
             item.id === value ? "text-ink" : "text-faint hover:text-mute",
           )}
         >
