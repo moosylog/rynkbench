@@ -4,6 +4,8 @@
 
 export type {
   Action,
+  /** A combo: keys pressed together and what they do. */
+  ComboDefinition,
   EncoderAction,
   HidKeyCode,
   KeyAction,

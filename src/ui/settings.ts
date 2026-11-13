@@ -12,6 +12,7 @@ export const SETTING_KEYS = {
   sidePanelWidth: "rynk:side-panel-width",
   keyEditorHeight: "rynk:key-editor-height",
   canvasHintDismissed: "rynk:canvas-hint-dismissed",
+  comboView: "rynk:combo-view",
   /** Layer lighting presets on boards without scene storage, per device. */
   layerLighting: (serial: string) => `rynkbench:layer-lighting:${serial || "unknown"}`,
 } as const;

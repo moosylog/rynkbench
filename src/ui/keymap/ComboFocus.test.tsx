@@ -88,6 +88,13 @@ describe("the combo list", () => {
     expect(html).toContain('aria-current="true"');
   });
 
+  it("shows each combo as a card with a small keyboard and its layers", () => {
+    const html = render(<ComboList />, [combo(2)], null);
+    expect(html).toContain("var(--color-accent-fill)");
+    expect(html).toContain("All Layers");
+    expect(html).toContain('aria-label="Search combos"');
+  });
+
   it("explains why Create is unavailable when every combo is in use", () => {
     const full = Array.from({ length: bundle.caps.max_combos }, () => combo(2));
     expect(render(<ComboList />, full, null)).toContain(`All ${bundle.caps.max_combos} combos are in use`);

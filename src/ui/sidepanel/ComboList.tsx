@@ -1,36 +1,69 @@
-// The side panel's combo list, as in GLIDE: Create Combo, then a row per
-// combo with its action, keys and layer, and a warning when it lacks an
-// action or a second key, or shares its keys with another. Clicking a row
-// (or Create) opens the combo in Focus Mode; its ⋮ menu edits or deletes it.
+// The side panel's combo list, as in GLIDE: Create Combo, a search and a
+// layer filter, then the combos as cards (a small keyboard with their keys)
+// or as a list. Clicking one (or Create) opens it in Focus Mode; its ⋮ menu
+// edits or deletes it.
 
-import { comboIsEmpty, comboLayer, comboNeeds, comboOutput, comboTriggerCount, comboTwins } from "../../model/combos";
+import { useState, useSyncExternalStore } from "react";
+import { comboIsEmpty, comboLayer, comboOutput, comboTriggerCount, comboTwins } from "../../model/combos";
 import { emptyCombo } from "../../model/slots";
-import { keyActionGlyph } from "../labels";
+import { keyActionDescription } from "../labels";
 import { layerName } from "../layer-names";
 import { showToast } from "../messages/store";
+import { createSetting, SETTING_KEYS } from "../settings";
 import { useWorkbench } from "../state";
 import { useTerms } from "../terms";
-import { Button, cx } from "../kit";
-import { MoreIcon, PlusIcon, WarningIcon } from "../icons";
+import { Button, cx, TextInput } from "../kit";
+import { PlusIcon } from "../icons";
 import { RowMenu, useRowMenu } from "../RowMenu";
+import { ComboCard } from "./ComboCard";
 
-function rowWarning(needs: ReturnType<typeof comboNeeds>, twins: number[]): string | null {
-  if (needs === "action") return "No action";
-  if (needs === "keys") return "Needs another key";
-  return twins.length > 0 ? "Duplicate keys" : null;
+type View = "cards" | "list";
+const comboView = createSetting<View>(SETTING_KEYS.comboView, (raw) => (raw === "list" ? "list" : "cards"));
+
+function ViewSwitch({ value }: { value: View }) {
+  return (
+    <div className="flex shrink-0 rounded-lg border border-line p-0.5">
+      {(["cards", "list"] as const).map((view) => (
+        <button
+          key={view}
+          type="button"
+          aria-pressed={value === view}
+          onClick={() => comboView.set(view)}
+          className={cx(
+            "cursor-pointer rounded-md px-2.5 py-1 text-small font-semibold capitalize transition-colors",
+            value === view ? "bg-raised text-accent" : "text-mute hover:text-ink",
+          )}
+        >
+          {view}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 export function ComboList() {
   const { bundle, state, dispatch, io } = useWorkbench();
   const term = useTerms();
   const menu = useRowMenu<number>();
+  const view = useSyncExternalStore(comboView.subscribe, comboView.get, comboView.get);
+  const [query, setQuery] = useState("");
+  const [layerFilter, setLayerFilter] = useState<number | null>(null);
   const capacity = bundle.caps.max_combos;
   const editing = state.selection?.type === "combo" ? state.selection.index : null;
   const used = state.combos.filter((combo) => !comboIsEmpty(combo)).length;
+  const free = state.combos.findIndex(comboIsEmpty);
+  const needle = query.trim().toLowerCase();
   const rows = state.combos
     .map((combo, index) => ({ combo, index }))
-    .filter(({ combo, index }) => comboTriggerCount(combo) > 0 || index === editing);
-  const free = state.combos.findIndex(comboIsEmpty);
+    .filter(({ combo, index }) => comboTriggerCount(combo) > 0 || index === editing)
+    .filter(({ combo }) => {
+      const layer = comboLayer(combo);
+      return layerFilter === null || layer === undefined || layer === layerFilter;
+    })
+    .filter(
+      ({ combo, index }) =>
+        !needle || `c${index} ${keyActionDescription(comboOutput(combo))}`.toLowerCase().includes(needle),
+    );
   const focus = (index: number) => dispatch({ type: "select", selection: { type: "combo", index } });
 
   const remove = (index: number) => {
@@ -45,7 +78,7 @@ export function ComboList() {
     return <p className="px-1 text-small leading-relaxed text-faint">This keyboard has no combos.</p>;
   }
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       <Button
         onClick={() => focus(free)}
         disabled={free === -1}
@@ -54,70 +87,53 @@ export function ComboList() {
       >
         <PlusIcon size={12} /> Create {term("section.combos").toLowerCase().replace(/s$/, "")}
       </Button>
-      {rows.length === 0 && (
+      {used > 0 && (
+        <>
+          <TextInput
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search by action or number (C3)"
+            aria-label="Search combos"
+          />
+          <div className="flex gap-2">
+            <select
+              value={layerFilter ?? ""}
+              onChange={(event) => setLayerFilter(event.target.value === "" ? null : Number(event.target.value))}
+              aria-label="Show combos on"
+              className="min-w-0 flex-1 rounded-lg border border-line bg-well px-2 py-1.5 text-body text-ink"
+            >
+              <option value="">All Layers</option>
+              {Array.from({ length: bundle.caps.num_layers }, (_, layer) => (
+                <option key={layer} value={layer}>
+                  {layerName(state.layerMetadata, layer)}
+                </option>
+              ))}
+            </select>
+            <ViewSwitch value={view} />
+          </div>
+        </>
+      )}
+      {used === 0 && editing === null && (
         <p className="px-1 pt-2 text-small leading-relaxed text-faint">
           No combos yet. A combo does something when several keys are pressed together.
         </p>
       )}
-      {rows.map(({ combo, index }) => {
-        const layer = comboLayer(combo);
-        const warning = rowWarning(comboNeeds(combo), comboTwins(state.combos, index));
-        const open = editing === index;
-        return (
-          <div
-            key={index}
-            {...menu.rowProps(index)}
-            data-testid="combo-row"
-            className={cx(
-              "group relative flex items-center rounded-xl border transition-all duration-200",
-              open
-                ? "border-accent bg-raised shadow-sm"
-                : menu.openFor === index
-                  ? "border-line-strong bg-panel"
-                  : "border-transparent hover:border-line-strong hover:bg-panel",
-            )}
-          >
-            <button
-              type="button"
-              aria-current={open ? "true" : undefined}
-              onClick={() => focus(index)}
-              className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 py-2 pl-3 pr-1 text-left"
-            >
-              <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-raised font-mono text-caption text-mute">
-                C{index}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className={cx("block truncate text-body font-semibold", open ? "text-accent" : "text-ink")}>
-                  {keyActionGlyph(comboOutput(combo)).text || "No action"}
-                </span>
-                <span className="block truncate text-small text-faint">
-                  {comboTriggerCount(combo)} keys
-                  {layer !== undefined ? ` · ${layerName(state.layerMetadata, layer)} only` : ""}
-                </span>
-                {warning && (
-                  <span className="flex items-center gap-1 text-small font-semibold text-warn">
-                    <WarningIcon size={11} /> {warning}
-                  </span>
-                )}
-              </span>
-            </button>
-            <button
-              type="button"
-              aria-label={`Actions for combo C${index}`}
-              title="Combo actions (or right-click the combo)"
-              onClick={(event) => menu.openFrom(event, index)}
-              className={cx(
-                "mr-1.5 flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-mute transition-[opacity,visibility] hover:bg-hover hover:text-ink",
-                open || menu.openFor === index
-                  ? "opacity-100"
-                  : "sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100",
-              )}
-            >
-              <MoreIcon size={15} />
-            </button>
-          </div>
-        );
-      })}
+      {used > 0 && rows.length === 0 && <p className="px-1 pt-2 text-small text-faint">No combos match.</p>}
+      {rows.map(({ combo, index }) => (
+        <ComboCard
+          key={index}
+          index={index}
+          combo={combo}
+          twins={comboTwins(state.combos, index).length}
+          view={view}
+          open={editing === index}
+          menuOpen={menu.openFor === index}
+          onOpen={() => focus(index)}
+          onMenu={(event) => menu.openFrom(event, index)}
+          rowProps={menu.rowProps(index)}
+        />
+      ))}
       {menu.at && (
         <RowMenu
           x={menu.at.x}

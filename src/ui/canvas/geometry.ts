@@ -1,7 +1,7 @@
 // The canvas geometry in key units: GLIDE's proportions (a 62 px key on a 70 px
 // pitch, 6 px corners) and the board's view box.
 
-import type { KeyboardModel } from "../../model/keyboard";
+import type { KeyboardModel, Rect } from "../../model/keyboard";
 
 // GLIDE's proportions: a 62 px key on a 70 px pitch, 6 px corners.
 export const CORNER = 0.086;
@@ -35,5 +35,15 @@ export function boardViewBox(model: KeyboardModel): {
     y: minY - VIEW_PAD,
     w: maxX - minX + VIEW_PAD * 2,
     h: maxY - minY + VIEW_PAD * 2 + CAP_DROP,
+  };
+}
+
+/** SVG rect attributes for a key rect given by its centre, shrunk by `inset` and moved down by `dy`. */
+export function rectAttrs(rect: Rect, inset = 0, dy = 0) {
+  return {
+    x: rect.x - rect.w / 2 + inset,
+    y: rect.y - rect.h / 2 + inset + dy,
+    width: rect.w - inset * 2,
+    height: rect.h - inset * 2,
   };
 }

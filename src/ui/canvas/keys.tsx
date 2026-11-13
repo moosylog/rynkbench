@@ -5,7 +5,7 @@
 
 import { memo } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, SVGProps } from "react";
-import type { Key, Rect } from "../../model/keyboard";
+import type { Key } from "../../model/keyboard";
 import type { KeyView } from "../../model/keyboard";
 
 import { keyHoverTitle } from "../key-address";
@@ -13,7 +13,7 @@ import { same } from "../../model/deep-equal";
 
 import type { KeyDecor } from "./decor";
 import { legendLayout } from "./legend";
-import { CORNER, CAP_INSET, CAP_GRADIENT, CAP_RELIEF, CAP_SHADOW } from "./geometry";
+import { CORNER, CAP_INSET, CAP_GRADIENT, CAP_RELIEF, CAP_SHADOW, rectAttrs } from "./geometry";
 
 export function CapDefs() {
   return (
@@ -39,16 +39,6 @@ export function CapDefs() {
 /* ------------------------------------------------------------------ */
 /* Key rendering                                                       */
 /* ------------------------------------------------------------------ */
-
-export function rectAttrs(rect: Rect, inset = 0, dy = 0) {
-  return {
-    x: rect.x - rect.w / 2 + inset,
-    y: rect.y - rect.h / 2 + inset + dy,
-    width: rect.w - inset * 2,
-    height: rect.h - inset * 2,
-  };
-}
-
 export function KeyRects({
   shape,
   inset = 0,
