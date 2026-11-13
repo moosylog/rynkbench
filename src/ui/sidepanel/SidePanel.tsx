@@ -317,7 +317,7 @@ function ComboList() {
 export function SidePanel({ onPicked }: { onPicked?: () => void }) {
   const [list, setList] = useState<List>("layers");
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-line bg-bg">
+    <aside className="flex h-full w-full min-w-0 flex-col border-r border-line bg-bg">
       <div className="shrink-0 border-b border-line bg-panel p-3">
         <ListSwitch value={list} onChange={setList} />
       </div>

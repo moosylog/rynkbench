@@ -89,9 +89,18 @@ function characterGroups(locale: KeyboardLocale): Record<"letters" | "numbers" |
     [true, false, NON_US],
     [false, true, NON_US],
   ];
+  // A letter key is one tile, labelled as its keycap (the capital) and bound to
+  // the key itself, as GLIDE shows it: its Shift capital is not a second tile.
+  const isLetterKey = (code: HidKeyCode) => {
+    const plain = characterFor(locale, code, false);
+    return plain !== null && plain.toUpperCase() !== plain && characterFor(locale, code, true) === plain.toUpperCase();
+  };
   for (const [shift, altgr, codes] of states) {
     for (const code of codes) {
-      const text = characterFor(locale, code, shift, altgr);
+      const letterKey = isLetterKey(code);
+      if (letterKey && shift && !altgr) continue;
+      const text =
+        letterKey && !altgr ? characterFor(locale, code, true) : characterFor(locale, code, shift, altgr);
       if (!text || seen.has(text)) continue;
       seen.add(text);
       const mods = { ...noModifiers(), left_shift: shift, right_alt: altgr };
@@ -107,8 +116,7 @@ function characterGroups(locale: KeyboardLocale): Record<"letters" | "numbers" |
       found[group].push(tile);
     }
   }
-  // Lower-case letters are what the key types; their capitals (lilac) follow.
-  found.letters.sort((a, b) => a.label.localeCompare(b.label) || Number(a.lilac) - Number(b.lilac));
+  found.letters.sort((a, b) => a.label.localeCompare(b.label));
   found.numbers.sort((a, b) => a.label.localeCompare(b.label));
   const rank = (tile: Tile) => SYMBOL_CLUSTERS.findIndex(([name]) => name === clusterOf(tile.label));
   found.symbols = found.symbols

@@ -5,6 +5,7 @@
 // editor, for macros, morse patterns and the rest).
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import type { CSSProperties } from "react";
 import type { Action, KeyAction, ModifierCombination } from "../../model/action-types";
 import { keyActionGlyph, keyActionDescription, actionDescription, modifierSymbols, anyModifier } from "../labels";
 import { keyAddressLabel, matrixKeyLabel } from "../key-address";
@@ -356,7 +357,7 @@ function SlotRow({
   );
 }
 
-export function KeyEditor() {
+export function KeyEditor({ height = 310 }: { height?: number }) {
   const { bundle, state, dispatch, io } = useWorkbench();
   const capabilities = useCapabilities();
   const [tab, setTab] = useState<Tab>("pick");
@@ -376,7 +377,10 @@ export function KeyEditor() {
 
   if (!selection) {
     return (
-      <section className="flex min-h-[132px] shrink-0 items-center justify-center rounded-2xl border border-line bg-panel px-6 py-8 text-center">
+      <section
+        style={{ "--editor-h": `${height}px` } as CSSProperties}
+        className="flex h-(--editor-h) min-h-[132px] shrink-0 items-center justify-center rounded-2xl border border-line bg-panel px-6 py-8 text-center max-lg:h-auto"
+      >
         <p className="text-ui font-semibold text-mute">↑ Click a key on the keyboard to change what it does</p>
       </section>
     );
@@ -408,7 +412,10 @@ export function KeyEditor() {
   const glyph = keyActionGlyph(action);
 
   return (
-    <section className="flex h-[310px] min-h-0 shrink-0 overflow-hidden rounded-2xl border border-line bg-panel max-lg:h-auto max-lg:flex-col">
+    <section
+      style={{ "--editor-h": `${height}px` } as CSSProperties}
+      className="flex h-(--editor-h) min-h-0 shrink-0 overflow-hidden rounded-2xl border border-line bg-panel max-lg:h-auto max-lg:flex-col"
+    >
       {/* which key, and its slots */}
       <div className="flex w-[300px] shrink-0 flex-col gap-3 overflow-y-auto border-r border-line p-4 max-lg:w-full max-lg:border-r-0 max-lg:border-b">
         <div className="flex items-start gap-3">

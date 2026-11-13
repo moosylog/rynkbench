@@ -26,6 +26,7 @@ import { AdvancedSection } from "./advanced/AdvancedMode";
 import { ProfilesMode } from "./ProfilesMode";
 import { DeviceMode } from "./device/DeviceMode";
 import { SidePanel } from "./sidepanel/SidePanel";
+import { ResizeHandle, usePaneSize } from "./panes";
 import { InspectorShell, cx } from "./kit";
 import { historyShortcut, keyEditHistoryLabel } from "../model/history";
 import { firmwareFactsOf, resolveCapabilities } from "../capabilities";
@@ -82,11 +83,19 @@ function KeymapScreen() {
   const capabilities = useCapabilities();
   const selected = state.selection?.type;
   const side = selected === "encoder" || selected === "pointing" || (!selected && capabilities.has("pointing"));
+  const editorPane = usePaneSize("rynk:key-editor-height", 310, 180, 640);
   return (
     <>
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <KeymapCenter />
-        {selected !== "encoder" && selected !== "pointing" && <KeyEditor />}
+        {selected !== "encoder" && selected !== "pointing" && (
+          <>
+            <div className="max-lg:hidden">
+              <ResizeHandle edge="top" label="Key editor height" pane={editorPane} />
+            </div>
+            <KeyEditor height={editorPane.size} />
+          </>
+        )}
       </div>
       {side && (
         <InspectorShell>
@@ -170,8 +179,9 @@ export function Workbench({
   const currentArea = areaOfSection(areas, state.mode);
   const section: SectionId = currentArea ? state.mode : "keymap";
   const area = currentArea ?? areas[0];
-  // The phone's side-panel drawer.
+  // The phone's side-panel drawer, and the side panel's width elsewhere.
   const [drawer, setDrawer] = useState(false);
+  const sidePane = usePaneSize("rynk:side-panel-width", 256, 200, 420);
   // Each area remembers the section last shown in it.
   const lastSection = useRef<Partial<Record<AreaId, SectionId>>>({});
   useEffect(() => {
@@ -315,14 +325,17 @@ export function Workbench({
         />
         <div className="flex min-h-0 flex-1">
           {section === "keymap" && (
-            <div className="max-sm:hidden">
-              <SidePanel />
+            <div className="flex shrink-0 max-sm:hidden" style={{ width: sidePane.size + 12 }}>
+              <div className="min-w-0 flex-1">
+                <SidePanel />
+              </div>
+              <ResizeHandle edge="right" label="Side panel width" pane={sidePane} />
             </div>
           )}
           {section === "keymap" && drawer && (
             <div className="fixed inset-0 z-[60] sm:hidden" onClick={() => setDrawer(false)}>
               <div className="absolute inset-0 bg-well/70" />
-              <div className="absolute inset-y-0 left-0 w-[86vw] max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <div className="absolute inset-y-0 left-0 w-[86vw] max-w-sm bg-bg shadow-2xl" onClick={(e) => e.stopPropagation()}>
                 <SidePanel onPicked={() => setDrawer(false)} />
               </div>
             </div>

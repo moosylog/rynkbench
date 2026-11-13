@@ -35,15 +35,25 @@ describe("pick key", () => {
     ]);
   });
 
-  it("gives every character one tile, a shifted one marked", () => {
+  it("shows each letter key once, as its keycap, bound to the key itself", () => {
     const letters = group("letters").tiles;
-    expect(letters.find((t) => t.label === "a")?.lilac).toBeFalsy();
-    expect(letters.find((t) => t.label === "A")?.lilac).toBe(true);
+    expect(letters.map((t) => t.label)).toEqual("ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""));
+    expect(letters.find((t) => t.label === "A")).toMatchObject({ lilac: false, action: { Key: { Hid: "A" } } });
+    expect(searchTiles(groups, "a").flatMap((g) => g.tiles.map((t) => t.label))).toContain("A");
+  });
+
+  it("gives every other character one tile, a shifted one marked", () => {
     const dollar = group("symbols").tiles.find((t) => t.label === "$");
     expect(dollar?.lilac).toBe(true);
     expect(dollar?.action).toMatchObject({ KeyWithModifier: ["Kc4", { left_shift: true }] });
-    const labels = groups.main.flatMap((g) => g.tiles.map((t) => t.id));
-    expect(new Set(labels).size).toBe(labels.length);
+    const ids = groups.main.flatMap((g) => g.tiles.map((t) => t.id));
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("keeps a layout's own letters, such as the German ä and ß", () => {
+    const german = pickKeyGroups(LOCALES.find((l) => l.id === "de")!).main.find((g) => g.id === "letters")!;
+    expect(german.tiles.map((t) => t.label)).toEqual(expect.arrayContaining(["Ä", "Ö", "Ü", "ß"]));
+    expect(german.tiles.filter((t) => t.label === "Z")).toHaveLength(1);
   });
 
   it("clusters symbols so the eye finds them", () => {
