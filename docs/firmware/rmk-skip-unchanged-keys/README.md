@@ -4,11 +4,21 @@ A firmware change for RMK (`colonelpanic8/rmk`, the source Rynkbench's protocol 
 
 | | |
 |---|---|
-| Files | `0001-storage-skip-unchanged-key-and-encoder-actions.patch` (one commit, `git am`), `apply.sh` |
-| Changes | `rmk/src/storage/mod.rs` only: two helpers, the two places that use them, one test |
-| Based on | `colonelpanic8/rmk` at `4bed409` ("feat: expose held modifier combinations in config") |
+| Files | `for-assembled-ce86673.patch`, `for-main-4bed409.patch` (the same change for each branch, one commit each, `git am`), `apply.sh` (uses the one that fits) |
+| Changes | `rmk/src/storage/mod.rs` only: compare before storing a key or encoder action, and one test |
 | Cost | One flash read per key write. Reads do not wear flash. |
-| Status | Compiles; RMK's storage tests pass (6 of 6, including the new one); clippy clean; not yet tried on a keyboard |
+| Status | Applies to both branches; all tests pass (below); clippy clean; not yet tried on a keyboard |
+
+## Which version
+
+`colonelpanic8/rmk` has two lines, and their storage code differs:
+
+| Branch | Version | Use it for |
+|---|---|---|
+| `assembled`, at `ce86673` (the revision Rynkbench's `flake.lock` pins) | `for-assembled-ce86673.patch` | **The firmware Rynkbench talks to** and the MoErgo Glove80 and Go60 builds (`colonelpanic8/moergo-rmk`). Start here. |
+| default branch, at `4bed409` | `for-main-4bed409.patch` | Offering the change upstream. |
+
+`apply.sh` checks which one applies to your checkout.
 
 ## The problem
 
@@ -34,7 +44,20 @@ Other firmware does the same as this patch: QMK's `eeprom_update_byte` reads fir
 
 ## The change
 
-Two small helpers in `Storage`, used by the storage task in place of the unconditional store:
+**On `assembled`** every write the host asks for reaches flash through one message, `FlashOperationMessage::Store(item)`. The storage task now hands it to `put_unless_stored`, which reads the stored value first for a key or an encoder action and leaves flash alone when it is the same; every other item is stored as before:
+
+```rust
+async fn put_unless_stored(&mut self, item: StorageItem) -> Result<(), SSError<F::Error>> {
+    let (key, value) = item.split();
+    #[cfg(feature = "host")]
+    {
+        // read only for keys and encoder actions; equal → Ok(()) without storing
+    }
+    self.flash.store_item(&mut self.buffer, &key, &value).await
+}
+```
+
+**On the default branch** the storage task has a branch per kind of write; two small helpers take the place of the unconditional store:
 
 ```rust
 /// Stores a key's action unless flash already holds that same action.
@@ -65,7 +88,7 @@ What stays the same:
 
 ## The test
 
-`storage::tests::unchanged_key_and_encoder_actions_are_not_stored_again` counts writes on the test flash (`FLASH_WRITES`, added to the existing `TestFlash`) and checks:
+`storage::tests::unchanged_key_and_encoder_actions_are_not_stored_again` counts writes on the test flash (on `assembled` its in-memory flash already counts them; on the default branch the patch adds `FLASH_WRITES` to the test flash) and checks:
 
 1. after initialization, storing the action a key already has writes nothing;
 2. a different action is written and reads back;
@@ -76,18 +99,20 @@ With the comparison removed, the test fails, so it really guards the behaviour.
 
 ## Results
 
-Run against `4bed409` with the patch applied, stable Rust, `cargo-nextest` 0.9:
+Stable Rust, `cargo-nextest` 0.9. Feature sets are the ones RMK's own CI uses (`.github/ci/_lib.sh`).
 
-| Check | Result |
-|---|---|
-| `cargo nextest run --no-default-features --features=vial,storage storage` | 6 passed (the 5 existing storage tests and the new one) |
-| `cargo nextest run --no-default-features --features=split,vial,storage,async_matrix,_ble storage` | 6 passed |
-| The new test with the comparison removed | fails, as it should |
-| `cargo clippy --no-default-features --features=vial,storage --tests` | no findings in `storage/mod.rs` |
-| `cargo build` (default features) | builds |
-| `rustfmt` | formatted |
+| Branch | Check | Result |
+|---|---|---|
+| `assembled` | **every RMK test**, `--features rynk,storage,lighting` | 876 passed |
+| `assembled` | storage tests, `--features rynk,_ble,split,async_matrix,storage` | 22 passed |
+| `assembled` | the new test with the comparison switched off | fails, as it should |
+| `assembled` | `cargo clippy --features rynk,storage,lighting --tests` | no findings in `storage/mod.rs` |
+| default | storage tests, `--features vial,storage` and `split,vial,storage,async_matrix,_ble` | 6 passed each |
+| default | the new test with the comparison removed | fails, as it should |
+| default | `cargo clippy`, `cargo build` | clean, builds |
+| both | `apply.sh` on a clean checkout | applies the right version, its storage tests pass |
 
-Not yet done: a run on a real keyboard (see below), and RMK's full matrix (`sh scripts/test_all.sh`).
+Not yet done: a run on a real keyboard (see below), and the rest of RMK's CI feature sets.
 
 ## Apply it
 
@@ -101,8 +126,8 @@ or by hand:
 
 ```sh
 cd /path/to/rmk
-git am /path/to/0001-storage-skip-unchanged-key-and-encoder-actions.patch
-cd rmk && cargo nextest run --no-default-features --features=vial,storage storage
+git am /path/to/for-assembled-ce86673.patch          # or for-main-4bed409.patch on the default branch
+cd rmk && cargo nextest run --no-default-features --features=rynk,storage,lighting storage   # default branch: vial,storage
 ```
 
 RMK's tests need `cargo-nextest` (`cargo install cargo-nextest --locked`): embassy-time's mock driver is one per process.
@@ -115,4 +140,4 @@ RMK's tests need `cargo-nextest` (`cargo install cargo-nextest --locked`): embas
 
 ## For upstream
 
-The change is general and small enough to offer to RMK itself: it fixes wear for every host, not only Rynkbench. Combo, morse and fork slots go through the same storage task and could get the same comparison once their types can be compared for equality; the lighting tables already have it.
+The change is general and small enough to offer to RMK itself: it fixes wear for every host, not only Rynkbench. Combo, morse and fork slots go through the same storage path and could get the same comparison once their stored types can be compared for equality; the lighting tables already have it. On `assembled`, `put_unless_stored` is the one place to add them.
