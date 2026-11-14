@@ -7,6 +7,8 @@ One word, one meaning. Code, docs and screens use these terms.
 - **Board spec:** declarative data describing one board: how to recognize it, geometry, presets, firmware channel, file formats.
 - **Feature set:** what one keyboard instance offers after merging firmware advertisement, board spec and environment.
 - **Offer:** the policy engine's answer to "is this feature shown here, and how far does it reach", with the reason.
+- **Sync:** bringing the keyboard to the layout you want by writing only what differs from a fresh read of it (ADR 0012, docs/sync.md).
+- **Three-way check:** before writing, each changed item is compared with what it was based on and with what the keyboard holds now; a change made on both sides is shown first.
 - **Rynkbench Guard:** what keeps a layout from being broken: one gate every key write passes, which stops or asks only when a change breaks something. See ADR 0011.
 - **Reach:** how far a change goes: `device` (live), `build` (needs a firmware build), `file` (only in the file).
 - **Edge table:** the one list of places a reference can live. The graph is derived from it.

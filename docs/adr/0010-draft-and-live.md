@@ -18,3 +18,7 @@ Rynkbench edits a keyboard while it is connected. RMK stores every write: unlike
 
 - Combos, morse, macros and device settings still write at once; the review window says so. They join the draft next.
 - `state.tsx` did not grow: the draft is built from its existing staging, outside it.
+
+## Later
+
+- Send now goes through the one write path of ADR 0012: a fresh read, a three-way check, only what differs, one read-back. Combos, morse and forks joined the draft; a kept draft remembers what each change was based on.
