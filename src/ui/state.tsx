@@ -6,6 +6,7 @@ import type { Dispatch } from "react";
 import type { MacroOp } from "../vendor/rynk-wasm/rynk_wasm";
 import { same } from "../model/deep-equal";
 import { conditionalTablesEqual, overlaysEqual } from "./lighting/compare";
+import { planSync, readImage, writePlan } from "../sync";
 import type {
   BehaviorConfig,
   ComboDefinition,
@@ -1037,110 +1038,16 @@ async function readLayerRewriteSnapshot(
   if (state.lightingState !== null && !config.lightingOutputSupported) {
     throw new Error("lighting wake layers could not be read, so layer references cannot be rewritten safely");
   }
-
-  const caps = await session.device.capabilities();
-  const [metadata, layerKeymaps, layerState, combos, morse, forks, behaviorOptions, autoMouse, pointing] =
-    await Promise.all([
-      Promise.all(
-        Array.from({ length: caps.num_layers }, (_, layer) =>
-          session.keymap.getLayerMetadata(layer),
-        ),
-      ),
-      session.keymap.readAll(),
-      session.keymap.layerState(),
-      caps.max_combos > 0 ? session.combos.readAll() : Promise.resolve([]),
-      caps.max_morse > 0 ? session.morse.readAll() : Promise.resolve([]),
-      caps.max_forks > 0 ? session.forks.readAll() : Promise.resolve([]),
-      session.behavior.options(),
-      session.behavior.autoMouseLayers(),
-      session.pointing.get(),
-    ]);
-  if (!layerState.complete) {
+  const { layerStateComplete, ...image } = await readImage(session, { ...config, layerMetadata: true });
+  if (!layerStateComplete) {
     throw new Error("complete active-layer state is required before editing layer structure");
   }
-  const encoders = await Promise.all(
-    Array.from({ length: caps.num_layers }, (_, layer) =>
-      Promise.all(
-        Array.from({ length: caps.num_encoders }, (_, encoder) =>
-          session.keymap.getEncoder(encoder, layer),
-        ),
-      ),
-    ),
-  );
-  const [scenes, runtimeConditionalScenes, outputMode] = await Promise.all([
-    config.scenesSupported ? session.lighting.scenes.readScenes() : Promise.resolve([]),
-    config.conditionalScenesSupported
-      ? session.lighting.conditionalScenes.read()
-      : Promise.resolve([]),
-    config.lightingOutputSupported ? session.lighting.outputMode() : Promise.resolve(null),
-  ]);
-  const layers = Array.from({ length: caps.num_layers }, (_, layer) => {
-    const found = layerKeymaps.find((candidate) => candidate.layer === layer);
-    if (!found) throw new Error(`keymap read omitted layer ${layer}`);
-    return found.actions;
-  });
-
-  return {
-    metadata,
-    layers,
-    encoders,
-    defaultLayer: layerState.defaultLayer,
-    activeLayers: layerState.activeLayers,
-    combos,
-    morse,
-    forks,
-    behaviorOptions,
-    autoMouseLayers: autoMouse.configs,
-    scenes,
-    runtimeConditionalScenes,
-    compiledScenes: state.compiledScenes,
-    compiledConditionalScenes: state.conditionalScenes,
-    wakeLayers: outputMode?.wake_layers ?? 0,
-    pointing,
-  };
-}
-
-async function writeLayerRewriteSnapshot(
-  session: RynkSession,
-  snapshot: LayerRewriteSnapshot,
-  config: IoFeatures,
-): Promise<void> {
-  await session.keymap.replaceAll(
-    snapshot.layers.map((actions, layer) => ({ layer, actions })),
-  );
-  for (let layer = 0; layer < snapshot.encoders.length; layer += 1) {
-    for (let encoder = 0; encoder < snapshot.encoders[layer].length; encoder += 1) {
-      await session.keymap.setEncoder(encoder, layer, snapshot.encoders[layer][encoder]);
-    }
-  }
-  for (let index = 0; index < snapshot.combos.length; index += 1) {
-    await session.combos.set(index, snapshot.combos[index]);
-  }
-  for (let index = 0; index < snapshot.morse.length; index += 1) {
-    await session.morse.set(index, snapshot.morse[index]);
-  }
-  for (let index = 0; index < snapshot.forks.length; index += 1) {
-    await session.forks.set(index, snapshot.forks[index]);
-  }
-  if (snapshot.behaviorOptions) await session.behavior.setOptions(snapshot.behaviorOptions);
-  await session.behavior.setAutoMouseLayers(snapshot.autoMouseLayers);
-  if (config.scenesSupported) await session.lighting.scenes.replaceScenes(snapshot.scenes);
-  if (config.conditionalScenesSupported) {
-    await session.lighting.conditionalScenes.replace(snapshot.runtimeConditionalScenes);
-  }
-  if (snapshot.pointing) {
-    const current = await session.pointing.get();
-    await session.pointing.set({ ...snapshot.pointing, revision: current.revision });
-  }
-  if (config.lightingOutputSupported) await session.lighting.setWakeLayers(snapshot.wakeLayers);
-  await session.keymap.setDefaultLayer(snapshot.defaultLayer);
-  for (let layer = 0; layer < snapshot.metadata.length; layer += 1) {
-    await session.keymap.setLayerMetadata(layer, snapshot.metadata[layer]);
-  }
+  return { ...image, compiledScenes: state.compiledScenes, compiledConditionalScenes: state.conditionalScenes };
 }
 
 function assertLayerRewriteReadback(expected: LayerRewriteSnapshot, actual: LayerRewriteSnapshot): void {
-  const comparable = (snapshot: LayerRewriteSnapshot) => ({
+  // A rewrite carries its `order` (which slot came from where); a read never does.
+  const comparable = ({ order: _order, ...snapshot }: LayerRewriteSnapshot & { order?: number[] }) => ({
     ...snapshot,
     compiledScenes: [],
     compiledConditionalScenes: [],
@@ -1261,7 +1168,7 @@ export function makeIo(
         plan = planLayerRewrite(original, operation);
       }
       writing = true;
-      await writeLayerRewriteSnapshot(session, plan, features);
+      await writePlan(session, planSync(original, plan)); // only what moves (ADR 0012)
       const readback = await readLayerRewriteSnapshot(session, getState(), features);
       assertLayerRewriteReadback(plan, readback);
       dispatch({ type: "keyHistoryClear" });
@@ -1271,7 +1178,8 @@ export function makeIo(
       let message = errorMessage(error);
       if (original && writing) {
         try {
-          await writeLayerRewriteSnapshot(session, original, features);
+          const now = await readLayerRewriteSnapshot(session, getState(), features);
+          await writePlan(session, planSync(now, original));
         } catch (rollbackError) {
           message += `; rollback also failed: ${errorMessage(rollbackError)}`;
         }

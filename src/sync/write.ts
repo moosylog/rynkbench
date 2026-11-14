@@ -8,14 +8,14 @@ import type { KeyboardImage } from "./image";
 import { planSync, storedItems, type SyncStep } from "./plan";
 import { readImage, type ImageFeatures, type ReadImage } from "./read";
 
-/** A write that stopped part-way: how many steps went through, and why. */
+/** A write that stopped part-way: the cause's message, how many steps went through, and which one failed. */
 export class SyncStopped extends Error {
   readonly done: number;
   readonly total: number;
   readonly step: SyncStep;
 
   constructor(done: number, total: number, step: SyncStep, cause: unknown) {
-    super(`${cause instanceof Error ? cause.message : String(cause)} (step ${done + 1} of ${total}: ${step.kind})`);
+    super(cause instanceof Error ? cause.message : String(cause), { cause });
     this.name = "SyncStopped";
     this.done = done;
     this.total = total;
