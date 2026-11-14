@@ -8,7 +8,7 @@
 import type { Fork, Morse, MorseProfileEntry } from "../../model/action-types";
 import { morsePatternGlyph } from "../../model/morse";
 import { forkIsEmpty, morseIsEmpty } from "../../model/slots";
-import type { TermId } from "../terms";
+import type { Term, TermId, Wording } from "../terms";
 import { actionLabel, keyActionGlyph } from "../labels";
 import { morseProfileSummary } from "../morse-profile";
 import type { SiteRef, UsageReport } from "../advanced/usage";
@@ -31,15 +31,15 @@ export interface LibraryRow {
 interface KindInfo {
   /** The list's name, in both voices (ui/terms.ts). */
   term: TermId;
-  /** One of them, in the row name: "Macro 3". */
-  one: string;
+  /** One of them, in the row name ("Macro 3"), in both voices. */
+  one: Term;
 }
 
 export const LIBRARY_KINDS: Record<LibraryKind, KindInfo> = {
-  macros: { term: "section.macros", one: "Macro" },
-  morse: { term: "section.morse", one: "Tap pattern" },
-  forks: { term: "section.forks", one: "Fork" },
-  profiles: { term: "section.profiles", one: "Timing" },
+  macros: { term: "section.macros", one: { technical: "Macro", friendly: "Macro" } },
+  morse: { term: "section.morse", one: { technical: "Morse", friendly: "Tap pattern" } },
+  forks: { term: "section.forks", one: { technical: "Fork", friendly: "Conditional key" } },
+  profiles: { term: "section.profiles", one: { technical: "Profile", friendly: "Tap timing" } },
 };
 
 export const LIBRARY_ORDER: LibraryKind[] = ["macros", "morse", "forks", "profiles"];
@@ -51,6 +51,8 @@ export interface LibraryInput {
   morse: readonly Morse[];
   forks: readonly Fork[];
   profiles: readonly MorseProfileEntry[];
+  /** The app's voice for row names (ui/terms.ts). */
+  wording: Wording;
 }
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
@@ -66,7 +68,7 @@ function forkDetail(fork: Fork, morse: readonly Morse[]): string {
 
 /** The rows of one list: the stored behaviors of that kind, in slot order. */
 export function libraryRows(kind: LibraryKind, input: LibraryInput): LibraryRow[] {
-  const one = LIBRARY_KINDS[kind].one;
+  const one = LIBRARY_KINDS[kind].one[input.wording];
   switch (kind) {
     case "macros":
       return input.usage.macros.filter((macro) => (input.macroOps[macro.index]?.length ?? 0) > 0).map((macro) => ({

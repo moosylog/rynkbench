@@ -7,7 +7,7 @@
 import { useState } from "react";
 import type { MouseEvent } from "react";
 import { useWorkbench } from "../state";
-import { useTerms } from "../terms";
+import { useTerms, useWording } from "../terms";
 import { Button, TextInput, cx } from "../kit";
 import { ChevronDownIcon, ChevronRightIcon, MoreIcon, PlusIcon } from "../icons";
 import { RowMenu, useRowMenu } from "../RowMenu";
@@ -30,7 +30,8 @@ import {
 function useLibraryInput(): LibraryInput {
   const { state } = useWorkbench();
   const usage = useUsageReport();
-  return { usage, macroOps: state.macroOps, morse: state.morse, forks: state.forks, profiles: state.morseProfiles };
+  const wording = useWording();
+  return { usage, macroOps: state.macroOps, morse: state.morse, forks: state.forks, profiles: state.morseProfiles, wording };
 }
 
 /** The header row that opens and closes the library. */
@@ -98,7 +99,7 @@ export function BehaviorLibrary({ kinds }: { kinds: LibraryKind[] }) {
 
   const all = libraryRows(kind, input);
   const rows = searchRows(all, search);
-  const one = LIBRARY_KINDS[kind].one;
+  const one = LIBRARY_KINDS[kind].one[input.wording];
   const unused = unusedRows(input).length;
   const open = (focus: BehaviorFocus) => {
     setBehaviorFocus(kind, focus);

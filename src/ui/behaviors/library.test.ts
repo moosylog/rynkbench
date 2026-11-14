@@ -30,6 +30,7 @@ function input(over: Partial<LibraryInput> = {}): LibraryInput {
     morse: [morse([[0b10, key("F4")], [0b100, key("Escape")]]), morse([[0b100, key("D")]]), morse([])],
     forks: [{ trigger: "No", negative_output: "No", positive_output: "No" } as unknown as Fork],
     profiles: [{ index: 3, name: "hrm_pinky", profile: { hold_timeout_ms: 270 } } as never],
+    wording: "friendly",
     ...over,
   };
 }
@@ -44,6 +45,10 @@ describe("the Behavior Library rows", () => {
       ["Tap pattern 1", "not used"],
     ]);
     expect(libraryRows("profiles", input()).map((row) => row.name)).toEqual(["hrm_pinky"]);
+  });
+
+  it("name rows in the app's voice, as the tabs are", () => {
+    expect(libraryRows("morse", input({ wording: "technical" }))[0].name).toBe("Morse 0");
   });
 
   it("leave out empty slots: a cleared macro, an unprogrammed fork, an empty tap pattern", () => {
