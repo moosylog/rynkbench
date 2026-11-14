@@ -80,15 +80,22 @@ export function legendLayout(
  *  36% and the next ones 23% (GLIDE's .kc-dual, .kc-icon-2), and a number
  *  beside a picture (the Bluetooth profile) is 26% of the cap tall. The small
  *  tiers (a hold, a chord's modifiers) use GLIDE's 13 px pictures and the
- *  hold's text size. Sizes are in key units; the cap is 62/70 of the pitch. */
+ *  hold's text size. A wide picture (the MoErgo logo) alone is GLIDE's
+ *  .kc-wide: 132% of the face's content box wide, past its padding but clear
+ *  of the cap's edge. Sizes are in key units; the cap is 62/70 of the pitch. */
 export interface FaceItem {
   kind: "icon" | "text";
   /** Index into the face's parts. */
   part: number;
-  /** Centre, from the cap's centre, and size (an icon's side, a text's font size), in key units. */
+  /** Centre, from the cap's centre, and size (an icon's height, a text's font size), in key units. */
   dx: number;
   size: number;
+  /** Drawn width in key units (an icon's side unless it is wide). */
+  width: number;
 }
+
+/** A face part to lay out; `aspect` is a picture's width over its height (1 when square). */
+export type FacePiece = { icon: string; aspect?: number } | { text: string };
 
 const CAP = 62 / PITCH_PX;
 const FACE = {
@@ -99,27 +106,31 @@ const FACE = {
   smallIcon: 13 / PITCH_PX,
   gap: 0.03 * CAP,
   smallGap: 1 / PITCH_PX,
+  /** GLIDE's .kc-icon is 52% of the face's content box, .kc-wide 132% of it. */
+  wide: (1.32 / 0.52) * 0.402 * CAP,
 } as const;
 
-export function faceLayout(
-  parts: readonly ({ icon: string } | { text: string })[],
-  capWidth: number,
-  tier: "main" | "small",
-): FaceItem[] {
+export function faceLayout(parts: readonly FacePiece[], capWidth: number, tier: "main" | "small"): FaceItem[] {
   const small = tier === "small";
+  const aspect = (part: FacePiece) => ("icon" in part ? (part.aspect ?? 1) : 1);
+  const wideAlone = !small && parts.length === 1 && aspect(parts[0]) > 1;
   const sizes = parts.map((part, i) => {
     if ("text" in part) return small ? SIZE.sub : FACE.text;
+    if (wideAlone) return FACE.wide / aspect(part);
     if (small) return FACE.smallIcon;
     return parts.length === 1 ? FACE.alone : i === 0 ? FACE.first : FACE.next;
   });
-  const widths = parts.map((part, i) => ("text" in part ? [...part.text].length * GLYPH_WIDTH * sizes[i] : sizes[i]));
+  const widths = parts.map((part, i) =>
+    "text" in part ? [...part.text].length * GLYPH_WIDTH * sizes[i] : sizes[i] * aspect(part),
+  );
   const gap = small ? FACE.smallGap : FACE.gap;
   const total = widths.reduce((sum, w) => sum + w, 0) + gap * (parts.length - 1);
-  const scale = Math.min(1, (capWidth - MARGIN) / total);
+  // A wide picture alone may cross the face's padding (GLIDE's .kc-wide), not the cap's edge.
+  const scale = Math.min(1, (capWidth - (wideAlone ? MARGIN / 2 : MARGIN)) / total);
   let x = -(total * scale) / 2;
   return parts.map((part, i) => {
     const w = widths[i] * scale;
-    const item: FaceItem = { kind: "text" in part ? "text" : "icon", part: i, dx: x + w / 2, size: sizes[i] * scale };
+    const item: FaceItem = { kind: "text" in part ? "text" : "icon", part: i, dx: x + w / 2, size: sizes[i] * scale, width: w };
     x += w + gap * scale;
     return item;
   });

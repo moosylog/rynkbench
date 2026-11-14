@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import type { ReactNode } from "react";
-import type { Action, Morse, MorseMode, MorseProfile } from "../../vendor/rynk-wasm/rynk_wasm";
+import type { Action, Morse, MorseMode, MorseProfile } from "../../model/action-types";
 import { actionLabel } from "../labels";
 import { SlotPicker } from "../keymap/ActionEditor";
 import { useWorkbench } from "../state";
@@ -15,6 +15,7 @@ import { Button, InspectorShell, SectionLabel, TextInput, cx } from "../kit";
 import { CloseIcon, PlusIcon, TrashIcon } from "../icons";
 import { CenterScroll, SlotCard, SlotStatus, morseIsEmpty } from "./bits";
 import { useSlotEditor } from "./use-slot-editor";
+import { useLayerNames } from "../use-layer-names";
 
 function PatternBuilder({
   onAdd,
@@ -24,6 +25,7 @@ function PatternBuilder({
   disabled: boolean;
 }) {
   const { bundle } = useWorkbench();
+  const layerNames = useLayerNames();
   const [elements, setElements] = useState<MorseElement[]>([]);
   const [action, setAction] = useState<Action>("No");
 
@@ -74,7 +76,7 @@ function PatternBuilder({
       <div className="text-small text-faint">
         Action for this pattern:{" "}
         <span className={cx("font-mono", action === "No" ? "text-faint" : "text-ink")}>
-          {actionLabel(action) || "unset"}
+          {actionLabel(action, layerNames) || "unset"}
         </span>
       </div>
       <SlotPicker numLayers={bundle.caps.num_layers} onPick={setAction} />
@@ -188,6 +190,7 @@ function ProfileEditor({
 
 export function MorseTab({ nav }: { nav: ReactNode }) {
   const { bundle, state, io } = useWorkbench();
+  const layerNames = useLayerNames();
   const caps = bundle.caps;
 
   const { sel, draft, setDraft, saved, editing, dirty, pending, open, close, addNew, entries, hasFree } =
@@ -232,7 +235,7 @@ export function MorseTab({ nav }: { nav: ReactNode }) {
                         {morsePatternGlyph(pattern)}
                       </span>
                       <span className="min-w-0 flex-1 truncate text-ink">
-                        {actionLabel(action) || "—"}
+                        {actionLabel(action, layerNames) || "—"}
                       </span>
                     </div>
                   ))}
@@ -283,7 +286,7 @@ export function MorseTab({ nav }: { nav: ReactNode }) {
                     {morsePatternGlyph(pattern)}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-body text-ink">
-                    {actionLabel(action) || "—"}
+                    {actionLabel(action, layerNames) || "—"}
                   </span>
                   <button
                     type="button"

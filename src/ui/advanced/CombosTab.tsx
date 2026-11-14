@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import type {
   KeyAction,
   MatrixPosition,
-} from "../../vendor/rynk-wasm/rynk_wasm";
+} from "../../model/action-types";
 import type { KeyView } from "../../model/keyboard";
 import { BoardWell, KeyboardCanvas } from "../KeyboardCanvas";
 import type { KeyDecor } from "../KeyboardCanvas";
@@ -33,9 +33,12 @@ import {
   comboWithOutput,
   samePosition,
 } from "../../model/combos";
+import { useLayerNames } from "../use-layer-names";
+import { layerName } from "../layer-names";
 
 function TriggerChip({ action, onRemove }: { action: KeyAction; onRemove: () => void }) {
-  const glyph = keyActionGlyph(action);
+  const layerNames = useLayerNames();
+  const glyph = keyActionGlyph(action, [], layerNames);
   return (
     <span className="inline-flex items-center gap-1 rounded-md border border-cap-edge bg-cap px-2 py-1 font-mono text-body text-cap-ink">
       {glyph.text || "·"}
@@ -87,6 +90,7 @@ export function CombosTab({
   goBehavior: () => void;
 }) {
   const { bundle, state, io } = useWorkbench();
+  const layerNames = useLayerNames();
   const caps = bundle.caps;
   const cols = caps.num_cols;
 
@@ -126,7 +130,7 @@ export function CombosTab({
 
   const decorFor = (key: KeyView): KeyDecor => {
     const action = layerActions?.[key.row * cols + key.col];
-    const glyph = action !== undefined ? keyActionGlyph(action) : { text: "" };
+    const glyph = action !== undefined ? keyActionGlyph(action, [], layerNames) : { text: "" };
     if (!glyph.text && key.label) {
       glyph.text = key.label;
       glyph.dim = true;
@@ -217,7 +221,7 @@ export function CombosTab({
                 {(() => {
                   const displayed = index === sel && draft ? draft : combo;
                   return comboIsActions(displayed)
-                    ? displayed.Actions.actions.map((a) => keyActionGlyph(a).text || "·").join(" + ") || "—"
+                    ? displayed.Actions.actions.map((a) => keyActionGlyph(a, [], layerNames).text || "·").join(" + ") || "—"
                     : displayed.Positions.positions
                         .map((position) =>
                           keyAddressLabel(keyAtPosition(bundle.model.keys, position)),
@@ -225,13 +229,14 @@ export function CombosTab({
                         .join(" + ") || "—";
                 })()}
                 <span className="mx-1.5 text-faint">→</span>
-                {keyActionGlyph(comboOutput(index === sel && draft ? draft : combo)).text || "·"}
+                {keyActionGlyph(comboOutput(index === sel && draft ? draft : combo), [], layerNames).text || "·"}
               </span>
-              {comboLayer(index === sel && draft ? draft : combo) !== undefined && (
-                <Chip className="tnum shrink-0">
-                  L{comboLayer(index === sel && draft ? draft : combo)}
-                </Chip>
-              )}
+              {(() => {
+                const only = comboLayer(index === sel && draft ? draft : combo);
+                return only === undefined ? null : (
+                  <Chip className="tnum shrink-0">{layerNames(only) ?? `L${only}`}</Chip>
+                );
+              })()}
             </button>
           ))}
           <Button variant="outline" onClick={addNew} disabled={!hasFree || editing}>
@@ -329,7 +334,7 @@ export function CombosTab({
                 <option value="any">Any layer</option>
                 {Array.from({ length: caps.num_layers }, (_, n) => (
                   <option key={n} value={n}>
-                    Layer {n}
+                    {layerName(state.layerMetadata, n)}
                   </option>
                 ))}
               </select>
@@ -350,7 +355,7 @@ export function CombosTab({
               <SectionLabel>Output</SectionLabel>
               <div className="mt-1.5 flex items-center gap-2 rounded-lg border border-line bg-raised px-3 py-2">
                 <span className="font-mono text-ui text-ink">
-                  {keyActionGlyph(comboOutput(draft)).text || "unset"}
+                  {keyActionGlyph(comboOutput(draft), [], layerNames).text || "unset"}
                 </span>
               </div>
               {/* fixed-height frame: keeps the editor's internal scrolling from

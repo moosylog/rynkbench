@@ -99,3 +99,30 @@ describe("keyActionGlyph", () => {
     expect(keyActionGlyph({ Morse: 0 } as KeyAction)).toEqual({ text: "Mo0" });
   });
 });
+
+describe("layer keys by name", () => {
+  const names = (layer: number) => ["Base", "Lower", "Magic"][layer];
+  const tap = { Key: { Hid: "A" as const } };
+
+  it("show the layer's name, after the kind for all but a momentary key", () => {
+    expect(actionLabel({ LayerOn: 1 }, names)).toBe("Lower");
+    expect(actionLabel({ LayerToggle: 2 }, names)).toBe("TG Magic");
+    expect(actionLabel({ DefaultLayer: 0 }, names)).toBe("DF Base");
+    expect(actionLabel({ OneShotLayer: 1 }, names)).toBe("OSL Lower");
+    expect(keyActionGlyph({ TapHold: [tap, { LayerOn: 1 }, DEFAULT_TAP_HOLD_PROFILE] }, [], names).sub).toBe("Lower");
+  });
+
+  it("fall back to the number for a layer without a name", () => {
+    expect(actionLabel({ LayerOn: 5 }, names)).toBe("L5");
+    expect(actionLabel({ LayerToggle: 5 }, names)).toBe("TG5");
+    expect(actionLabel({ LayerOn: 1 })).toBe("L1");
+  });
+
+  it("name the layer in descriptions", () => {
+    expect(keyActionDescription({ Single: { LayerOn: 1 } }, names)).toBe("Momentary layer Lower");
+    expect(keyActionDescription({ Single: { LayerToggle: 5 } }, names)).toBe("Toggle layer 5");
+    expect(keyActionDescription({ TapHold: [tap, { LayerOn: 2 }, DEFAULT_TAP_HOLD_PROFILE] }, names)).toBe(
+      "Tap A / hold Magic · default timing",
+    );
+  });
+});

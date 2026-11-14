@@ -1,6 +1,7 @@
 import type { KeyView } from "../../model/keyboard";
 import type { KeyAction } from "../../model/action-types";
 import { keyActionGlyph } from "../labels";
+import type { LayerNames } from "../layer-names";
 import { effectiveAction } from "../live/compositor";
 
 /** What a key does where the lighting view looks: on the overlay, what the
@@ -20,6 +21,9 @@ export function lightingKeyAction(
   return action === undefined || action === "Transparent" ? effectiveAction(layers, [], defaultLayer, index) : action;
 }
 
-export function lightingKeyLegend(...args: Parameters<typeof lightingKeyAction>): string {
-  return keyActionGlyph(lightingKeyAction(...args)).text;
+/** The legend of lightingKeyAction's key; `names` names its layer keys. */
+export function lightingKeyLegend(
+  ...[key, layers, cols, target, activeLayers, defaultLayer, names]: [...Parameters<typeof lightingKeyAction>, LayerNames?]
+): string {
+  return keyActionGlyph(lightingKeyAction(key, layers, cols, target, activeLayers, defaultLayer), [], names).text;
 }

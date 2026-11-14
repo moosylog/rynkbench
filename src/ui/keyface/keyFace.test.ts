@@ -117,3 +117,31 @@ describe("special keys", () => {
     expect(specialKind("Transparent", mac)).toBeUndefined();
   });
 });
+
+describe("the Magic layer", () => {
+  const named: FaceContext = { ...mac, layerNames: (layer) => ["Base", "Lower", "Magic"][layer] };
+  it("shows the MoErgo logo on a key that holds it, as GLIDE draws &magic", () => {
+    expect(keyFace(single({ LayerOn: 2 }), [], named).face).toEqual([{ icon: "magic" }]);
+    const lower = keyFace(single({ LayerOn: 1 }), [], named);
+    expect([lower.text, lower.face]).toEqual(["Lower", undefined]);
+  });
+  it("keeps the name where the logo would hide what the key does", () => {
+    const toggle = keyFace(single({ LayerToggle: 2 }), [], named);
+    expect([toggle.text, toggle.face]).toEqual(["TG Magic", undefined]);
+    const hold = keyFace({ TapHold: [{ Key: { Hid: "A" } }, { LayerOn: 2 }, 0] } as KeyAction, [], named);
+    expect([hold.sub, hold.subFace]).toEqual(["Magic", undefined]);
+  });
+  it("is the logo only when the layer is called Magic", () => {
+    expect(keyFace(single({ LayerOn: 2 }), [], mac).face).toBeUndefined();
+  });
+});
+
+describe("a wide picture", () => {
+  it("alone is GLIDE's .kc-wide: 132% of the face's content box, at its own proportions", () => {
+    const cap = 62 / 70;
+    const [logo] = faceLayout([{ icon: "magic", aspect: 1772 / 650 }], 1, "main");
+    expect(logo.width).toBeCloseTo(Math.min((1.32 / 0.52) * 0.402 * cap, 0.9));
+    expect(logo.width / logo.size).toBeCloseTo(1772 / 650);
+    expect(logo.width).toBeLessThanOrEqual(0.9 + 1e-9);
+  });
+});

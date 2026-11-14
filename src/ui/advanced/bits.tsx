@@ -8,7 +8,7 @@ import type {
   LedIndicator,
   MouseButtons,
   StateBits,
-} from "../../vendor/rynk-wasm/rynk_wasm";
+} from "../../model/action-types";
 import { comboIsEmpty as definitionIsEmpty } from "../../model/combos";
 import { keyActionGlyph } from "../labels";
 import { ModGrid } from "../keymap/ActionEditor";
@@ -16,6 +16,7 @@ import type { SlotKind } from "../state";
 import { slotPendingId } from "../state";
 import { WriteStatus } from "../write-status";
 import { cx } from "../kit";
+import { useLayerNames } from "../use-layer-names";
 
 /* ------------------------------------------------------------------ */
 /* Empty-slot semantics (mirror what fresh firmware reports)           */
@@ -58,7 +59,8 @@ export function ActionSlotButton({
   active: boolean;
   onClick: () => void;
 }) {
-  const glyph = keyActionGlyph(value);
+  const layerNames = useLayerNames();
+  const glyph = keyActionGlyph(value, [], layerNames);
   return (
     <button
       type="button"

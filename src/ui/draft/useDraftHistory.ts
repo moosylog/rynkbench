@@ -4,7 +4,7 @@
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { keyActionGlyph } from "../labels";
-import { layerName } from "../layer-names";
+import { layerName, layerNamesOf } from "../layer-names";
 import { showToast } from "../messages/store";
 import type { WorkbenchAction, WorkbenchState } from "../../model/workbench-state";
 import { emptyHistory, record, redo, stepBetween, undo, type DraftHistory, type Step } from "./draftHistory";
@@ -47,7 +47,7 @@ export function useDraftHistory(state: WorkbenchState, dispatch: (action: Workbe
     if (!step) return null;
     if (step.length > 1) return `${step.length} keys`;
     const [change] = step;
-    return `${keyActionGlyph(change.to, state.morse).text || "an empty key"} on ${layerName(state.layerMetadata, change.layer)}`;
+    return `${keyActionGlyph(change.to, state.morse, layerNamesOf(state.layerMetadata)).text || "an empty key"} on ${layerName(state.layerMetadata, change.layer)}`;
   };
   const travel = (direction: "undo" | "redo") => {
     const moved = direction === "undo" ? undo(history) : redo(history);

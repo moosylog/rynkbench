@@ -116,7 +116,7 @@ const LEGEND_ACTIONS: Record<string, KeyAction> = {
   "→": hid("Right"),
   "↑": hid("Up"),
   "↓": hid("Down"),
-  Magic: layerOn(1),
+  Magic: layerOn(2),
   L3: layerOn(2),
   L4: layerOn(3),
 };

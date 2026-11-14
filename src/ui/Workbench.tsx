@@ -39,6 +39,7 @@ import { ResizeHandle, usePaneSize } from "./panes";
 import { SETTING_KEYS } from "./settings";
 import { InspectorShell, cx } from "./kit";
 import { historyShortcut, keyEditHistoryLabel } from "../model/history";
+import { layerName } from "./layer-names";
 import { firmwareFactsOf, resolveCapabilities } from "../capabilities";
 import { useTerms } from "./terms";
 import { getLocaleId, subscribeLocale } from "./locale";
@@ -246,7 +247,8 @@ export function Workbench({
           : stateRef.current.keyEditHistory.future.at(-1);
       const result = direction === "undo" ? await io.undoKeyEdit() : await io.redoKeyEdit();
       if (!result.ok) return;
-      const label = entry ? keyEditHistoryLabel(entry) : "key edit";
+      const named = (layer: number) => layerName(stateRef.current.layerMetadata, layer);
+      const label = entry ? keyEditHistoryLabel(entry, named) : "key edit";
       const back = direction === "undo" ? "redo" : "undo";
       showToast(`${direction === "undo" ? "Undone" : "Redone"}: ${label}`, {
         action: {
@@ -276,8 +278,8 @@ export function Workbench({
           ? ("writing" as const)
           : ("idle" as const),
       error: state.keyEditHistory.error,
-      undoLabel: undoEntry ? keyEditHistoryLabel(undoEntry) : null,
-      redoLabel: redoEntry ? keyEditHistoryLabel(redoEntry) : null,
+      undoLabel: undoEntry ? keyEditHistoryLabel(undoEntry, (layer) => layerName(state.layerMetadata, layer)) : null,
+      redoLabel: redoEntry ? keyEditHistoryLabel(redoEntry, (layer) => layerName(state.layerMetadata, layer)) : null,
       undo: () => travel("undo"),
       redo: () => travel("redo"),
       clear: () => dispatch({ type: "keyHistoryClear" }),

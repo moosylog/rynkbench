@@ -4,7 +4,7 @@
 // backed by the firmware's complete active-layer snapshot.
 
 import { useMemo } from "react";
-import type { ModifierCombination } from "../../vendor/rynk-wasm/rynk_wasm";
+import type { ModifierCombination } from "../../model/action-types";
 import type { KeyView } from "../../model/keyboard";
 import { BoardWell, KeyboardCanvas } from "../KeyboardCanvas";
 import type { KeyDecor } from "../KeyboardCanvas";
@@ -19,6 +19,7 @@ import { LockIndicators } from "./LockIndicators";
 import { useMatrixPoll } from "../matrix-poll";
 import { layersInMask } from "../lighting/wakeLayers";
 import { effectAnim, effectColor } from "../lighting/decor";
+import { useLayerNames } from "../use-layer-names";
 
 /** Wire HSV (0–255 each) → CSS color. */
 function wireHsvCss(hue: number, saturation: number, value: number): string {
@@ -63,6 +64,7 @@ function ModifierRow() {
 /** Every layer's authoritative active/default status, ordered by index. */
 function LayerStack() {
   const { bundle, state } = useWorkbench();
+  const layerNames = useLayerNames();
   const numLayers = bundle.caps.num_layers;
   const activeLayers = new Set(state.activeLayers);
 
@@ -115,7 +117,7 @@ function LayerStack() {
                 tone,
               )}
             >
-              <span className="tnum font-mono text-body">L{i}</span>
+              <span className="truncate font-mono text-body">{layerNames(i) ?? `L${i}`}</span>
               {litLayers.has(i) && (
                 <span
                   title="Has compiled or stored scene lighting"
@@ -138,6 +140,7 @@ function LayerStack() {
 
 export function LiveMode() {
   const { bundle, state } = useWorkbench();
+  const layerNames = useLayerNames();
   const capabilities = useCapabilities();
   const cols = bundle.caps.num_cols;
   // Only a firmware that cannot report resolved modifiers needs the matrix
@@ -204,7 +207,7 @@ export function LiveMode() {
       state.defaultLayer,
       key.row * cols + key.col,
     );
-    const glyph = liveKeyActionGlyph(action, shiftActive);
+    const glyph = liveKeyActionGlyph(action, shiftActive, layerNames);
     if (!glyph.text && key.label) return { text: key.label, dim: true };
     return glyph.text ? { ...glyph, dim: true } : undefined;
   };
@@ -330,7 +333,7 @@ export function LiveMode() {
                     <Row label="Wake layers">
                       {wakeLayers.length === 0
                         ? "—"
-                        : `${wakeLayers.map((layer) => `L${layer}`).join(", ")}${state.lightingOutputMode.wake_active ? " · active" : ""}`}
+                        : `${wakeLayers.map((layer) => layerNames(layer) ?? `L${layer}`).join(", ")}${state.lightingOutputMode.wake_active ? " · active" : ""}`}
                     </Row>
                   </>
                 )}

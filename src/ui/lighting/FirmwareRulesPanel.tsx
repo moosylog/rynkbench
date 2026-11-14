@@ -3,7 +3,7 @@
 
 import { useCallback, useMemo } from "react";
 import { keyAddressWithLegend } from "../key-address";
-import { layerName } from "../layer-names";
+import { layerName, layerNamesOf } from "../layer-names";
 import { useWorkbench } from "../state";
 import { SectionLabel } from "../kit";
 import { effectColor } from "./decor";
@@ -29,13 +29,13 @@ export function FirmwareRulesPanel() {
       if (key.ledId !== undefined) {
         const label = lightingKeyLegend(
           key, state.layers, bundle.caps.num_cols,
-          state.lightingTarget, state.activeLayers, state.defaultLayer,
+          state.lightingTarget, state.activeLayers, state.defaultLayer, layerNamesOf(state.layerMetadata),
         );
         result.set(key.ledId, keyAddressWithLegend({ ...key, label }));
       }
     }
     return result;
-  }, [bundle.model, bundle.caps.num_cols, state.layers, state.lightingTarget, state.activeLayers, state.defaultLayer]);
+  }, [bundle.model, bundle.caps.num_cols, state.layers, state.lightingTarget, state.activeLayers, state.defaultLayer, state.layerMetadata]);
   const nameOf = useCallback(
     (layer: number) => layerName(state.layerMetadata, layer),
     [state.layerMetadata],

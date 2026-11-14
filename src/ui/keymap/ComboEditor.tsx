@@ -92,7 +92,7 @@ export function ComboEditor({ focus, size }: { focus: ComboFocus; size: number }
         />
       ) : (
         <p className="text-body leading-relaxed text-mute">
-          {keyActionDescription(output)}. Edit it under Every action, or pick an action to replace it.
+          {keyActionDescription(output, faceContext.layerNames)}. Edit it under Every action, or pick an action to replace it.
         </p>
       )}
       <LayerChoice focus={focus} />

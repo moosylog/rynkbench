@@ -8,7 +8,7 @@ import type {
   HidKeyCode,
   KeyAction,
   ModifierCombination,
-} from "../../vendor/rynk-wasm/rynk_wasm";
+} from "../../model/action-types";
 import { searchKeycodes } from "../hid";
 import { getLocaleId, subscribeLocale } from "../locale";
 import { actionLabel, anyModifier, hidName, modifierSymbols } from "../labels";
@@ -22,17 +22,9 @@ import { morseProfileSummary } from "../morse-profile";
 import { Button, SectionLabel, Segmented, TextInput, cx } from "../kit";
 import { mergeModifiers, pickedHidAction } from "./actions";
 import { LIGHT_ACTIONS, SYSTEM_ACTIONS } from "./action-catalog";
+import { useLayerNames } from "../use-layer-names";
 
-type Tab =
-  | "keys"
-  | "mods"
-  | "layers"
-  | "behavior"
-  | "advanced"
-  | "macros"
-  | "morse"
-  | "system"
-  | "lighting";
+type Tab = "keys" | "mods" | "layers" | "behavior" | "advanced" | "macros" | "morse" | "system" | "lighting";
 
 const BASE_TABS: Array<{ id: Tab; label: string }> = [
   { id: "keys", label: "Keys" },
@@ -197,6 +189,7 @@ function LayerPicker({
   onPick: (action: Action) => void;
 }) {
   const [kind, setKind] = useState<LayerKind>("LayerOn");
+  const layerNames = useLayerNames();
   const hint = LAYER_KINDS.find((k) => k.id === kind)?.hint;
   return (
     <div className="flex flex-col gap-3">
@@ -221,7 +214,7 @@ function LayerPicker({
       <div className="flex flex-wrap gap-1.5">
         {Array.from({ length: numLayers }, (_, n) => (
           <Keycap key={n} wide onClick={() => onPick({ [kind]: n } as unknown as Action)}>
-            L{n}
+            {layerNames(n) ?? `L${n}`}
           </Keycap>
         ))}
       </div>
@@ -308,6 +301,7 @@ function TapHoldEditor({
   const initial =
     typeof current === "object" && "TapHold" in current ? current.TapHold : null;
   const { state } = useWorkbench();
+  const layerNames = useLayerNames();
   const [tap, setTap] = useState<Action>(initial?.[0] ?? "No");
   const [hold, setHold] = useState<Action>(initial?.[1] ?? "No");
   const [profile, setProfile] = useState<number>(initial?.[2] ?? DEFAULT_TAP_HOLD_PROFILE);
@@ -328,7 +322,7 @@ function TapHoldEditor({
         {which}
       </span>
       <span className={cx("font-mono text-ui", value === "No" ? "text-faint" : "text-ink")}>
-        {actionLabel(value) || "unset"}
+        {actionLabel(value, layerNames) || "unset"}
       </span>
     </button>
   );

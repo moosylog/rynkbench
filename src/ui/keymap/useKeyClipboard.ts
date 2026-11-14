@@ -16,6 +16,7 @@ import {
   serializeKeyAction,
   type ClipboardBoard,
 } from "./keyManipulation";
+import { layerName, layerNamesOf } from "../layer-names";
 
 function clipboardBoard(state: WorkbenchState, cols: number): ClipboardBoard {
   return { layers: state.layers, cols, pending: state.pending };
@@ -48,6 +49,8 @@ export function useKeyClipboard(
     }
     const target = plan.target;
     const { layer: selectedLayer, row, col, action } = target;
+    const names = layerNamesOf(snapshot.layerMetadata);
+    const onLayer = layerName(snapshot.layerMetadata, selectedLayer);
 
     if (plan.kind === "copy") {
       localClipboardRef.current = structuredClone(action);
@@ -60,7 +63,7 @@ export function useKeyClipboard(
       void navigator.clipboard.writeText(serializeKeyAction(action)).then(
         () =>
           report(
-            `Copied ${keyActionDescription(action)} from Layer ${selectedLayer}, r${row} c${col}.`,
+            `Copied ${keyActionDescription(action, names)} from ${onLayer}, r${row} c${col}.`,
           ),
         () =>
           report(
@@ -87,7 +90,7 @@ export function useKeyClipboard(
       const result = await io.setKey(selectedLayer, row, col, pasted);
       report(
         result.ok
-          ? `Pasted ${keyActionDescription(pasted)} to Layer ${selectedLayer}, r${row} c${col}.`
+          ? `Pasted ${keyActionDescription(pasted, names)} to ${onLayer}, r${row} c${col}.`
           : result.guarded
             ? result.message
             : `Paste failed: ${result.message}`,

@@ -5,7 +5,7 @@
 // The panel never edits a key; it chooses what the canvas and the editor show.
 
 import { useEffect, useState } from "react";
-import { layerName } from "../layer-names";
+import { layerName, layerNamesOf, layerRef } from "../layer-names";
 import { pointingDraftDirty, useWorkbench } from "../state";
 import { useCapabilities } from "../use-capabilities";
 import { askConfirm, showToast } from "../messages/store";
@@ -260,7 +260,7 @@ function LayerList({ onPicked }: { onPicked?: () => void }) {
         <RowMenu
           x={menu.at.x}
           y={menu.at.y}
-          label={`Layer ${layerName(state.layerMetadata, menu.at.id)}`}
+          label={`Layer ${layerRef(menu.at.id, layerNamesOf(state.layerMetadata))}`}
           items={items(menu.at.id)}
           onAction={(id) => menu.at && act(menu.at.id, id)}
           onClose={menu.close}

@@ -11,6 +11,7 @@ import { layerName } from "../layer-names";
 import { useWorkbench } from "../state";
 import { cx } from "../kit";
 import { MoreIcon, WarningIcon } from "../icons";
+import { useLayerNames } from "../use-layer-names";
 
 function warningOf(combo: ComboDefinition, twins: number): string | null {
   const needs = comboNeeds(combo);
@@ -45,9 +46,10 @@ export function ComboCard({
   rowProps: object;
 }) {
   const { bundle, state } = useWorkbench();
+  const layerNames = useLayerNames();
   const layer = comboLayer(combo);
   const warning = warningOf(combo, twins);
-  const action = keyActionGlyph(comboOutput(combo)).text || "No action";
+  const action = keyActionGlyph(comboOutput(combo), [], layerNames).text || "No action";
   // A combo of actions is matched on its own layer, else the default one.
   const actions = state.layers[layer ?? state.defaultLayer] ?? [];
   const actionAt = (row: number, col: number): KeyAction => actions[row * bundle.caps.num_cols + col] ?? "No";

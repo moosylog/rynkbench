@@ -13,6 +13,7 @@ import type {
 } from "../vendor/rynk-wasm/rynk_wasm";
 import type { LayerMetadata, RuntimeLightingRule } from "../session/types";
 import { mapActionLayers, mapKeyActionLayers } from "../domain";
+import { layerName } from "../model/layer-names";
 
 export interface LayerRewriteSnapshot {
   metadata: LayerMetadata[];
@@ -80,10 +81,11 @@ function assertImmutableLayerRefsStayPut(
   snapshot: LayerRewriteSnapshot,
   mapping: Map<number, number>,
 ): void {
+  const named = (layer: number) => layerName(snapshot.metadata, layer);
   for (const cell of snapshot.compiledScenes) {
     if (mapLayer(cell.layer, mapping, "compiled lighting scene") !== cell.layer) {
       throw new Error(
-        `layer ${cell.layer} is fixed by a compiled lighting scene; this firmware cannot move it losslessly`,
+        `${named(cell.layer)} is fixed by a compiled lighting scene; this firmware cannot move it losslessly`,
       );
     }
   }
@@ -94,7 +96,7 @@ function assertImmutableLayerRefsStayPut(
       mapLayer(condition.layer, mapping, "compiled lighting condition") !== condition.layer
     ) {
       throw new Error(
-        `layer ${condition.layer} is fixed by a compiled lighting condition; this firmware cannot move it losslessly`,
+        `${named(condition.layer)} is fixed by a compiled lighting condition; this firmware cannot move it losslessly`,
       );
     }
   }
@@ -156,7 +158,7 @@ export function planLayerRewrite(
   const occupied = occupiedPrefix(snapshot.metadata);
   if (occupied < 1) throw new Error("the keyboard must retain a base layer");
   if (operation.layer < 0 || operation.layer >= occupied) {
-    throw new Error(`layer ${operation.layer} is not occupied`);
+    throw new Error(`${layerName(snapshot.metadata, operation.layer)} is not occupied`);
   }
   const activeNonDefault = snapshot.activeLayers.filter(
     (layer) => layer !== snapshot.defaultLayer,
@@ -269,7 +271,7 @@ export function planLayerRewrite(
       // Every other surface refuses rather than dropping; painted cells are no
       // different, and losing them is not part of deleting a layer.
       if (layer === undefined) {
-        throw new Error(`layer ${cell.layer} still has painted lighting; clear it first`);
+        throw new Error(`${layerName(snapshot.metadata, cell.layer)} still has painted lighting; clear it first`);
       }
       return { ...structuredClone(cell), layer };
     }),
@@ -309,7 +311,7 @@ export function planLayerDuplicate(
   conditionalSceneCapacity: number | null = null,
 ): LayerRewrite {
   const occupied = occupiedPrefix(snapshot.metadata);
-  if (source < 0 || source >= occupied) throw new Error(`layer ${source} is not occupied`);
+  if (source < 0 || source >= occupied) throw new Error(`${layerName(snapshot.metadata, source)} is not occupied`);
   if (occupied >= snapshot.metadata.length) {
     throw new Error(`firmware layer capacity (${snapshot.metadata.length}) is full`);
   }
@@ -323,7 +325,7 @@ export function planLayerDuplicate(
   }
   if (snapshot.compiledScenes.some((cell) => cell.layer === source)) {
     throw new Error(
-      `layer ${source} has a compiled lighting scene; this firmware cannot duplicate it losslessly`,
+      `${layerName(snapshot.metadata, source)} has a compiled lighting scene; this firmware cannot duplicate it losslessly`,
     );
   }
   if (
@@ -332,7 +334,7 @@ export function planLayerDuplicate(
     )
   ) {
     throw new Error(
-      `layer ${source} has a compiled lighting condition; this firmware cannot duplicate it losslessly`,
+      `${layerName(snapshot.metadata, source)} has a compiled lighting condition; this firmware cannot duplicate it losslessly`,
     );
   }
 

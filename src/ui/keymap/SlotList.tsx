@@ -10,6 +10,7 @@ import { actionDescription, actionLabel } from "../labels";
 import { cx } from "../kit";
 import { GripIcon, TrashIcon } from "../icons";
 import { morseProfileSummary } from "../morse-profile";
+import { useLayerNames } from "../use-layer-names";
 
 const SLOT_NAME: Record<Slot, string> = { tap: "On Tap", hold: "On Hold", doubleTap: "On Double Tap" };
 
@@ -41,6 +42,7 @@ function SlotRow({
   onClear: () => void;
 }) {
   const empty = value === "No";
+  const layerNames = useLayerNames();
   return (
     <div
       className={cx(
@@ -62,7 +64,7 @@ function SlotRow({
             empty ? "text-small text-faint" : "font-mono text-small text-ink",
           )}
         >
-          {empty ? "Pick an action →" : actionLabel(value) || actionDescription(value)}
+          {empty ? "Pick an action →" : actionLabel(value, layerNames) || actionDescription(value, layerNames)}
         </span>
       </button>
       <button

@@ -117,8 +117,8 @@ export function KeyEditor({ size = 310 }: { size?: number }) {
           {slots.kind === "transparent"
             ? "Same as the layer below. Pick an action to give this key its own."
             : slots.kind === "morse"
-              ? `${keyActionDescription(action)}. Edit it under Behaviors → Morse, or pick an action to replace it.`
-              : `${keyActionDescription(action)}. Edit it under Every action, or pick an action to replace it.`}
+              ? `${keyActionDescription(action, faceContext.layerNames)}. Edit it under Behaviors → Morse, or pick an action to replace it.`
+              : `${keyActionDescription(action, faceContext.layerNames)}. Edit it under Every action, or pick an action to replace it.`}
         </p>
       )}
 

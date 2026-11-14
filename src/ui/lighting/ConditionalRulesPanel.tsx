@@ -21,7 +21,7 @@ import type {
   LightingOutputMode,
   LightingSplitForce,
   LightingSplitLink,
-} from "../../vendor/rynk-wasm/rynk_wasm";
+} from "../../model/lighting-types";
 import { useWorkbench } from "../state";
 import { conditionalTablesEqual } from "./compare";
 import { ApplyBar, Button, SectionLabel, Segmented, TextInput, cx } from "../kit";
@@ -32,7 +32,7 @@ import { describeRuleConditions, runtimeConditionalSupported } from "./firmwareR
 import { describeEffect, effectRgb } from "./effect";
 import { EffectEditor } from "./EffectEditor";
 import { keyAddressWithLegend } from "../key-address";
-import { layerName } from "../layer-names";
+import { layerName, layerNamesOf } from "../layer-names";
 import { appendRule, moveRule, newRule, removeRule, replaceRule, retargetLayer, rulesOnLayer } from "./rules";
 import type { Rule, Rules } from "./rules";
 import { RULES, hasLayerIndicatorConditions, hasLightingFeature } from "../../session/lighting-features";
@@ -111,13 +111,13 @@ export function ConditionalRulesPanel() {
       if (key.ledId !== undefined) {
         const label = lightingKeyLegend(
           key, state.layers, bundle.caps.num_cols,
-          state.lightingTarget, state.activeLayers, state.defaultLayer,
+          state.lightingTarget, state.activeLayers, state.defaultLayer, layerNamesOf(state.layerMetadata),
         );
         labels.set(key.ledId, keyAddressWithLegend({ ...key, label }));
       }
     }
     return labels;
-  }, [bundle.model, bundle.caps.num_cols, state.layers, state.lightingTarget, state.activeLayers, state.defaultLayer]);
+  }, [bundle.model, bundle.caps.num_cols, state.layers, state.lightingTarget, state.activeLayers, state.defaultLayer, state.layerMetadata]);
 
   const ledOptions = useMemo(
     () => [...ledLabels.keys()].sort((a, b) => a - b),

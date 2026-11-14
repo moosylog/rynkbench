@@ -78,8 +78,12 @@ export function reduceKeyEditHistory(
   }
 }
 
-export function keyEditHistoryLabel(entry: KeyEditHistoryEntry): string {
-  return `Layer ${entry.layer}, row ${entry.row}, column ${entry.col}`;
+/** `layerName` names the entry's layer (ui/layer-names.ts layerName). */
+export function keyEditHistoryLabel(
+  entry: KeyEditHistoryEntry,
+  layerName: (layer: number) => string = (layer) => `Layer ${layer}`,
+): string {
+  return `${layerName(entry.layer)}, row ${entry.row}, column ${entry.col}`;
 }
 
 export type HistoryShortcut = "undo" | "redo";

@@ -10,6 +10,7 @@ import type { Os } from "../preferences";
 import { KEY_ICON_DATA, type KeyIconName } from "./keyIconData";
 import { chordLook, chordText } from "./modifiers";
 import type { SpecialKey } from "../theme/themes";
+import { isMagicLayer, type LayerNames } from "../layer-names";
 
 /** One piece of a face: a picture or a little text, laid out in a row. */
 export type FacePart = { icon: KeyIconName } | { text: string };
@@ -20,6 +21,8 @@ export interface FaceContext {
   bleProfiles: number;
   /** Pictures a board gives its own User actions (its profile's `userActions`). */
   userIcons?: ReadonlyMap<number, KeyIconName>;
+  /** The keyboard's layer names: layer keys show them, a Magic layer key the MoErgo logo. */
+  layerNames?: LayerNames;
 }
 
 const icon = (name: KeyIconName): FacePart => ({ icon: name });
@@ -108,6 +111,13 @@ export function actionFace(action: Action, ctx: FaceContext): FacePart[] | undef
   return undefined;
 }
 
+/** A key that holds the Magic layer shows the MoErgo logo, as GLIDE draws &magic.
+ *  Only as the key's tap: a hold keeps the layer's name, as in GLIDE. */
+function magicFace(action: Action, ctx: FaceContext): FacePart[] | undefined {
+  if (typeof action !== "object" || !("LayerOn" in action)) return undefined;
+  return isMagicLayer(ctx.layerNames?.(action.LayerOn)) ? [icon("magic")] : undefined;
+}
+
 /** A chord key (⌘Z, Ctrl+Z): its modifiers drawn small above the key, as in
  *  GLIDE. One that types a character (⇧2 → "@") shows that character instead. */
 function chordFace(action: Action, ctx: FaceContext): { chord: FacePart[]; key: string } | undefined {
@@ -136,7 +146,7 @@ function modifiersOf(action: Action | undefined): ModifierCombination | undefine
 
 /** keyActionGlyph, with the pictures and per-OS modifiers the canvas draws. */
 export function keyFace(action: KeyAction, morse: readonly Morse[], ctx: FaceContext): KeyGlyph {
-  const glyph = keyActionGlyph(action, morse);
+  const glyph = keyActionGlyph(action, morse, ctx.layerNames);
   // A key that does nothing: GLIDE's faint slash.
   if (action === "No") return { ...glyph, none: true };
   if (typeof action !== "object") return glyph;
@@ -147,7 +157,7 @@ export function keyFace(action: KeyAction, morse: readonly Morse[], ctx: FaceCon
   const out: KeyGlyph = { ...glyph };
   const tapMods = modifiersOf(tap);
   if (tapMods) out.text = chordText(tapMods, ctx.os);
-  const face = actionFace(tap, ctx);
+  const face = magicFace(tap, ctx) ?? actionFace(tap, ctx);
   if (face) out.face = face;
   const chord = chordFace(tap, ctx);
   if (chord) {

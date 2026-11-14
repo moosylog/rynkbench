@@ -16,6 +16,7 @@ import { Button, cx, TextInput } from "../kit";
 import { PlusIcon } from "../icons";
 import { RowMenu, useRowMenu } from "../RowMenu";
 import { ComboCard } from "./ComboCard";
+import { useLayerNames } from "../use-layer-names";
 
 type View = "cards" | "list";
 const comboView = createSetting<View>(SETTING_KEYS.comboView, (raw) => (raw === "list" ? "list" : "cards"));
@@ -43,6 +44,7 @@ function ViewSwitch({ value }: { value: View }) {
 
 export function ComboList() {
   const { bundle, state, dispatch, io } = useWorkbench();
+  const layerNames = useLayerNames();
   const term = useTerms();
   const menu = useRowMenu<number>();
   const view = useSyncExternalStore(comboView.subscribe, comboView.get, comboView.get);
@@ -62,7 +64,7 @@ export function ComboList() {
     })
     .filter(
       ({ combo, index }) =>
-        !needle || `c${index} ${keyActionDescription(comboOutput(combo))}`.toLowerCase().includes(needle),
+        !needle || `c${index} ${keyActionDescription(comboOutput(combo), layerNames)}`.toLowerCase().includes(needle),
     );
   const focus = (index: number) => dispatch({ type: "select", selection: { type: "combo", index } });
 

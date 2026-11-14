@@ -20,9 +20,11 @@ import { layerName } from "../layer-names";
 import { Button, SectionLabel, cx } from "../kit";
 
 import { CloseIcon, SpinnerIcon } from "../icons";
+import { useLayerNames } from "../use-layer-names";
 
 function EncoderInspector({ id }: { id: number }) {
   const { bundle, state, io } = useWorkbench();
+  const layerNames = useLayerNames();
   const layer = state.uiLayer;
   const encoder = state.encoders[`${layer}:${id}`];
   const pending = state.pending[encoderPendingId(layer, id)];
@@ -70,7 +72,7 @@ function EncoderInspector({ id }: { id: number }) {
         {label}
       </span>
       <span className="font-mono text-ui text-ink">
-        {keyActionGlyph(value).text || "unset"}
+        {keyActionGlyph(value, [], layerNames).text || "unset"}
       </span>
     </button>
   );

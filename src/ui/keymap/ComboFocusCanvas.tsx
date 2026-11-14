@@ -12,6 +12,7 @@ import { keyAddressLabel } from "../key-address";
 import { keyActionDescription } from "../labels";
 import { useWorkbench } from "../state";
 import type { ComboFocus } from "./useComboFocus";
+import { useLayerNames } from "../use-layer-names";
 
 const NEEDS = {
   keys: "Needs at least 2 keys",
@@ -55,6 +56,7 @@ function FocusPill({ focus }: { focus: ComboFocus }) {
 
 export function ComboFocusCanvas({ focus }: { focus: ComboFocus }) {
   const { bundle, state } = useWorkbench();
+  const layerNames = useLayerNames();
   const cols = bundle.caps.num_cols;
   const actions = state.layers[focus.layer];
   const actionAt = (key: KeyView) => actions?.[key.row * cols + key.col] ?? "No";
@@ -75,7 +77,7 @@ export function ComboFocusCanvas({ focus }: { focus: ComboFocus }) {
     const inCombo = comboHasKey(focus.combo, key, action);
     return {
       fill: inCombo ? "var(--color-accent-fill)" : undefined,
-      ariaLabel: `${keyAddressLabel(key)}: ${keyActionDescription(action)}. ${
+      ariaLabel: `${keyAddressLabel(key)}: ${keyActionDescription(action, layerNames)}. ${
         inCombo ? "In the combo; press Enter to take it out." : "Press Enter to add it to the combo."
       }`,
       ariaKeyShortcuts: "Enter Space Escape",

@@ -1,9 +1,7 @@
-import type { LayerMetadata } from "../session/types";
+// How the screens name a layer (model/layer-names.ts), and the one layer a key
+// draws as a picture. Screens get the keyboard's names from useLayerNames.
 
-/** The user-facing name of a layer, falling back to its physical number. */
-export function layerName(
-  metadata: readonly LayerMetadata[] | null | undefined,
-  layer: number,
-): string {
-  return metadata?.[layer]?.name || `Layer ${layer}`;
-}
+export { layerName, layerNamesOf, layerRef, type LayerNames } from "../model/layer-names";
+
+/** MoErgo's Magic layer: a key that holds it shows the MoErgo logo, as GLIDE draws &magic. */
+export const isMagicLayer = (name: string | undefined): boolean => name?.toLowerCase() === "magic";
