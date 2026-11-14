@@ -19,7 +19,7 @@ describe("modifiers by computer", () => {
   it("read as GLIDE writes them", () => {
     expect(chordText(mods("left_ctrl", "left_shift"), "mac")).toBe("⌃⇧");
     expect(chordText(mods("left_ctrl", "left_shift"), "win")).toBe("Ctrl+Shift");
-    expect(chordText(mods("left_gui"), "linux")).toBe("❖");
+    expect(chordText(mods("left_gui"), "linux")).toBe("Super");
     expect(chordLook(mods("left_gui"), "linux")[0].word).toBe("Super");
   });
   it("call right Alt AltGr off the Mac, and all four Hyper", () => {

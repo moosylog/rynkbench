@@ -52,9 +52,8 @@ export function chordLook(mods: ModifierCombination, os: Os): ModifierLook[] {
   });
 }
 
-/** A chord as text: "⌃⇧" on the Mac, "Ctrl+Shift" elsewhere. */
+/** A chord as text: "⌃⇧" on the Mac, words elsewhere ("Ctrl+Shift", "Super"). */
 export function chordText(mods: ModifierCombination, os: Os): string {
-  return chordLook(mods, os)
-    .map((look) => look.symbol)
-    .join(os === "mac" ? "" : "+");
+  const looks = chordLook(mods, os);
+  return os === "mac" ? looks.map((look) => look.symbol).join("") : looks.map((look) => look.word).join("+");
 }

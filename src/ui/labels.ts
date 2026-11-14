@@ -219,6 +219,7 @@ const CONTROL_LABELS: Record<string, string> = {
   ComboOff: "CmbOff",
   ComboToggle: "Combo",
   CapsWordToggle: "CapsWd",
+  MaintenanceModeToggle: "Maint",
 };
 
 export function actionLabel(action: Action): string {
