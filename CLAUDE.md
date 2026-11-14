@@ -5,7 +5,7 @@ Live site: https://moosylog.github.io/rynkbench/ (GitHub Pages, deployed from `m
 
 ## Rules from the owner
 - Top quality, easy to maintain, a clear structure. Leave every file you touch at least as clean as you found it.
-- Work on a branch (`redesign` so far), push it, and merge to `master` only when its Checks run is green; `master` deploys.
+- Work on a branch (`redesign` so far); commit there. Push, ship and merge to `master` only when the owner asks; `master` deploys, and only from a green Checks run.
 - Every change keeps the guards green; never add to a baseline or an allow-list to make a test pass. Fix the code.
 - A decision that shapes the code goes in an ADR (`docs/adr/`, next number, one page, linked from its README).
 
@@ -42,7 +42,8 @@ Live site: https://moosylog.github.io/rynkbench/ (GitHub Pages, deployed from `m
 ## Working efficiently
 - `npm run t -- <paths>`: only failures and totals. Run the tests for what you changed; the whole suite only when asked or before a large merge.
 - No Nix here? `npm run wasm:ci` puts the WASM clients from the newest green Checks run with the same build recipe into `src/vendor`, so every test runs locally. Never commit `src/vendor`.
-- `npm run ship`: push, wait for Checks, merge to `master` only when green, wait for the deploy (one retry for Pages' own hiccups). `npm run ship -- --check` stops after Checks.
+- `npm run ship` (only when asked): push, wait for Checks, merge to `master` only when green, wait for the deploy (one retry for Pages' own hiccups). `npm run ship -- --check` stops after Checks.
+- Browser checks only when asked or at the end of a feature, once: screenshots (scaled, or a zoomed region) and `find`; never a full page snapshot (the keyboard alone is thousands of lines).
 - Search only in `src/` and `docs/`; `.rgignore` hides golden files and fixtures (open one by path when needed). Big files (`ui/state.tsx`, `session/link-session.ts`, `session/mock/board.ts`): find the line first, then read only that range.
 - One feature per session, with a short brief; this file and the ADRs carry what a new session needs.
 - When a change touches a module that writes to the keyboard, move its writes onto the one path in the same change (ADR 0013); never add a write that bypasses Guard and the draft.
