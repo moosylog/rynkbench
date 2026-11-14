@@ -7,8 +7,8 @@ const B = { Single: { Key: { Hid: "B" } } } as unknown as KeyAction;
 const edit = (action: KeyAction) => ({ layer: 0, row: 0, col: 1, before: "No" as KeyAction, action });
 const image = (over: Partial<DraftImage>): DraftImage => ({ layers: [["No", "No"]], stagedKeys: {}, lighting: [{}], rules: [], ...over });
 const lit = (led: number, r: number): Cells => ({ [led]: { led_id: led, effect: { Solid: { color: { r, g: 0, b: 0 } } }, ttl_ms: undefined } });
-const keyStep = (from: KeyAction, to: KeyAction): Step => ({ keys: [{ layer: 0, row: 0, col: 1, from, to }], lights: [], rules: null });
-const lightStep = (from: Cells, to: Cells): Step => ({ keys: [], lights: [{ layer: 0, from, to }], rules: null });
+const keyStep = (from: KeyAction, to: KeyAction): Step => ({ order: 1, keys: [{ layer: 0, row: 0, col: 1, from, to }], lights: [], rules: null });
+const lightStep = (from: Cells, to: Cells): Step => ({ order: 1, keys: [], lights: [{ layer: 0, from, to }], rules: null });
 
 describe("the draft's undo and redo", () => {
   it("takes a step from how the staged keys changed", () => {
@@ -20,7 +20,7 @@ describe("the draft's undo and redo", () => {
   });
 
   it("ignores changes that are not to staged keys", () => {
-    expect(stepBetween(image({ layers: [[A, "No"]] }), image({ layers: [[B, "No"]] }), 2)).toEqual({ keys: [], lights: [], rules: null });
+    expect(stepBetween(image({ layers: [[A, "No"]] }), image({ layers: [[B, "No"]] }), 2)).toEqual({ order: 0, keys: [], lights: [], rules: null });
   });
 
   it("takes a step from a layer's lighting and the rules, and none from the same cells read again", () => {
@@ -48,8 +48,9 @@ describe("the draft's undo and redo", () => {
 describe("a Paint stroke", () => {
   it("joins the last step: each thing from where it started to where it ended", () => {
     let history = record(emptyHistory(), lightStep({}, lit(3, 9)));
-    history = record(history, { keys: [], lights: [{ layer: 0, from: lit(3, 9), to: { ...lit(3, 9), ...lit(4, 9) } }], rules: null }, true);
+    history = record(history, { order: 2, keys: [], lights: [{ layer: 0, from: lit(3, 9), to: { ...lit(3, 9), ...lit(4, 9) } }], rules: null }, true);
     expect(history.past).toHaveLength(1);
+    expect(history.past[0].order).toBe(1);
     expect(history.past[0].lights).toEqual([{ layer: 0, from: {}, to: { ...lit(3, 9), ...lit(4, 9) } }]);
   });
 

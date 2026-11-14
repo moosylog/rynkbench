@@ -21,6 +21,7 @@ import { KeymapInspector } from "./keymap/SideInspector";
 import { DraftKeeper } from "./draft/DraftKeeper";
 import { guardIo } from "./guard/guardIo";
 import { useDraftHistory } from "./draft/useDraftHistory";
+import { oneHistory } from "./draft/oneHistory";
 import { ComboEditor } from "./keymap/ComboEditor";
 import { ComboFocusCanvas } from "./keymap/ComboFocusCanvas";
 import { useComboFocus } from "./keymap/useComboFocus";
@@ -285,26 +286,23 @@ export function Workbench({
     }),
     [historyBusy, historyOperation, redoEntry, state, travel, undoEntry],
   );
-  // In Draft, undo and redo walk the draft's own steps (draft/draftHistory.ts).
-  const draftHistory = useDraftHistory(state, dispatch, bundle.caps.num_cols);
-  const { canUndo, canRedo, undoLabel, redoLabel, undo: undoDraft, redo: redoDraft } = draftHistory;
+  // One Undo for keys and lights, in Draft, Live and a file alike (draft/oneHistory.ts).
+  const stagedHistory = useDraftHistory(state, dispatch, bundle.caps.num_cols);
   const history = useMemo(
-    () =>
-      state.batchMode
-        ? {
-            ...deviceHistory,
-            error: null,
-            canUndo,
-            canRedo,
-            undoLabel,
-            redoLabel,
-            undo: async () => undoDraft(),
-            redo: async () => redoDraft(),
-          }
-        : deviceHistory,
-    // The draft's undo and redo read its history when called.
+    () => oneHistory(state.batchMode, deviceHistory, stagedHistory, state.keyEditHistory),
+    // The staged history's undo and redo read it when called.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state.batchMode, deviceHistory, canUndo, canRedo, undoLabel, redoLabel],
+    [
+      state.batchMode,
+      state.keyEditHistory,
+      deviceHistory,
+      stagedHistory.canUndo,
+      stagedHistory.canRedo,
+      stagedHistory.undoLabel,
+      stagedHistory.redoLabel,
+      stagedHistory.tops.past,
+      stagedHistory.tops.future,
+    ],
   );
   const historyRef = useRef(history);
   useEffect(() => {

@@ -1,10 +1,11 @@
-// Undo and redo for the draft. Device history covers only edits that reached
-// the keyboard; in Draft changes are staged instead, so these steps are taken
-// from how the staged keys and the layers' lighting change: every change in
-// one go (a key, a paste, a swap, a light) is one step, and a Paint stroke,
-// however many keys it crosses, is one step too (`merge`). Undo stages the
-// keys and lights back. Send and Discard start a new history, as the draft
-// starts over. Pure; the hook that drives it is in useDraftHistory.ts.
+// Undo and redo for what is staged: the staged keys (in Draft) and the layers'
+// lighting (always staged first; in Live sent once painting pauses). Every
+// change in one go (a key, a paste, a swap, a light) is one step, and a Paint
+// stroke, however many keys it crosses, is one step too (`merge`). Undo stages
+// them back. Each step has its place in time (`order`, model/history.ts), so
+// in Live it undoes in turn with the keys written to the keyboard. Send and
+// Discard start a new history, as the draft starts over. Pure; the hook that
+// drives it is in useDraftHistory.ts.
 
 import type { KeyAction } from "../../model/action-types";
 import type { LightingOverlayCell } from "../../model/lighting-types";
@@ -30,6 +31,8 @@ export interface LightChange {
 }
 
 export interface Step {
+  /** When it was done, among every edit (model/history.ts nextEditOrder). */
+  order: number;
   keys: KeyChange[];
   lights: LightChange[];
   /** The rule table (status lights) before and after; null when it stayed. */
@@ -64,7 +67,7 @@ const same = (a: unknown, b: unknown) => a === b || canonical(a) === canonical(b
 
 /** What a state transition changed: the keys among those staged before or
  *  after it, each layer's lighting, and the rules. */
-export function stepBetween(before: DraftImage, after: DraftImage, cols: number): Step {
+export function stepBetween(before: DraftImage, after: DraftImage, cols: number, order = 0): Step {
   const places = new Map<string, StagedKeyEdit>();
   for (const edit of [...Object.values(before.stagedKeys), ...Object.values(after.stagedKeys)]) {
     places.set(`${edit.layer}:${edit.row}:${edit.col}`, edit);
@@ -82,11 +85,12 @@ export function stepBetween(before: DraftImage, after: DraftImage, cols: number)
     if (!same(from, to)) lights.push({ layer, from, to });
   }
   const rules = same(before.rules, after.rules) ? null : { from: before.rules, to: after.rules };
-  return { keys, lights, rules };
+  return { order, keys, lights, rules };
 }
 
-/** Two steps one after the other as one: each thing from where the first found
- *  it to where the second left it; what ends where it started drops out. */
+/** Two steps one after the other as one, in the first one's place in time:
+ *  each thing from where the first found it to where the second left it; what
+ *  ends where it started drops out. */
 export function merge(first: Step, second: Step): Step {
   const keyAt = (change: KeyChange) => `${change.layer}:${change.row}:${change.col}`;
   const keys = new Map(first.keys.map((change) => [keyAt(change), change]));
@@ -101,6 +105,7 @@ export function merge(first: Step, second: Step): Step {
   }
   const rules = first.rules && second.rules ? { from: first.rules.from, to: second.rules.to } : (second.rules ?? first.rules);
   return {
+    order: first.order,
     keys: [...keys.values()].filter((change) => !same(change.from, change.to)),
     lights: [...lights.values()].filter((change) => !same(change.from, change.to)).sort((a, b) => a.layer - b.layer),
     rules: rules && !same(rules.from, rules.to) ? rules : null,

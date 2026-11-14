@@ -155,7 +155,7 @@ export function TopBar({
 
       <div
         className="flex items-center gap-0.5"
-        title="History covers individual key binding edits only. Imports, encoder bindings, default layers, lighting, profiles, and advanced settings are not included."
+        title="Undo covers key bindings and RGB Lighting. Imports, encoders, default layers, profiles and advanced settings are not included."
       >
         <Button
           variant="ghost"
@@ -163,8 +163,8 @@ export function TopBar({
           disabled={!history.canUndo}
           reason={history.phase !== "idle" ? "Wait for the keyboard to finish saving" : "Nothing to undo"}
           onClick={() => void history.undo()}
-          aria-label="Undo key binding edit"
-          title={`Undo ${history.undoLabel ?? "key binding edit"} · Ctrl/⌘ Z`}
+          aria-label="Undo"
+          title={`Undo ${history.undoLabel ?? "the last edit"} · Ctrl/⌘ Z`}
         >
           <UndoIcon size={15} />
         </Button>
@@ -174,8 +174,8 @@ export function TopBar({
           disabled={!history.canRedo}
           reason={history.phase !== "idle" ? "Wait for the keyboard to finish saving" : "Nothing to redo"}
           onClick={() => void history.redo()}
-          aria-label="Redo key binding edit"
-          title={`Redo ${history.redoLabel ?? "key binding edit"} · Ctrl/⌘ Shift Z or Ctrl Y`}
+          aria-label="Redo"
+          title={`Redo ${history.redoLabel ?? "the last edit"} · Ctrl/⌘ Shift Z or Ctrl Y`}
         >
           <RedoIcon size={15} />
         </Button>

@@ -1,13 +1,16 @@
-// Drives the draft's undo and redo (draftHistory.ts): records a step each time
-// the staged keys or the layers' lighting change, stages them back on undo,
-// and starts over when the draft is sent or discarded (resetDraftHistory). A
-// Paint stroke (beginStroke, from pointer down to pointer up) is one step.
+// Drives the undo and redo of what is staged (draftHistory.ts): records a step
+// each time the staged keys or the layers' lighting change, stages them back
+// on undo, and starts over when the draft is sent or discarded
+// (resetDraftHistory). A Paint stroke (beginStroke, from pointer down to
+// pointer up) is one step. In Live and in a file only lighting is staged, so
+// its steps are lighting; the Workbench undoes them in turn with key writes.
 
 import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { keyActionGlyph } from "../labels";
 import { layerName, layerNamesOf } from "../layer-names";
 import { showToast } from "../messages/store";
 import { lightingDraftFor } from "../state";
+import { nextEditOrder } from "../../model/history";
 import type { WorkbenchAction, WorkbenchState } from "../../model/workbench-state";
 import { layerLightingActions } from "./changes";
 import { emptyHistory, isEmptyStep, record, redo, stepBetween, undo, type DraftHistory, type DraftImage, type Step } from "./draftHistory";
@@ -75,11 +78,11 @@ export function useDraftHistory(state: WorkbenchState, dispatch: (action: Workbe
       skipNext = false;
       return;
     }
-    if (!state.batchMode) return;
     const step = stepBetween(before, image, cols);
-    set(record(history, step, stroke?.recorded ?? false));
-    if (stroke && !isEmptyStep(step)) stroke.recorded = true;
-  }, [image, state.batchMode, cols]);
+    if (isEmptyStep(step)) return;
+    set(record(history, { ...step, order: nextEditOrder() }, stroke?.recorded ?? false));
+    if (stroke) stroke.recorded = true;
+  }, [image, cols]);
 
   const label = (step: Step | undefined) => {
     if (!step) return null;
@@ -113,6 +116,8 @@ export function useDraftHistory(state: WorkbenchState, dispatch: (action: Workbe
   };
 
   return {
+    /** When the steps undo and redo would take were done (model/history.ts). */
+    tops: { past: current.past.at(-1)?.order, future: current.future.at(-1)?.order },
     canUndo: current.past.length > 0,
     canRedo: current.future.length > 0,
     undoLabel: label(current.past.at(-1)),

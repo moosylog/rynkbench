@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import type { KeyAction } from "../vendor/rynk-wasm/rynk_wasm";
 import {
   historyShortcut,
+  nextEditOrder,
+  pickHistorySide,
   initialKeyEditHistory,
   reduceKeyEditHistory,
   type KeyEditHistoryEntry,
@@ -134,5 +136,31 @@ describe("history shortcuts", () => {
     expect(historyShortcut(shortcutEvent("z", { altKey: true }))).toBeNull();
     expect(historyShortcut(shortcutEvent("z", { defaultPrevented: true }))).toBeNull();
     expect(historyShortcut(shortcutEvent("x"))).toBeNull();
+  });
+});
+
+describe("one order for key edits and light changes", () => {
+  const tops = (keys: { past?: number; future?: number }, lights: { past?: number; future?: number }) => ({ keys, lights });
+
+  it("undoes the newest done edit, whichever stack it is on", () => {
+    expect(pickHistorySide(tops({ past: 3 }, { past: 5 }), "undo")).toBe("lights");
+    expect(pickHistorySide(tops({ past: 6 }, { past: 5 }), "undo")).toBe("keys");
+    expect(pickHistorySide(tops({}, {}), "undo")).toBeNull();
+  });
+
+  it("redoes the oldest undone edit first", () => {
+    // Done 1 (key), 2 (light); undone 2 then 1.
+    expect(pickHistorySide(tops({ future: 1 }, { future: 2 }), "redo")).toBe("keys");
+    expect(pickHistorySide(tops({ past: 1 }, { future: 2 }), "redo")).toBe("lights");
+  });
+
+  it("redoes nothing older than an edit done since", () => {
+    expect(pickHistorySide(tops({ past: 7 }, { future: 4 }), "redo")).toBeNull();
+    expect(pickHistorySide(tops({ future: 4 }, { past: 7, future: 6 }), "redo")).toBeNull();
+  });
+
+  it("numbers every edit in one sequence", () => {
+    const first = nextEditOrder();
+    expect(nextEditOrder()).toBe(first + 1);
   });
 });

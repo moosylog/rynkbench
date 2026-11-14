@@ -32,6 +32,7 @@ import type {
 import type { BootloaderTarget } from "../model/boards";
 import {
   initialKeyEditHistory,
+  nextEditOrder,
   reduceKeyEditHistory,
 } from "../model/history";
 import {
@@ -1042,7 +1043,6 @@ export function makeIo(
   dispatch: Dispatch<WorkbenchAction>,
   { cols, onDisconnect, features = NO_IO_FEATURES }: IoOptions,
 ): WorkbenchIo {
-  let keyEditSequence = 0;
   let directKeyWritesPending = 0;
   let keyHistoryWritePending = false;
 
@@ -1184,7 +1184,7 @@ export function makeIo(
       return Promise.resolve({ ok: true });
     }
     const prev = getState().layers[layer][row * cols + col];
-    const sequence = ++keyEditSequence;
+    const sequence = nextEditOrder();
     directKeyWritesPending += 1;
     dispatch({ type: "keyWriteStart", layer, row, col, action });
     return session.keymap
