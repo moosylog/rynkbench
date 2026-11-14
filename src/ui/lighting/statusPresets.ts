@@ -158,6 +158,9 @@ const ADVERTISING: LightingEffect = {
   Blink: { color: { r: 255, g: 255, b: 255 }, period_ms: 800, phase_ms: 0, duty: 50 },
 };
 
+/** The colours a Bluetooth profile's and USB's status light show. */
+export const STATUS_COLORS = { empty: EMPTY, bonded: BONDED, selected: SELECTED, active: ACTIVE, advertising: ADVERTISING } as const;
+
 function rule(
   led: number,
   layer: number,

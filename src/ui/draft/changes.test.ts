@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { KeyAction } from "../../vendor/rynk-wasm/rynk_wasm";
 import { testWorkbench } from "../../test/workbench";
 import type { WorkbenchState } from "../state";
-import { withStatusLight } from "../lighting/keyLight";
+import { withStatusLight } from "../lighting/statusLight";
 import { draftGroups, draftSize, draftSnapshot, parseStoredDraft, restoreActions } from "./changes";
 
 const A = { Single: { Key: { Hid: "A" } } } as unknown as KeyAction;

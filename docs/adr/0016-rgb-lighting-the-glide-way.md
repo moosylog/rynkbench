@@ -19,6 +19,9 @@ Lighting is its own top-bar area with two tabs, both named for what they are onl
 3. Quick links: sun-button menu, links back, empty states.
 4. Overlay out of the normal flow; Lighting area removed from the top bar (`ui/areas.ts`), its screens deleted or moved.
 
+## Progress
+- **Stage 1 (done):** the key editor tab is "RGB Lighting" with Off, Color, Layer below and Status light (Caps/Num/Scroll Lock, battery per half, and on wireless boards a Bluetooth profile or USB, in the status preset's colours; `ui/lighting/statusLight.ts`). Layer below stays: it is how a key shows the layers underneath, as in GLIDE. In Draft a light and a Paint stroke are each one undo step (`ui/draft/draftHistory.ts`); Live undo stays keys only until ADR 0013 joins the histories. The Lighting area's tabs are named RGB Lighting and RGB Effects. Still to come: selecting several keys on the Keymap, so one choice reaches them all.
+
 ## Consequences
 - A lighting feature goes either on a key (key editor, Paint) or in Layout properties; there is no lighting screen to add it to.
 - The big lighting panels (`ConditionalRulesPanel`, `LightingMode`) shrink or go as their parts move; their size ceilings only go down.

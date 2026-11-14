@@ -1,8 +1,8 @@
-// Reading and writing keys' lights on the layer shown, for the Lighting tab
-// and for Paint on the canvas. A light lives in the layer's scene (Off, a
-// colour, Layer below) or in the rule table (a lock or battery light); both
-// are staged in the draft and sent with it. Your colours and changing one
-// colour everywhere work over every layer's scene and the rules.
+// Reading and writing keys' lights on the layer shown, for the RGB Lighting
+// tab and for Paint on the canvas. A light lives in the layer's scene (Off, a
+// colour, Layer below) or in the rule table (a status light); both are staged
+// in the draft and sent with it. Your colours and changing one colour
+// everywhere work over every layer's scene and the rules you coloured.
 
 import { useMemo } from "react";
 import type { LightingRgb8 } from "../../model/lighting-types";
@@ -11,12 +11,13 @@ import { effectRgb } from "../lighting/effect";
 import {
   colorsInUse,
   keyLightOf,
+  pickedColor,
   planLight,
   recolorCells,
   recolorRules,
-  statusLightOf,
   type KeyLight,
 } from "../lighting/keyLight";
+import { statusLightOf } from "../lighting/statusLight";
 import { targetPreviewEffects } from "../lighting/preview";
 import { lightingDraftFor, useWorkbench } from "../state";
 import { useCapability } from "../use-capabilities";
@@ -29,6 +30,7 @@ export function useKeyLights() {
   const layers = Array.from({ length: bundle.caps.num_layers }, (_, index) => index);
   const draft = lightingDraftFor(state, layer);
   const rules = state.runtimeConditionalDraft;
+  const coloured = rules.filter(pickedColor);
   const preview = useMemo(() => targetPreviewEffects(layer, draft, state.compiledScenes), [layer, draft, state.compiledScenes]);
 
   // A lock or battery light watches the half of a split board its key is on.
@@ -41,8 +43,10 @@ export function useKeyLights() {
   return {
     /** The firmware can store a layer's lighting; without it lights can only be read. */
     writable: scenes !== undefined,
-    /** Lock and battery lights need the firmware's rule table. */
+    /** Status lights need the firmware's rule table. */
     statusLights: rulesTable !== undefined,
+    /** How many Bluetooth profiles a profile's status light can show; none without Bluetooth. */
+    bleProfiles: bundle.caps.ble_enabled ? bundle.caps.num_ble_profiles : 0,
     /** A split board has a battery on each half. */
     split: bundle.caps.is_split,
     preview,
@@ -56,14 +60,14 @@ export function useKeyLights() {
       if (plan.rules) dispatch({ type: "conditionalDraft", cells: plan.rules });
     },
     /** Your colours: those lit in the layout's scenes and rules, most used first. */
-    yours: colorsInUse([...everyCell().map((cell) => cell.effect), ...rules.map((rule) => rule.cell.effect)]),
+    yours: colorsInUse([...everyCell().map((cell) => cell.effect), ...coloured.map((rule) => rule.cell.effect)]),
     usage(color: LightingRgb8) {
       const hex = rgbToHex(color);
       const lit = layers.filter((index) =>
         Object.values(lightingDraftFor(state, index)).some((cell) => rgbToHex(effectRgb(cell.effect)) === hex),
       );
       const keys = everyCell().filter((cell) => rgbToHex(effectRgb(cell.effect)) === hex).length;
-      const ruleKeys = rules.filter((rule) => rgbToHex(effectRgb(rule.cell.effect)) === hex).length;
+      const ruleKeys = coloured.filter((rule) => rgbToHex(effectRgb(rule.cell.effect)) === hex).length;
       return { keys: keys + ruleKeys, layers: lit.length };
     },
     /** Changes one colour on every key of every layer, effects kept; returns how many changed. */

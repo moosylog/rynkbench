@@ -21,3 +21,6 @@ One word, one meaning. Code, docs and screens use these terms.
 - **Wire type:** a data shape defined by the protocol package. Screens must not use them.
 - **Domain type:** a data shape defined by the app's own model.
 - **Baseline (ratchet):** the recorded set of known boundary violations; it may only shrink.
+- **RGB Lighting:** each key's own light, per layer: Off, a Color, Layer below or a Status light. Set in the key editor's RGB Lighting tab or with Paint (ADR 0016). Never "key colours".
+- **Status light:** a key's light that shows the keyboard's state (Caps, Num or Scroll Lock, a half's battery level, a Bluetooth profile, USB); it lives in the firmware's rule table.
+- **RGB Effects:** the firmware's effects across the whole keyboard (effect, palette, speed).

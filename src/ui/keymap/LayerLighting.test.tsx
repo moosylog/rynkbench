@@ -46,7 +46,7 @@ describe("layer lighting summary", () => {
   // unlit and leave no way to mask the firmware default.
   it("reads a key lit only by a compiled firmware cell as its colour", () => {
     const html = markup(4);
-    expect(html).toMatch(/aria-checked="true"[^>]*>(?:(?!aria-checked).)*?Custom color/);
+    expect(html).toMatch(/aria-checked="true"[^>]*>(?:(?!aria-checked).)*?Color</);
     expect(html).toContain("Paint");
   });
 

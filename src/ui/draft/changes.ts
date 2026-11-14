@@ -118,14 +118,17 @@ export function restoreActions(kept: StoredDraft, state: WorkbenchState): Workbe
   for (const { layer, row, col, action, before } of kept.keys) actions.push({ type: "keyStage", layer, row, col, action, before });
   for (const { kind, index, value, before } of kept.slots ?? []) actions.push({ type: "slotStage", kind, index, value, before });
   for (const { layer, id, action } of kept.encoders) actions.push({ type: "encoderStage", layer, id, action });
-  for (const [key, cells] of Object.entries(kept.lighting)) {
-    const layer = Number(key);
-    const keep = new Set(cells.map((cell) => cell.led_id));
-    const gone = Object.keys(lightingBaseFor(state, layer)).map(Number).filter((led) => !keep.has(led));
-    actions.push({ type: "draftReset", target: layer });
-    if (cells.length) actions.push({ type: "paint", cells, target: layer });
-    if (gone.length) actions.push({ type: "erase", ledIds: gone, target: layer });
-  }
+  for (const [key, cells] of Object.entries(kept.lighting)) actions.push(...layerLightingActions(state, Number(key), cells));
   if (kept.rules) actions.push({ type: "conditionalDraft", cells: kept.rules });
+  return actions;
+}
+
+/** The actions that make a layer's lighting draft exactly `cells`. */
+export function layerLightingActions(state: WorkbenchState, layer: number, cells: readonly LightingOverlayCell[]): WorkbenchAction[] {
+  const keep = new Set(cells.map((cell) => cell.led_id));
+  const gone = Object.keys(lightingBaseFor(state, layer)).map(Number).filter((led) => !keep.has(led));
+  const actions: WorkbenchAction[] = [{ type: "draftReset", target: layer }];
+  if (cells.length) actions.push({ type: "paint", cells: [...cells], target: layer });
+  if (gone.length) actions.push({ type: "erase", ledIds: gone, target: layer });
   return actions;
 }

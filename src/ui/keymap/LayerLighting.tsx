@@ -1,10 +1,10 @@
-// The key editor's Lighting tab, as GLIDE's Key Lighting: one choice for the
-// key on the layer shown (Off, Custom color, Layer below, and with the
-// firmware's rule table Lock light and Battery level), the chosen one's fields
-// under it, and Paint, which makes the choice a brush for the canvas. While
-// the tab is open the canvas shows the board under its lights. Changes join
-// the draft (sent with Review & send; in Live, once painting pauses). Brushes,
-// zones and rules stay in the Lighting screen.
+// The key editor's RGB Lighting tab, as GLIDE's Key Lighting (ADR 0016): one
+// choice for the key on the layer shown (Off, Color, Layer below, and with the
+// firmware's rule table Status light), the chosen one's fields under it, and
+// Paint, which makes the choice a brush for the canvas (one undo step per
+// stroke). While the tab is open the canvas shows the board under its lights.
+// Changes join the draft (sent with Review & send; in Live, once painting
+// pauses). Zones and condition rules stay in the Lighting screen for now.
 
 import { useEffect, useState } from "react";
 import type { LightingEffect } from "../../model/lighting-types";
@@ -20,23 +20,23 @@ import { KeyLightFields } from "./KeyLightFields";
 import { lightView, useLightView } from "./lightView";
 import { useKeyLights } from "./useKeyLights";
 
-const [RED, , , GREEN] = LED_PRESETS;
+const [RED] = LED_PRESETS;
+
+/** The choices; a status light is one choice whatever it shows. */
+type Choice = "off" | "color" | "below" | "status";
+const choiceOf = (light: KeyLight): Choice =>
+  light.kind === "off" || light.kind === "color" || light.kind === "below" ? light.kind : "status";
 
 /** Each choice, with what it starts as when picked. */
-const CHOICES: Array<{ start: KeyLight; title: string; text: string; needsRules?: boolean }> = [
-  { start: { kind: "off" }, title: "Off", text: "The LED stays dark." },
-  { start: { kind: "color", color: RED, effect: "Solid", timing: DEFAULT_TIMING }, title: "Custom color", text: "One color you pick." },
-  { start: { kind: "below" }, title: "Layer below", text: "Shows what the layer below lights." },
+const CHOICES: Array<{ id: Choice; start: KeyLight; title: string; text: string; needsRules?: boolean }> = [
+  { id: "off", start: { kind: "off" }, title: "Off", text: "The LED stays dark." },
+  { id: "color", start: { kind: "color", color: RED, effect: "Solid", timing: DEFAULT_TIMING }, title: "Color", text: "One color you pick." },
+  { id: "below", start: { kind: "below" }, title: "Layer below", text: "Shows what the layer below lights." },
   {
+    id: "status",
     start: { kind: "lock", lock: "caps_lock", on: RED, off: null },
-    title: "Lock light",
-    text: "Lights up while Caps, Num or Scroll Lock is on.",
-    needsRules: true,
-  },
-  {
-    start: { kind: "battery", level: 40, below: RED, above: GREEN },
-    title: "Battery level",
-    text: "One color below a battery level, another above.",
+    title: "Status light",
+    text: "Shows a lock, the battery or the connection.",
     needsRules: true,
   },
 ];
@@ -67,10 +67,10 @@ export function LayerLighting({ ledId }: { ledId: number | undefined }) {
 
   const current: KeyLight = ledId === undefined ? { kind: "below" } : lights.lightOf(ledId);
   // What each choice had last, so trying another and coming back keeps its fields.
-  const [kept, setKept] = useState<Partial<Record<KeyLight["kind"], KeyLight>>>({});
+  const [kept, setKept] = useState<Partial<Record<Choice, KeyLight>>>({});
   // Re-seed only when the key or the layer changes.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => setKept({ [current.kind]: current }), [ledId, layer]);
+  useEffect(() => setKept({ [choiceOf(current)]: current }), [ledId, layer]);
 
   if (!lights.writable) {
     const effect = ledId === undefined ? undefined : lights.preview.get(ledId);
@@ -79,7 +79,7 @@ export function LayerLighting({ ledId }: { ledId: number | undefined }) {
 
   const shown: KeyLight = view.brush ?? current;
   const choose = (light: KeyLight) => {
-    setKept((all) => ({ ...all, [light.kind]: light }));
+    setKept((all) => ({ ...all, [choiceOf(light)]: light }));
     if (view.brush) return lightView.setBrush(light);
     if (ledId !== undefined && !sameLight(light, current)) lights.set(light, [ledId]);
   };
@@ -89,7 +89,7 @@ export function LayerLighting({ ledId }: { ledId: number | undefined }) {
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <h3 className="mr-auto text-small font-semibold tracking-widest text-mute uppercase">
-          Key lighting · {layerName(state.layerMetadata, layer)}
+          RGB Lighting · {layerName(state.layerMetadata, layer)}
         </h3>
         <button
           type="button"
@@ -110,10 +110,10 @@ export function LayerLighting({ ledId }: { ledId: number | undefined }) {
       {state.lightingError && <ErrorBanner message={state.lightingError} />}
 
       {CHOICES.filter((choice) => !choice.needsRules || lights.statusLights).map((choice) => {
-        const chosen = shown.kind === choice.start.kind;
+        const chosen = choiceOf(shown) === choice.id;
         return (
           <div
-            key={choice.start.kind}
+            key={choice.id}
             className={cx(
               "rounded-xl border transition-colors",
               chosen ? "border-accent bg-accent-dim" : "border-line-strong hover:border-mute",
@@ -125,7 +125,7 @@ export function LayerLighting({ ledId }: { ledId: number | undefined }) {
               role="radio"
               aria-checked={chosen}
               disabled={unusable}
-              onClick={() => choose(kept[choice.start.kind] ?? choice.start)}
+              onClick={() => choose(kept[choice.id] ?? choice.start)}
               className="flex w-full cursor-pointer items-start gap-3 px-4 py-2.5 text-left disabled:cursor-not-allowed"
             >
               <span
@@ -141,7 +141,7 @@ export function LayerLighting({ ledId }: { ledId: number | undefined }) {
                 <span className="block text-small text-mute">{choice.text}</span>
               </span>
             </button>
-            {chosen && (shown.kind === "color" || shown.kind === "lock" || shown.kind === "battery") && (
+            {chosen && (choice.id === "color" || choice.id === "status") && (
               <div className="flex flex-col gap-3 px-4 pt-1 pb-4 pl-11">
                 <KeyLightFields light={shown} lights={lights} onChange={choose} />
               </div>
@@ -158,7 +158,7 @@ export function LayerLighting({ ledId }: { ledId: number | undefined }) {
           dispatch({ type: "mode", mode: "lighting" });
         }}
       >
-        Brushes, zones and rules: open the Lighting screen
+        Zones and rules: open the Lighting screen
       </button>
     </div>
   );

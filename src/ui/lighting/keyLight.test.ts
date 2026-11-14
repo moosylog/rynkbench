@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { LightingEffect } from "../../vendor/rynk-wasm/rynk_wasm";
 import { DEFAULT_TIMING } from "./effect";
-import { colorsInUse, keyLightOf, planLight, recolorCells, statusLightOf, withStatusLight } from "./keyLight";
+import { colorsInUse, keyLightOf, planLight, recolorCells, recolorRules } from "./keyLight";
+import { statusLightOf, withStatusLight } from "./statusLight";
+import { bleStatusRules } from "./statusPresets";
 import { BLACK_EFFECT } from "./preview";
 import { newRule } from "./rules";
 
@@ -70,6 +72,37 @@ describe("lock and battery lights", () => {
     const back = planLight({ kind: "off" }, [7], 2, plan.rules ?? []);
     expect(back.rules).toEqual([]);
     expect(keyLightOf(undefined, statusLightOf(plan.rules ?? [], 2, 7))).toEqual(lock);
+  });
+});
+
+describe("Bluetooth and USB lights", () => {
+  it("write the status preset's rules and read back the same light", () => {
+    const ble = withStatusLight([], 2, 7, { kind: "bluetooth", profile: 1 });
+    expect(ble).toEqual(bleStatusRules(2, 7, 1));
+    expect(statusLightOf(ble, 2, 7)).toEqual({ kind: "bluetooth", profile: 1 });
+    expect(statusLightOf(withStatusLight([], 2, 7, { kind: "usb" }), 2, 7)).toEqual({ kind: "usb" });
+  });
+
+  it("read the preset's rules in any order and with fields in any order", () => {
+    const shuffled = bleStatusRules(0, 3, 2)
+      .reverse()
+      .map((rule) => JSON.parse(JSON.stringify({ effects: rule.effects, ...rule })) as typeof rule);
+    expect(statusLightOf(shuffled, 0, 3)).toEqual({ kind: "bluetooth", profile: 2 });
+  });
+
+  it("are replaced by another light, and leave connection rules that are not exactly theirs alone", () => {
+    const ble = withStatusLight([], 2, 7, { kind: "bluetooth", profile: 0 });
+    expect(withStatusLight(ble, 2, 7, { kind: "usb" })).toHaveLength(3);
+    expect(planLight({ kind: "off" }, [7], 2, ble).rules).toEqual([]);
+    const edited = ble.slice(1);
+    expect(statusLightOf(edited, 2, 7)).toBeNull();
+    expect(withStatusLight(edited, 2, 7, null)).toEqual(edited);
+  });
+
+  it("keep their colours out of recolouring", () => {
+    const ble = withStatusLight([], 0, 1, { kind: "bluetooth", profile: 0 });
+    const green = { r: 0, g: 192, b: 32 };
+    expect(recolorRules(ble, green, RED)).toEqual(ble);
   });
 });
 

@@ -1,14 +1,20 @@
-// The fields under a chosen light in the Lighting tab: a custom colour and its
-// effect, a lock light's lock and two colours, a battery light's half, level
-// and two colours. Every colour is the same ColorChoice.
+// The fields under a chosen light in the RGB Lighting tab: a colour and its
+// effect; for a status light what it shows (a lock, the battery, a Bluetooth
+// profile, USB) and that one's own fields. Every colour is the same ColorChoice.
 
 import type { ReactNode } from "react";
-import type { LightingRgb8 } from "../../model/lighting-types";
-import { BATTERY_LEVELS, type KeyLight, type Lock } from "../lighting/keyLight";
+import type { LightingEffect, LightingRgb8 } from "../../model/lighting-types";
+import type { KeyLight } from "../lighting/keyLight";
+import { BATTERY_LEVELS, type Lock, type StatusLight } from "../lighting/statusLight";
+import { STATUS_COLORS } from "../lighting/statusPresets";
+import { effectColor } from "../lighting/decor";
 import type { EffectKind } from "../lighting/effect";
 import { ColorChoice } from "../lighting/ColorChoice";
+import { LED_PRESETS } from "../color";
 import { cx } from "../kit";
 import type { KeyLights } from "./useKeyLights";
+
+const [RED, , , GREEN] = LED_PRESETS;
 
 const EFFECTS: Array<{ id: EffectKind; label: string }> = [
   { id: "Solid", label: "Steady" },
@@ -25,11 +31,53 @@ const HALVES = [
   { id: 0, label: "Left half" },
   { id: 1, label: "Right half" },
 ];
-const LOCKS: Array<{ id: Lock; label: string }> = [
+type Shows = Lock | "battery" | "bluetooth" | "usb";
+const SHOWS: Array<{ id: Shows; label: string; wireless?: boolean }> = [
   { id: "caps_lock", label: "Caps Lock" },
   { id: "num_lock", label: "Num Lock" },
   { id: "scroll_lock", label: "Scroll Lock" },
+  { id: "battery", label: "Battery" },
+  { id: "bluetooth", label: "Bluetooth", wireless: true },
+  { id: "usb", label: "USB", wireless: true },
 ];
+const showsOf = (light: StatusLight): Shows => (light.kind === "lock" ? light.lock : light.kind);
+
+/** The status light that shows `shows`, keeping a lock light's colours from one lock to another. */
+function showing(light: StatusLight, shows: Shows): StatusLight {
+  if (shows === "battery") return { kind: "battery", level: 40, below: RED, above: GREEN };
+  if (shows === "bluetooth") return { kind: "bluetooth", profile: 0 };
+  if (shows === "usb") return { kind: "usb" };
+  return light.kind === "lock" ? { ...light, lock: shows } : { kind: "lock", lock: shows, on: RED, off: null };
+}
+
+/** What a Bluetooth profile's or USB's light shows, in the status preset's colours. */
+const STATES: Record<"bluetooth" | "usb", Array<{ effect: LightingEffect; label: string }>> = {
+  bluetooth: [
+    { effect: STATUS_COLORS.empty, label: "Free" },
+    { effect: STATUS_COLORS.bonded, label: "Paired" },
+    { effect: STATUS_COLORS.advertising, label: "Pairing" },
+    { effect: STATUS_COLORS.selected, label: "Chosen" },
+    { effect: STATUS_COLORS.active, label: "In use" },
+  ],
+  usb: [
+    { effect: STATUS_COLORS.bonded, label: "Unplugged" },
+    { effect: STATUS_COLORS.selected, label: "Plugged in" },
+    { effect: STATUS_COLORS.active, label: "In use" },
+  ],
+};
+
+function States({ of }: { of: "bluetooth" | "usb" }) {
+  return (
+    <div className="flex flex-wrap gap-x-3 gap-y-1">
+      {STATES[of].map((state) => (
+        <span key={state.label} className="flex items-center gap-1.5 text-small text-mute">
+          <span className="size-2.5 rounded-sm border border-cap-edge" style={{ background: effectColor(state.effect) }} />
+          {state.label}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -46,7 +94,7 @@ function Segments<T extends string | number>({ options, value, onPick }: {
   onPick: (id: T) => void;
 }) {
   return (
-    <div className="inline-flex rounded-lg border border-line-strong p-0.5">
+    <div className="inline-flex flex-wrap rounded-lg border border-line-strong p-0.5">
       {options.map((option) => (
         <button
           key={option.id}
@@ -100,36 +148,54 @@ export function KeyLightFields({ light, lights, onChange }: {
       </>
     );
   }
-  if (light.kind === "lock") {
-    return (
-      <>
-        <Field label="Lock">
-          <Segments options={LOCKS} value={light.lock} onPick={(lock) => onChange({ ...light, lock })} />
-        </Field>
-        <Field label="When on">{color(light.on, (next) => next && onChange({ ...light, on: next }))}</Field>
-        <Field label="When off">{color(light.off, (off) => onChange({ ...light, off }), "Dark while the lock is off")}</Field>
-      </>
-    );
-  }
-  if (light.kind === "battery") {
-    return (
-      <>
-        {lights.split && (
-          <Field label="Battery">
-            <Segments options={HALVES} value={light.node ?? 0} onPick={(node) => onChange({ ...light, node })} />
+  if (light.kind === "off" || light.kind === "below") return null;
+  const shows = SHOWS.filter((option) => !option.wireless || lights.bleProfiles > 0);
+  return (
+    <>
+      <Field label="Shows">
+        <Segments options={shows} value={showsOf(light)} onPick={(id) => onChange(showing(light, id))} />
+      </Field>
+      {light.kind === "lock" && (
+        <>
+          <Field label="When on">{color(light.on, (next) => next && onChange({ ...light, on: next }))}</Field>
+          <Field label="When off">{color(light.off, (off) => onChange({ ...light, off }), "Dark while the lock is off")}</Field>
+        </>
+      )}
+      {light.kind === "battery" && (
+        <>
+          {lights.split && (
+            <Field label="Battery">
+              <Segments options={HALVES} value={light.node ?? 0} onPick={(node) => onChange({ ...light, node })} />
+            </Field>
+          )}
+          <Field label="Level">
+            <Segments
+              options={BATTERY_LEVELS.map((level) => ({ id: level as number, label: `${level}%` }))}
+              value={light.level}
+              onPick={(level) => onChange({ ...light, level })}
+            />
           </Field>
-        )}
-        <Field label="Level">
-          <Segments
-            options={BATTERY_LEVELS.map((level) => ({ id: level as number, label: `${level}%` }))}
-            value={light.level}
-            onPick={(level) => onChange({ ...light, level })}
-          />
+          <Field label="Below">{color(light.below, (next) => next && onChange({ ...light, below: next }))}</Field>
+          <Field label="Above">{color(light.above, (next) => next && onChange({ ...light, above: next }))}</Field>
+        </>
+      )}
+      {light.kind === "bluetooth" && (
+        <Field label="Profile">
+          <div className="flex flex-col gap-2">
+            <Segments
+              options={Array.from({ length: Math.max(lights.bleProfiles, light.profile + 1) }, (_, slot) => ({ id: slot, label: String(slot + 1) }))}
+              value={light.profile}
+              onPick={(profile) => onChange({ ...light, profile })}
+            />
+            <States of="bluetooth" />
+          </div>
         </Field>
-        <Field label="Below">{color(light.below, (next) => next && onChange({ ...light, below: next }))}</Field>
-        <Field label="Above">{color(light.above, (next) => next && onChange({ ...light, above: next }))}</Field>
-      </>
-    );
-  }
-  return null;
+      )}
+      {light.kind === "usb" && (
+        <Field label="Colors">
+          <States of="usb" />
+        </Field>
+      )}
+    </>
+  );
 }

@@ -33,6 +33,7 @@ import { CanvasPill } from "./CanvasPill";
 import { CarriedKey } from "./CarriedKey";
 import { useKeyMoves } from "./useKeyMoves";
 import { useLightView } from "./lightView";
+import { beginStroke } from "../draft/useDraftHistory";
 import { shownColor, type KeyLight } from "../lighting/keyLight";
 import { useKeyLights } from "./useKeyLights";
 import { cssEmissiveRgb } from "../color";
@@ -169,7 +170,7 @@ export function KeymapCenter() {
     };
   };
 
-  /** Paint gives a key the Lighting tab's light, on the layer shown. */
+  /** Paint gives a key the RGB Lighting tab's light, on the layer shown; a stroke is one undo step. */
   const paintKey = (key: KeyView, brush: KeyLight) => {
     if (key.ledId !== undefined) lights.set(brush, [key.ledId]);
   };
@@ -267,8 +268,10 @@ export function KeymapCenter() {
           onKeyHover={setHovered}
           onKeyPointerDown={(key) => {
             moves.cancelKeyboardMove();
-            if (light.brush) paintKey(key, light.brush);
-            else dispatch({ type: "select", selection: { type: "key", row: key.row, col: key.col } });
+            if (light.brush) {
+              beginStroke();
+              paintKey(key, light.brush);
+            } else dispatch({ type: "select", selection: { type: "key", row: key.row, col: key.col } });
           }}
           onKeyPointerEnter={(key, event) => {
             if (light.brush && event.buttons & 1) paintKey(key, light.brush);

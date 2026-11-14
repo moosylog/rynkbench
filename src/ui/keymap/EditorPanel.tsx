@@ -15,7 +15,7 @@ import type { EditorTab } from "./editorTabs";
 const TABS: Record<EditorTab, { label: string; Icon: (props: { size?: number }) => ReactNode }> = {
   pick: { label: "Pick Key", Icon: KeymapIcon },
   layer: { label: "Switch Layer", Icon: MenuIcon },
-  lighting: { label: "Lighting", Icon: LightingIcon },
+  lighting: { label: "RGB Lighting", Icon: LightingIcon },
   all: { label: "Every action", Icon: SlidersIcon },
 };
 
