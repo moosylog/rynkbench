@@ -208,6 +208,14 @@ export type SlotValueOf<K extends SlotKind> = K extends "combos"
     ? Morse
     : Fork;
 
+/** A combo, morse or fork slot changed in the draft, with what it was based on. */
+export interface StagedSlotEdit {
+  kind: SlotKind;
+  index: number;
+  before: ComboDefinition | Morse | Fork;
+  value: ComboDefinition | Morse | Fork;
+}
+
 /** Whole-value configuration surfaces written optimistically as one unit.
  *  The key is the pending id; the value names the state field it replaces. */
 export const FIELD_STATE_KEY = {
@@ -301,6 +309,8 @@ export interface WorkbenchState {
   stagedKeys: Record<string, StagedKeyEdit>;
   /** encoderPendingId → staged encoder edit. */
   stagedEncoders: Record<string, StagedEncoderEdit>;
+  /** slotPendingId → staged combo, morse or fork. */
+  stagedSlots: Record<string, StagedSlotEdit>;
   /** A batch apply is writing staged edits to the device. */
   batchBusy: boolean;
   batchError: string | null;
@@ -374,10 +384,13 @@ export type WorkbenchAction =
   | { type: "keyHistorySuspend"; suspended: boolean }
   | { type: "keyHistoryErrorDismiss" }
   | { type: "batchMode"; enabled: boolean }
-  | { type: "keyStage"; layer: number; row: number; col: number; action: KeyAction }
+  /** `before`: what the edit was based on, when a kept draft is restored (else what the keyboard has). */
+  | { type: "keyStage"; layer: number; row: number; col: number; action: KeyAction; before?: KeyAction }
   | { type: "keyStageApplied"; layer: number; row: number; col: number }
   | { type: "encoderStage"; layer: number; id: number; action: EncoderAction }
   | { type: "encoderStageApplied"; layer: number; id: number }
+  | { type: "slotStage"; kind: SlotKind; index: number; value: ComboDefinition | Morse | Fork; before?: ComboDefinition | Morse | Fork }
+  | { type: "slotStageApplied"; kind: SlotKind; index: number }
   | { type: "batchDiscard" }
   | { type: "batchApplyStart" }
   | { type: "batchApplyDone"; error: string | null }

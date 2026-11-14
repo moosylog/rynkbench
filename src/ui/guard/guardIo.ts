@@ -14,6 +14,7 @@ import { layerName } from "../layer-names";
 import { askConfirm, showToast } from "../messages/store";
 import type { IoWriteResult, KeyWrite, WorkbenchIo, WorkbenchState } from "../state";
 import { askRequest, overwriteRequest, stopText, type GuardNames } from "./words";
+import { discardStagedSlots } from "../draft/slotStage";
 
 function sideOf(state: WorkbenchState, cols: number, layers: KeyAction[][]): GuardInput {
   return {
@@ -59,13 +60,14 @@ export function guardIo(io: WorkbenchIo, bundle: ConnectedBundle, getState: () =
     return (await askConfirm(askRequest(asks, named))) ? null : "Rejected, so nothing was changed";
   };
 
-  const judged = async (edits: readonly KeyWrite[]): Promise<IoWriteResult> => {
+  /** Judges the state after a change against the state now; asks or stops as the rules say. */
+  const judgedState = async (afterState: WorkbenchState, after: KeyAction[][]): Promise<IoWriteResult> => {
     const state = getState();
-    const after = withKeys(state.layers, cols, edits);
-    const findings = judgeChange(sideOf(state, cols, state.layers), sideOf(state, cols, after));
-    const refused = await verdict(findings, names(state, after), true);
+    const findings = judgeChange(sideOf(state, cols, state.layers), sideOf(afterState, cols, after));
+    const refused = await verdict(findings, names(afterState, after), true);
     return refused ? { ok: false, message: refused, guarded: true } : { ok: true };
   };
+  const judged = (edits: readonly KeyWrite[]) => judgedState(getState(), withKeys(getState().layers, cols, edits));
 
   return {
     ...io,
@@ -74,6 +76,14 @@ export function guardIo(io: WorkbenchIo, bundle: ConnectedBundle, getState: () =
       if (same(getState().layers[layer]?.[row * cols + col], action)) return { ok: true };
       const pass = await judged([{ layer, row, col, action }]);
       return pass.ok ? io.setKey(layer, row, col, action, options) : pass;
+    },
+    // A morse, combo or fork slot can turn a layer on, so changing one is judged too.
+    async setSlot(kind, index, value) {
+      const state = getState();
+      const table = [...state[kind]];
+      table[index] = value as never;
+      const pass = await judgedState({ ...state, [kind]: table }, state.layers);
+      return pass.ok ? io.setSlot(kind, index, value) : pass;
     },
     async writeKeys(edits, options) {
       const layers = getState().layers;
@@ -90,7 +100,7 @@ export function guardIo(io: WorkbenchIo, bundle: ConnectedBundle, getState: () =
       const state = getState();
       const staged = Object.values(state.stagedKeys).map((edit) => ({ ...edit, action: edit.before }));
       const onKeyboard = withKeys(state.layers, cols, staged);
-      const findings = judgeChange(sideOf(state, cols, onKeyboard), sideOf(state, cols, state.layers));
+      const findings = judgeChange(sideOf(discardStagedSlots(state), cols, onKeyboard), sideOf(state, cols, state.layers));
       const refused = await verdict(findings, names(state, state.layers), false);
       if (refused) return { ok: false, message: refused, guarded: true };
       const named = names(state, state.layers);

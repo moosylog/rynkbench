@@ -79,4 +79,15 @@ describe("Send", () => {
       expect(storedKeysOf(session) - before).toBe(1);
     });
   });
+
+  it("sends a drafted morse entry with the keys, and keeps what it was based on in the draft", async () => {
+    await inDraft(async ({ session, io, state }) => {
+      const entry = { profile: state().morse[0].profile, actions: [[1, { Key: { Hid: "F13" } }]] } as never;
+      await io.setSlot("morse", 0, entry);
+      expect(Object.values(state().stagedSlots)).toMatchObject([{ kind: "morse", index: 0, value: entry }]);
+      expect(await io.applyBatch()).toEqual({ ok: true });
+      expect((await session.morse.readAll())[0]).toEqual(entry);
+      expect(state().stagedSlots).toEqual({});
+    });
+  });
 });

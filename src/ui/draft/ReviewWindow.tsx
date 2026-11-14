@@ -19,6 +19,12 @@ function groupText(group: DraftGroup, name: (layer: number) => string): { title:
       return { title: `Keys${on}`, count: plural(group.count, "key") };
     case "encoders":
       return { title: `Encoders${on}`, count: plural(group.count, "encoder") };
+    case "combos":
+      return { title: "Combos", count: plural(group.count, "combo") };
+    case "morse":
+      return { title: "Morse (tap patterns)", count: group.count === 1 ? "1 entry" : `${group.count} entries` };
+    case "forks":
+      return { title: "Forks", count: plural(group.count, "fork") };
     case "lighting":
       return { title: `Lighting${on}`, count: plural(group.count, "key") };
     case "lightRules":

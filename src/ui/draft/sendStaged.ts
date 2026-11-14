@@ -11,6 +11,7 @@ import { same } from "../../model/deep-equal";
 import { errorMessage } from "../../session/errors";
 import { draftBase, draftImage } from "./draftImage";
 import { changedRuleLeds, lightingLayers } from "./changes";
+import { stagedEditCount } from "./selectors";
 
 export interface SendOptions {
   /** Asked when items you changed were also changed on the keyboard; true sends anyway. */
@@ -40,6 +41,9 @@ function markSent(image: KeyboardImage, state: WorkbenchState, cols: number, dis
       dispatch({ type: "encoderStageApplied", layer: edit.layer, id: edit.id });
     }
   }
+  for (const edit of Object.values(state.stagedSlots)) {
+    if (same(image[edit.kind][edit.index], edit.value)) dispatch({ type: "slotStageApplied", kind: edit.kind, index: edit.index });
+  }
   // Sent keys are a bulk write outside per-key history, like an import.
   if (keys > 0) dispatch({ type: "keyHistoryClear" });
   return keys;
@@ -51,7 +55,7 @@ export async function sendStaged(deps: SendDeps, options: SendOptions = {}): Pro
   if (start.batchBusy) return { ok: false, message: "the draft is already being sent" };
   const lighting = lightingLayers(start).size > 0;
   const rules = changedRuleLeds(start.runtimeConditionalDraft, start.runtimeConditionalScenes).size > 0;
-  if (Object.keys(start.stagedKeys).length + Object.keys(start.stagedEncoders).length === 0 && !lighting && !rules) {
+  if (stagedEditCount(start) === 0 && !lighting && !rules) {
     return { ok: true };
   }
   dispatch({ type: "batchApplyStart" });

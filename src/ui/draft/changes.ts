@@ -5,12 +5,12 @@
 
 import type { EncoderAction, KeyAction } from "../../model/action-types";
 import type { LightingOverlayCell } from "../../model/lighting-types";
-import type { WorkbenchAction, WorkbenchState } from "../../model/workbench-state";
+import type { SlotKind, StagedSlotEdit, WorkbenchAction, WorkbenchState } from "../../model/workbench-state";
 import type { Rules } from "../lighting/rules";
 import { lightingBaseFor, lightingDraftFor } from "../state";
 import { stagedBetween } from "../lighting/compare";
 
-export type DraftArea = "keys" | "encoders" | "lighting" | "lightRules";
+export type DraftArea = "keys" | "encoders" | "combos" | "morse" | "forks" | "lighting" | "lightRules";
 
 export interface DraftGroup {
   area: DraftArea;
@@ -51,9 +51,16 @@ export function draftGroups(state: WorkbenchState): DraftGroup[] {
   };
   const lighting = [...lightingLayers(state)].sort(([a], [b]) => a - b).map(([layer, count]) => ({ area: "lighting" as const, layer, count }));
   const rules = changedRuleLeds(state.runtimeConditionalDraft, state.runtimeConditionalScenes).size;
+  const slots = (kind: SlotKind): DraftGroup[] => {
+    const count = Object.values(state.stagedSlots).filter((edit) => edit.kind === kind).length;
+    return count > 0 ? [{ area: kind, count }] : [];
+  };
   return [
     ...perLayer(Object.values(state.stagedKeys), "keys"),
     ...perLayer(Object.values(state.stagedEncoders), "encoders"),
+    ...slots("combos"),
+    ...slots("morse"),
+    ...slots("forks"),
     ...lighting,
     ...(rules > 0 ? [{ area: "lightRules" as const, count: rules }] : []),
   ];
@@ -65,7 +72,9 @@ export const draftSize = (groups: readonly DraftGroup[]) => groups.reduce((sum, 
 
 /** The draft as kept for a keyboard: what each change makes, not what it replaced. */
 export interface StoredDraft {
-  keys: Array<{ layer: number; row: number; col: number; action: KeyAction }>;
+  /** `before`: what the key was based on, so Send can tell a change made on the keyboard since. */
+  keys: Array<{ layer: number; row: number; col: number; action: KeyAction; before?: KeyAction }>;
+  slots?: StagedSlotEdit[];
   encoders: Array<{ layer: number; id: number; action: EncoderAction }>;
   /** Each changed layer's whole lighting draft. */
   lighting: Record<number, LightingOverlayCell[]>;
@@ -81,7 +90,8 @@ export function draftSnapshot(state: WorkbenchState): StoredDraft | null {
   const lighting: Record<number, LightingOverlayCell[]> = {};
   for (const layer of lightingLayers(state).keys()) lighting[layer] = Object.values(lightingDraftFor(state, layer));
   return {
-    keys: Object.values(state.stagedKeys).map(({ layer, row, col, action }) => ({ layer, row, col, action })),
+    keys: Object.values(state.stagedKeys),
+    slots: Object.values(state.stagedSlots),
     encoders: Object.values(state.stagedEncoders).map(({ layer, id, action }) => ({ layer, id, action })),
     lighting,
     rules: changedRuleLeds(state.runtimeConditionalDraft, state.runtimeConditionalScenes).size > 0 ? state.runtimeConditionalDraft : null,
@@ -105,7 +115,8 @@ export function parseStoredDraft(raw: string | null): StoredDraft | null {
  *  each layer's lighting draft replaced, the rule table replaced. */
 export function restoreActions(kept: StoredDraft, state: WorkbenchState): WorkbenchAction[] {
   const actions: WorkbenchAction[] = [];
-  for (const { layer, row, col, action } of kept.keys) actions.push({ type: "keyStage", layer, row, col, action });
+  for (const { layer, row, col, action, before } of kept.keys) actions.push({ type: "keyStage", layer, row, col, action, before });
+  for (const { kind, index, value, before } of kept.slots ?? []) actions.push({ type: "slotStage", kind, index, value, before });
   for (const { layer, id, action } of kept.encoders) actions.push({ type: "encoderStage", layer, id, action });
   for (const [key, cells] of Object.entries(kept.lighting)) {
     const layer = Number(key);

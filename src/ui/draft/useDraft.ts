@@ -69,6 +69,10 @@ export function useDraft() {
         for (const edit of Object.values(now.stagedEncoders).filter((edit) => edit.layer === group.layer)) {
           if (edit.before) dispatch({ type: "encoderStage", layer: edit.layer, id: edit.id, action: edit.before });
         }
+      } else if (group.area === "combos" || group.area === "morse" || group.area === "forks") {
+        for (const edit of Object.values(now.stagedSlots).filter((edit) => edit.kind === group.area)) {
+          dispatch({ type: "slotStage", kind: edit.kind, index: edit.index, value: edit.before });
+        }
       } else if (group.area === "lighting") {
         dispatch({ type: "draftReset", target: group.layer });
       } else {

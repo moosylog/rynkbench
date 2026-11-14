@@ -8,6 +8,8 @@ import { same } from "../model/deep-equal";
 import { conditionalTablesEqual, overlaysEqual } from "./lighting/compare";
 import { planSync, readImage, writePlan } from "../sync";
 import { sendStaged, type SendOptions } from "./draft/sendStaged";
+import { canTravelKeyEditHistory, hasPendingConfigurationWrite, pointingDraftDirty, stagedEditCount } from "./draft/selectors";
+import { discardStagedSlots, reduceStagedSlot } from "./draft/slotStage";
 import type {
   BehaviorConfig,
   ComboDefinition,
@@ -206,6 +208,7 @@ export function initialWorkbenchState(bundle: ConnectedBundle): WorkbenchState {
     batchMode: bundle.session.kind !== "offline", // a keyboard starts in Draft (ADR 0010)
     stagedKeys: {},
     stagedEncoders: {},
+    stagedSlots: {},
     batchBusy: false,
     batchError: null,
     layerBusy: false,
@@ -249,6 +252,7 @@ function setLayerKey(
 
 export function makeWorkbenchReducer(cols: number) {
   return function reducer(state: WorkbenchState, act: WorkbenchAction): WorkbenchState {
+    if (act.type === "slotStage" || act.type === "slotStageApplied") return reduceStagedSlot(state, act);
     switch (act.type) {
       case "mode":
         return { ...state, mode: act.mode, selection: null, hoverLeds: null };
@@ -343,7 +347,7 @@ export function makeWorkbenchReducer(cols: number) {
       case "keyStage": {
         const id = keyPendingId(act.layer, act.row, act.col);
         const before =
-          state.stagedKeys[id]?.before ?? state.layers[act.layer][act.row * cols + act.col];
+          state.stagedKeys[id]?.before ?? act.before ?? state.layers[act.layer][act.row * cols + act.col];
         const layers = setLayerKey(state.layers, cols, act.layer, act.row, act.col, act.action);
         if (same(before, act.action)) {
           // Edited back to what the device holds: nothing left to apply.
@@ -399,7 +403,7 @@ export function makeWorkbenchReducer(cols: number) {
           else encoders[key] = edit.before;
         }
         return {
-          ...state,
+          ...discardStagedSlots(state),
           layers,
           encoders,
           stagedKeys: {},
@@ -854,37 +858,7 @@ export function activeLightingBase(state: WorkbenchState): Record<number, Lighti
   return lightingBaseFor(state, state.lightingTarget);
 }
 
-/** How many key and encoder edits batch mode is holding, unapplied. */
-export function stagedEditCount(state: WorkbenchState): number {
-  return Object.keys(state.stagedKeys).length + Object.keys(state.stagedEncoders).length;
-}
-
-export function pointingDraftDirty(state: WorkbenchState): boolean {
-  return !pointingConfigsEqual(state.pointingConfig, state.pointingDraft);
-}
-
-export function hasPendingConfigurationWrite(state: WorkbenchState): boolean {
-  return (
-    state.keyEditHistorySuspended ||
-    state.lightingBusy ||
-    state.pointingBusy ||
-    state.batchBusy ||
-    Object.values(state.pending).some((item) => item.status === "pending")
-  );
-}
-
-export function canTravelKeyEditHistory(
-  state: WorkbenchState,
-  direction: "undo" | "redo",
-): boolean {
-  if (state.keyEditHistory.operation || hasPendingConfigurationWrite(state)) return false;
-  // Staged batch edits sit between the history's device state and the boards':
-  // traveling would write under them and stale their restore points.
-  if (stagedEditCount(state) > 0) return false;
-  return direction === "undo"
-    ? state.keyEditHistory.past.length > 0
-    : state.keyEditHistory.future.length > 0;
-}
+export { canTravelKeyEditHistory, hasPendingConfigurationWrite, pointingDraftDirty, stagedEditCount };
 
 export interface WorkbenchContextValue {
   bundle: ConnectedBundle;
@@ -1569,6 +1543,10 @@ export function makeIo(
     },
     loadExtensionParams: loadParams,
     setSlot(kind, index, value) {
+      if (getState().batchMode) {
+        dispatch({ type: "slotStage", kind, index, value });
+        return Promise.resolve({ ok: true });
+      }
       const prev = getState()[kind][index];
       dispatch({ type: "slotWriteStart", kind, index, value });
       const write =

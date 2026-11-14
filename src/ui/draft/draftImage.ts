@@ -19,7 +19,9 @@ function withDraft(now: KeyboardImage, state: WorkbenchState, cols: number, side
     const value = edit[side];
     if (value) encoders[edit.layer][edit.id] = value;
   }
-  return { ...now, layers, encoders };
+  const tables = { combos: [...now.combos], morse: [...now.morse], forks: [...now.forks] };
+  for (const edit of Object.values(state.stagedSlots)) (tables[edit.kind] as unknown[])[edit.index] = edit[side === "action" ? "value" : "before"];
+  return { ...now, layers, encoders, ...tables } as KeyboardImage;
 }
 
 /** What you want: the keyboard as read now, with every drafted change on it. */

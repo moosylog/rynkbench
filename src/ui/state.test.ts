@@ -87,6 +87,7 @@ function baseState(over: Partial<WorkbenchState> = {}): WorkbenchState {
     batchMode: false,
     stagedKeys: {},
     stagedEncoders: {},
+    stagedSlots: {},
     batchBusy: false,
     batchError: null,
     layerBusy: false,
