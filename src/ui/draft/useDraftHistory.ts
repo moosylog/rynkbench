@@ -6,7 +6,7 @@ import { useEffect, useRef, useSyncExternalStore } from "react";
 import { keyActionGlyph } from "../labels";
 import { layerName } from "../layer-names";
 import { showToast } from "../messages/store";
-import { useWorkbench } from "../state";
+import type { WorkbenchAction, WorkbenchState } from "../../model/workbench-state";
 import { emptyHistory, record, redo, stepBetween, undo, type DraftHistory, type Step } from "./draftHistory";
 
 let history: DraftHistory = emptyHistory();
@@ -28,9 +28,8 @@ export function resetDraftHistory() {
   set(emptyHistory());
 }
 
-export function useDraftHistory() {
-  const { bundle, state, dispatch } = useWorkbench();
-  const cols = bundle.caps.num_cols;
+/** Called by the Workbench itself, above its context, so it is given what it needs. */
+export function useDraftHistory(state: WorkbenchState, dispatch: (action: WorkbenchAction) => void, cols: number) {
   const current = useSyncExternalStore(subscribe, () => history, () => history);
   const previous = useRef({ layers: state.layers, stagedKeys: state.stagedKeys });
 

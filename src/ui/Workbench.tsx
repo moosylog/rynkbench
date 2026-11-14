@@ -267,7 +267,7 @@ export function Workbench({
     [historyBusy, historyOperation, redoEntry, state, travel, undoEntry],
   );
   // In Draft, undo and redo walk the draft's own steps (draft/draftHistory.ts).
-  const draftHistory = useDraftHistory();
+  const draftHistory = useDraftHistory(state, dispatch, bundle.caps.num_cols);
   const { canUndo, canRedo, undoLabel, redoLabel, undo: undoDraft, redo: redoDraft } = draftHistory;
   const history = useMemo(
     () =>
