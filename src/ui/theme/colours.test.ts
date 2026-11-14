@@ -1,4 +1,5 @@
-// The app's own colours come from theme tokens (src/index.css), never from a
+// The app's own colours come from theme tokens (src/index.css, values in
+// src/ui/theme/themes.ts), never from a
 // literal (#e55f2e, rgb(…), oklch(…)) or Tailwind's palette (text-red-400,
 // bg-white): a literal looks wrong in the other theme and drifts from the
 // design. A few files handle colour as data, not as styling, and say why.
@@ -7,6 +8,10 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const ROOT = new URL("../../../", import.meta.url);
+
+/** Where the theme tokens get their values (ADR 0014): like index.css, the
+ *  definition of the tokens, so it holds the colours themselves. */
+const TOKEN_SOURCES = new Set(["src/ui/theme/themes.ts"]);
 
 /** Files that work with colour as data: what they hold is content, not chrome. */
 const COLOUR_AS_DATA: Record<string, string> = {
@@ -35,7 +40,7 @@ describe("colours", () => {
   it("come from theme tokens everywhere in the UI", () => {
     const found: string[] = [];
     for (const path of sources()) {
-      if (path in COLOUR_AS_DATA) continue;
+      if (path in COLOUR_AS_DATA || TOKEN_SOURCES.has(path)) continue;
       const text = readFileSync(new URL(path, ROOT), "utf8");
       // Comments may name a colour; only code counts.
       const code = text.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");

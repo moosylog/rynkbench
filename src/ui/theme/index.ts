@@ -1,23 +1,35 @@
-// The color theme: dark by default, light on request. The choice is a
-// browser-local preference, kept with the other settings (../settings.ts) and applied as
-// <html data-theme="...">; src/index.css holds the values for each theme.
+// The colour theme: one of the themes in themes.ts, Default Dark unless chosen
+// otherwise. The choice is a browser-local preference, kept with the other
+// settings (../settings.ts) and applied as <html data-theme="…">; the themes'
+// values are written into the page once, at start-up (ADR 0014).
 
 import { useSyncExternalStore } from "react";
 import { SETTING_KEYS, createSetting } from "../settings";
+import { DEFAULT_THEME, THEMES, themesCss, type ThemeId } from "./themes";
 
-export type Theme = "dark" | "light";
-
-export const DEFAULT_THEME: Theme = "dark";
+export type Theme = ThemeId;
+export { DEFAULT_THEME };
 
 /** Anything that is not a known theme is the default. */
 export function normalizeTheme(value: unknown): Theme {
-  return value === "light" || value === "dark" ? value : DEFAULT_THEME;
+  return typeof value === "string" && value in THEMES ? (value as Theme) : DEFAULT_THEME;
 }
 
 const themeSetting = createSetting(SETTING_KEYS.theme, normalizeTheme);
 
+/** Writes every theme's values into the page, once. */
+function installThemes(): void {
+  if (typeof document === "undefined" || document.getElementById("rynk-themes")) return;
+  const style = document.createElement("style");
+  style.id = "rynk-themes";
+  style.textContent = themesCss();
+  document.head.append(style);
+}
+
 function apply(theme: Theme): void {
-  if (typeof document !== "undefined") document.documentElement.dataset.theme = theme;
+  if (typeof document === "undefined") return;
+  installThemes();
+  document.documentElement.dataset.theme = theme;
 }
 
 export function getTheme(): Theme {
