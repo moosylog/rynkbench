@@ -76,6 +76,13 @@ describe("guardIo", () => {
     expect(writes).toEqual(swap);
   });
 
+  it("does not send a key the keyboard already holds", async () => {
+    const { io, writes } = setup();
+    expect(await io.setKey(0, 0, 0, key("A"))).toEqual({ ok: true });
+    expect(await io.writeKeys([{ layer: 0, row: 0, col: 1, action: mo(1) }])).toEqual({ ok: true });
+    expect(writes).toEqual([]);
+  });
+
   it("keeps a broken draft off the keyboard at Send", async () => {
     const { io, writes } = setup({
       layers: [[mo(7), mo(1)], [key("B"), "No"]],

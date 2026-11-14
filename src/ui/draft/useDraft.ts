@@ -4,10 +4,9 @@
 // draft is held here, not on the keyboard (docs/adr/0010-draft-and-live.md).
 
 import { useMemo, useRef } from "react";
-import { sceneTableWithLayer } from "../lighting/preview";
 import { askConfirm, showToast } from "../messages/store";
-import { lightingDraftFor, useWorkbench } from "../state";
-import { draftGroups, draftSize, lightingLayers, changedRuleLeds, type DraftGroup } from "./changes";
+import { useWorkbench } from "../state";
+import { draftGroups, draftSize, lightingLayers, type DraftGroup } from "./changes";
 import { resetDraftHistory } from "./useDraftHistory";
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
@@ -19,22 +18,6 @@ export function useDraft() {
   const groups = useMemo(() => draftGroups(state), [state]);
   const size = draftSize(groups);
   const sending = state.batchBusy || state.lightingBusy;
-
-  /** Writes the lighting changes: every changed layer in one scene table, then the rules. */
-  const sendLighting = async (): Promise<string | null> => {
-    const now = latest.current;
-    const layers = [...lightingLayers(now).keys()];
-    if (layers.length > 0) {
-      const table = layers.reduce((cells, layer) => sceneTableWithLayer(cells, layer, lightingDraftFor(now, layer)), now.scenes);
-      const result = await io.applyScenes(table);
-      if (!result.ok) return result.message;
-    }
-    if (changedRuleLeds(latest.current.runtimeConditionalDraft, latest.current.runtimeConditionalScenes).size > 0) {
-      const result = await io.applyConditionalScenes(latest.current.runtimeConditionalDraft);
-      if (!result.ok) return result.message;
-    }
-    return null;
-  };
 
   return {
     /** A file has no keyboard to send to: everything is the file's. */
@@ -60,8 +43,10 @@ export function useDraft() {
       return false;
     },
 
-    /** Lighting only, for Live mode, where lighting goes once the painting pauses. */
-    sendLighting,
+    /** Live: what is waiting (lighting, lock and battery lights) goes through the same path as Send. */
+    async flush(): Promise<void> {
+      if (!sending && size > 0) await io.applyBatch();
+    },
 
     async discard() {
       const yes = await askConfirm({

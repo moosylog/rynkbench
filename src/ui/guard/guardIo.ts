@@ -1,10 +1,12 @@
 // Rynkbench Guard at the one door every key write goes through: the io. A
 // change is judged as a whole before it is made, in Live and in Draft; Send
 // checks the draft again, so nothing broken reaches the keyboard (ADR 0011).
+// A key the keyboard already holds is not sent at all (ADR 0012).
 
 import { judgeChange, keyActionIsBound } from "../../domain";
 import type { GuardFinding, GuardInput } from "../../domain";
 import { decodeMacros } from "../../model/macros";
+import { same } from "../../model/deep-equal";
 import type { KeyAction } from "../../model/action-types";
 import type { ConnectedBundle } from "../state";
 import { keyAtPosition, keyPlaceName } from "../key-address";
@@ -68,12 +70,18 @@ export function guardIo(io: WorkbenchIo, bundle: ConnectedBundle, getState: () =
   return {
     ...io,
     async setKey(layer, row, col, action, options) {
+      // RMK stores every key it is sent; one it already holds costs flash for nothing (ADR 0012).
+      if (same(getState().layers[layer]?.[row * cols + col], action)) return { ok: true };
       const pass = await judged([{ layer, row, col, action }]);
       return pass.ok ? io.setKey(layer, row, col, action, options) : pass;
     },
     async writeKeys(edits, options) {
-      const pass = await judged(edits);
-      return pass.ok ? io.writeKeys(edits, options) : pass;
+      const layers = getState().layers;
+      const changed = edits.filter(({ layer, row, col, action }) => !same(layers[layer]?.[row * cols + col], action));
+      for (let skipped = edits.length - changed.length; skipped > 0; skipped -= 1) options?.onWritten?.(true);
+      if (changed.length === 0) return { ok: true };
+      const pass = await judged(changed);
+      return pass.ok ? io.writeKeys(changed, options) : pass;
     },
     // Each change in the draft was judged when it was made; Send only makes
     // sure nothing broken goes, such as a draft kept from an older session,

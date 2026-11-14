@@ -8,11 +8,12 @@
 import { useEffect, useRef } from "react";
 import { readSetting, SETTING_KEYS, writeSetting } from "../settings";
 import { useWorkbench } from "../state";
-import { draftSnapshot, lightingLayers, parseStoredDraft } from "./changes";
+import { draftSnapshot, parseStoredDraft } from "./changes";
 import { earlierDraft, setEarlier } from "./earlier";
 import { useDraft } from "./useDraft";
 
-const LIVE_LIGHTING_PAUSE_MS = 900;
+/** How long Live waits after the last change before writing it. */
+const LIVE_PAUSE_MS = 600;
 
 export function DraftKeeper() {
   const { bundle, state } = useWorkbench();
@@ -49,15 +50,25 @@ export function DraftKeeper() {
     return () => window.removeEventListener("beforeunload", warn);
   }, [draft.offline, draft.size]);
 
-  // Live: lighting goes to the keyboard once painting pauses.
-  const lightingChanged = draft.live ? lightingLayers(state).size : 0;
+  // Live: what waits (lighting, lock and battery lights) goes once the painting
+  // pauses, and at once when the page is hidden or closed (ADR 0012).
+  const waiting = draft.live && !draft.offline ? draft.size : 0;
+  const flush = useRef(draft.flush);
+  flush.current = draft.flush;
   useEffect(() => {
-    if (draft.offline || !draft.live || lightingChanged === 0 || state.lightingBusy) return;
-    const timer = setTimeout(() => void draft.sendLighting(), LIVE_LIGHTING_PAUSE_MS);
-    return () => clearTimeout(timer);
-    // The latest draft is read when the timer fires.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft.offline, draft.live, lightingChanged, state.layerDrafts, state.lightingBusy]);
+    if (waiting === 0 || draft.sending) return;
+    const timer = setTimeout(() => void flush.current(), LIVE_PAUSE_MS);
+    const leave = () => {
+      if (document.visibilityState === "hidden") void flush.current();
+    };
+    document.addEventListener("visibilitychange", leave);
+    window.addEventListener("pagehide", leave);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", leave);
+      window.removeEventListener("pagehide", leave);
+    };
+  }, [waiting, draft.sending, state.layerDrafts, state.runtimeConditionalDraft]);
 
   return null;
 }
