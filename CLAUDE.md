@@ -38,8 +38,16 @@ Live site: https://moosylog.github.io/rynkbench/ (GitHub Pages, deployed from `m
 - Screens are tested by rendering them in a test workbench: `renderInWorkbench(<Screen />, { bundle, state })` or `testWorkbench(…)` from `src/test/workbench.tsx`. Overrides are typed; do not cast a whole context. For a realistic board use a real bundle (`openBundle` on the offline Glove80).
 - Pure logic gets a plain test next to it.
 
+## Working efficiently
+- `npm run t -- <paths>`: only failures and totals. Run the tests for what you changed; the whole suite only when asked or before a large merge.
+- No Nix here? `npm run wasm:ci` puts the WASM clients from the newest green Checks run with the same build recipe into `src/vendor`, so every test runs locally. Never commit `src/vendor`.
+- `npm run ship`: push, wait for Checks, merge to `master` only when green, wait for the deploy (one retry for Pages' own hiccups). `npm run ship -- --check` stops after Checks.
+- Search only in `src/` and `docs/`; `.rgignore` hides golden files and fixtures (open one by path when needed). Big files (`ui/state.tsx`, `session/link-session.ts`, `session/mock/board.ts`): find the line first, then read only that range.
+- One feature per session, with a short brief; this file and the ADRs carry what a new session needs.
+- When a change touches a module that writes to the keyboard, move its writes onto the one path in the same change (ADR 0013); never add a write that bypasses Guard and the draft.
+
 ## Checking work
-- The WASM client is built by Nix (`npm run wasm`). Where Nix cannot fetch its inputs, generate type stand-ins for local checking only (never commit `src/vendor`), run `npx tsc -b`, `npx oxlint`, and the tests that need no WASM (`src/architecture`, `src/ui/theme`, pure modules). The Checks run on GitHub is the gate.
+- The WASM client is built by Nix (`npm run wasm`); without Nix use `npm run wasm:ci`. Then `npx tsc -b`, `npx oxlint` and `npm run t`. The Checks run on GitHub is the gate.
 - Look at a change in a browser before calling it done: open https://moosylog.github.io/rynkbench/ after the deploy, start a new Glove80 layout and try what changed.
 
 ## Docs

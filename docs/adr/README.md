@@ -16,5 +16,6 @@ One short page per decision that shapes the code, so the reason survives the peo
 | [0010](0010-draft-and-live.md) | Draft and Live: when changes reach the keyboard | Accepted |
 | [0011](0011-guard.md) | Rynkbench Guard: one gate for every key write | Accepted |
 | [0012](0012-sync.md) | One write path: plan the difference, write only that | Accepted |
+| [0013](0013-one-history-one-gate.md) | One document, one history, one gate: adopted module by module | Accepted |
 
 The glossary is in [../glossary.md](../glossary.md).
