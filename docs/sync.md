@@ -120,4 +120,4 @@ The original layer move, delete and duplicate compared their read-back with the 
 - **Starting without the keyboard:** today you keep working when the link is lost. Opening a keyboard you have used before, without connecting it, needs its last read kept per keyboard and a session built from it.
 - **Live keys after a short pause:** keys go at once in Live because RMK only applies a key once it is written. Gathering repeated edits of one key would save a little more flash at the cost of trying it slightly later.
 - **Read only what is needed:** Send reads the whole keyboard before and after. Reading only the parts in the plan would make Send faster over Bluetooth.
-- **In the firmware:** skip storing unchanged keys (`docs/firmware/`), and later a keymap transaction so a large change is all-or-nothing on the keyboard itself.
+- **In the firmware:** skip storing unchanged keys (`docs/firmware/rmk-skip-unchanged-keys/`, ready to apply), and later a keymap transaction so a large change is all-or-nothing on the keyboard itself.
