@@ -10,7 +10,7 @@ Live site: https://moosylog.github.io/rynkbench/ (GitHub Pages, deployed from `m
 - A decision that shapes the code goes in an ADR (`docs/adr/`, next number, one page, linked from its README).
 
 ## Layers (src/architecture/boundaries.ts)
-- `session/` talks to keyboards (transports, the simulated boards); `config/` reads and writes layout files; `model/` holds plain data and pure functions; `domain/` the reference graph; `capabilities/` what a keyboard can do; `ui/` the screens.
+- `session/` talks to keyboards (transports, the simulated boards); `config/` reads and writes layout files; `model/` holds plain data and pure functions; `domain/` the reference graph; `capabilities/` what a keyboard can do; `sync/` the one write path (read, plan the difference, write, read back; ADR 0012); `ui/` the screens.
 - Core layers never import `ui/`. Screens never import a transport or the simulated boards; they use the session interface.
 - Screens never import the generated wire package (`src/vendor/rynk-wasm`): action types come from `model/action-types.ts`, geometry from `model/keyboard.ts`. Older files on the baseline (`boundaries.baseline.json`) leave it when touched; the guard fails on a new one.
 - What a screen offers is asked of capabilities (`ui/use-capabilities.ts`), never by probing firmware or testing a nullable field (`src/architecture/probing.ts`).

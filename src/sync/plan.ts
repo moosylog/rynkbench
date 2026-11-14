@@ -1,0 +1,129 @@
+// The planner: what to write so the keyboard holds the layout you want, and
+// nothing more (ADR 0012, docs/sync.md). RMK stores every key it is sent, even
+// an unchanged one, so only items that differ are listed. The order keeps the
+// keyboard usable if writing stops part-way: what keys will point to is
+// created first, keys and settings change next, what is no longer used goes
+// last.
+
+import { same } from "../model/deep-equal";
+import { comboIsEmpty } from "../model/combos";
+import { forkIsEmpty, morseIsEmpty } from "../model/slots";
+import type {
+  AutoMouseLayerConfig,
+  BehaviorOptions,
+  ComboDefinition,
+  EncoderAction,
+  Fork,
+  KeyAction,
+  LightingSceneCell,
+  MacroOp,
+  Morse,
+  PointingConfig,
+} from "../vendor/rynk-wasm/rynk_wasm";
+import type { LayerMetadata, RuntimeLightingRule } from "../session/types";
+import type { KeyboardImage, SlotTable } from "./image";
+
+export type SyncStep =
+  | { kind: "slot"; table: "combos"; index: number; value: ComboDefinition }
+  | { kind: "slot"; table: "morse"; index: number; value: Morse }
+  | { kind: "slot"; table: "forks"; index: number; value: Fork }
+  | { kind: "macros"; value: MacroOp[][] }
+  | { kind: "layerMetadata"; layer: number; value: LayerMetadata }
+  /** Neighbouring keys of one layer, from `start` (row-major offset). */
+  | { kind: "keys"; layer: number; start: number; actions: KeyAction[] }
+  | { kind: "encoder"; layer: number; id: number; action: EncoderAction }
+  | { kind: "defaultLayer"; layer: number }
+  | { kind: "behaviorOptions"; value: BehaviorOptions }
+  | { kind: "autoMouseLayers"; value: AutoMouseLayerConfig[] }
+  | { kind: "pointing"; value: PointingConfig }
+  | { kind: "wakeLayers"; value: number }
+  | { kind: "scenes"; value: LightingSceneCell[] }
+  | { kind: "rules"; value: RuntimeLightingRule[] };
+
+export type StepKind = SyncStep["kind"];
+
+const SLOT_EMPTY: { [T in SlotTable]: (value: never) => boolean } = {
+  combos: comboIsEmpty as (value: never) => boolean,
+  morse: morseIsEmpty as (value: never) => boolean,
+  forks: forkIsEmpty as (value: never) => boolean,
+};
+
+/** Runs of neighbouring offsets whose values differ. */
+function changedRuns<T>(from: readonly T[], to: readonly T[]): { start: number; values: T[] }[] {
+  const runs: { start: number; values: T[] }[] = [];
+  for (let offset = 0; offset < to.length; offset += 1) {
+    if (same(from[offset], to[offset])) continue;
+    const last = runs.at(-1);
+    if (last && last.start + last.values.length === offset) last.values.push(to[offset]);
+    else runs.push({ start: offset, values: [to[offset]] });
+  }
+  return runs;
+}
+
+/** A pointing configuration compared without its revision, which the keyboard counts. */
+const pointingBody = (config: PointingConfig | null) => (config ? { ...config, revision: 0 } : null);
+
+/** What to write, in order, so that `from` (what the keyboard holds) becomes `to`. */
+export function planSync(from: KeyboardImage, to: KeyboardImage): SyncStep[] {
+  if (from.layers.length !== to.layers.length) {
+    throw new Error(`the layouts have ${from.layers.length} and ${to.layers.length} layers; a keyboard's layer count is fixed`);
+  }
+  const create: SyncStep[] = [];
+  const change: SyncStep[] = [];
+  const remove: SyncStep[] = [];
+
+  for (const table of ["combos", "morse", "forks"] as const) {
+    to[table].forEach((value, index) => {
+      if (same(from[table][index], value)) return;
+      const step = { kind: "slot", table, index, value } as SyncStep;
+      (SLOT_EMPTY[table](value as never) ? remove : create).push(step);
+    });
+  }
+  if (to.macroOps && from.macroOps && !same(from.macroOps, to.macroOps)) {
+    // One stored item: grown or reworked macros go before the keys that run them, shrunk ones after.
+    (to.macroOps.length < from.macroOps.length ? remove : create).push({ kind: "macros", value: to.macroOps });
+  }
+  to.metadata.forEach((value, layer) => {
+    if (same(from.metadata[layer], value)) return;
+    (value.occupied ? create : remove).push({ kind: "layerMetadata", layer, value });
+  });
+
+  to.layers.forEach((cells, layer) => {
+    for (const run of changedRuns(from.layers[layer] ?? [], cells)) {
+      change.push({ kind: "keys", layer, start: run.start, actions: run.values });
+    }
+  });
+  to.encoders.forEach((encoders, layer) =>
+    encoders.forEach((action, id) => {
+      if (!same(from.encoders[layer]?.[id], action)) change.push({ kind: "encoder", layer, id, action });
+    }),
+  );
+  if (from.defaultLayer !== to.defaultLayer) change.push({ kind: "defaultLayer", layer: to.defaultLayer });
+  if (to.behaviorOptions && !same(from.behaviorOptions, to.behaviorOptions)) {
+    change.push({ kind: "behaviorOptions", value: to.behaviorOptions });
+  }
+  if (!same(from.autoMouseLayers, to.autoMouseLayers)) change.push({ kind: "autoMouseLayers", value: to.autoMouseLayers });
+  if (to.pointing && !same(pointingBody(from.pointing), pointingBody(to.pointing))) {
+    change.push({ kind: "pointing", value: to.pointing });
+  }
+  if (from.wakeLayers !== to.wakeLayers) change.push({ kind: "wakeLayers", value: to.wakeLayers });
+  if (!same(from.scenes, to.scenes)) change.push({ kind: "scenes", value: to.scenes });
+  if (!same(from.runtimeConditionalScenes, to.runtimeConditionalScenes)) {
+    change.push({ kind: "rules", value: to.runtimeConditionalScenes });
+  }
+  return [...create, ...change, ...remove];
+}
+
+/** How many items a plan stores: a key run counts each key, every other step one. */
+export function storedItems(steps: readonly SyncStep[]): number {
+  return steps.reduce((sum, step) => sum + (step.kind === "keys" ? step.actions.length : 1), 0);
+}
+
+/** The keys a plan writes, as layer, row and column. */
+export function plannedKeys(steps: readonly SyncStep[], cols: number): { layer: number; row: number; col: number }[] {
+  return steps.flatMap((step) =>
+    step.kind === "keys"
+      ? step.actions.map((_, i) => ({ layer: step.layer, row: Math.floor((step.start + i) / cols), col: (step.start + i) % cols }))
+      : [],
+  );
+}

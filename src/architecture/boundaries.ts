@@ -26,7 +26,7 @@ export interface BoundaryRule {
 }
 
 const LAYER_FOLDERS = new Set([
-  "session", "config", "model", "layers", "firmware", "capabilities", "domain", "ui", "vendor", "architecture",
+  "session", "config", "model", "layers", "firmware", "capabilities", "domain", "sync", "ui", "vendor", "architecture",
 ]);
 
 /** Top-level folder of a project-relative path: `src/ui/x.ts` is `ui`, and a
@@ -39,13 +39,13 @@ export function layerOf(path: string): string {
   return parts.length > 2 ? parts[1] : "app";
 }
 
-const CORE_LAYERS = new Set(["session", "config", "model", "layers", "firmware", "capabilities", "domain"]);
+const CORE_LAYERS = new Set(["session", "config", "model", "layers", "firmware", "capabilities", "domain", "sync"]);
 const BACKENDS = ["webhid", "webserial", "webbluetooth", "native", "native-ble", "offline", "mock"];
 
 export const BOUNDARY_RULES: BoundaryRule[] = [
   {
     id: "core-never-imports-ui",
-    why: "Logic must run without the screen: session, config, model, layers and firmware never import ui or the app shell.",
+    why: "Logic must run without the screen: session, config, model, layers, firmware and sync never import ui or the app shell.",
     breaks: (from, to) => CORE_LAYERS.has(layerOf(from)) && ["ui", "app"].includes(layerOf(to)),
   },
   {
@@ -68,6 +68,12 @@ export const BOUNDARY_RULES: BoundaryRule[] = [
     id: "ui-never-imports-wire-types",
     why: "Screens speak domain types, not one protocol's wire types: nothing under src/ui imports the generated Rynk package.",
     breaks: (from, to) => layerOf(from) === "ui" && to.startsWith("src/vendor/rynk-wasm"),
+  },
+  {
+    id: "sync-uses-the-session-interface",
+    why: "The write path (src/sync, ADR 0012) works for every keyboard: it uses the session interface, never a transport or a simulated board.",
+    breaks: (from, to) =>
+      layerOf(from) === "sync" && BACKENDS.some((b) => to === `src/session/${b}` || to.startsWith(`src/session/${b}/`)),
   },
   {
     id: "ui-never-imports-backends",

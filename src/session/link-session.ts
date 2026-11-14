@@ -77,7 +77,9 @@ import {
   hasLightingFeature,
 } from "./lighting-features";
 import { unsupported } from "./unsupported";
-import { classifyError, SessionError } from "./errors";
+import { SessionError } from "./errors";
+import { KEYMAP_WRITE_PAGE_KEYS, retryBusy, writeKeyRun } from "./flash-writes";
+export { isBusyError } from "./flash-writes";
 import {
   encodeRuleChunks,
   ruleFromAdvanced,
@@ -128,37 +130,6 @@ export function waitsForFlash(op: string): boolean {
     op === "storage_reset"
   );
 }
-
-/** Whether a rejected request was the firmware's `Busy`: its flash queue had
- *  no room for the write, nothing was applied, and the same request is welcome
- *  again once the queue drains. */
-export function isBusyError(error: unknown): boolean {
-  return classifyError(error) === "busy";
-}
-
-const BUSY_RETRY_DELAY_MS = 100;
-const BUSY_RETRY_LIMIT_MS = 300_000;
-
-/** Run a keymap write, sending it again while the firmware answers `Busy`.
- *  The firmware waits about half a second for flash-queue room before saying
- *  so, which paces the retries; the limit spans a page migration of minutes. */
-async function retryBusy<T>(op: () => Promise<T>): Promise<T> {
-  const started = performance.now();
-  for (;;) {
-    try {
-      return await op();
-    } catch (error) {
-      if (!isBusyError(error) || performance.now() - started >= BUSY_RETRY_LIMIT_MS) throw error;
-      await new Promise((resolve) => setTimeout(resolve, BUSY_RETRY_DELAY_MS));
-    }
-  }
-}
-
-/** Cells per keymap write page. Every cell is one flash item and the firmware
- *  only accepts a page it can queue for flash whole, answering `Busy`
- *  otherwise; a longer page streams through the queue and holds the session
- *  for the length of a storage page migration. Matches the native client. */
-const KEYMAP_WRITE_PAGE_KEYS = 4;
 
 export class RequestTimeout extends SessionError {
   readonly op: string;
@@ -814,6 +785,7 @@ export class LinkSession implements RynkSession {
       replaceAll: (layers) => this.run(() => this.replaceAllLayers(layers)),
       setKey: (layer, row, col, action) =>
         this.run(() => retryBusy(() => client.set_key(layer, row, col, action))),
+      writeKeys: (layer, start, actions) => this.run(() => this.writeKeyRun(layer, start, actions)),
       getEncoder: (encoderId, layer) => this.run(() => client.get_encoder(encoderId, layer)),
       setEncoder: (encoderId, layer, action) =>
         this.run(() => client.set_encoder(encoderId, layer, action)),
@@ -1080,36 +1052,33 @@ export class LinkSession implements RynkSession {
     if (layers.length !== caps.num_layers) {
       throw new Error(`keymap write has ${layers.length} layers; expected ${caps.num_layers}`);
     }
-    let pageKeys = 0;
-    if (caps.bulk_transfer_supported && perLayer > 0) {
-      const bulkCapacity = (await this.client.get_keymap_bulk(0, 0, 0)).actions.length;
-      if (bulkCapacity < 1) throw new Error("keymap bulk endpoint returned an empty page");
-      pageKeys = Math.min(bulkCapacity, KEYMAP_WRITE_PAGE_KEYS);
-    }
     for (let layer = 0; layer < caps.num_layers; layer += 1) {
       const actions = layers[layer]?.actions;
       if (layers[layer]?.layer !== layer || actions.length !== perLayer) {
         throw new Error(`keymap write omitted or malformed layer ${layer}`);
       }
-      if (pageKeys > 0) {
-        for (let start = 0; start < perLayer; start += pageKeys) {
-          await retryBusy(() =>
-            this.client.set_keymap_bulk({
-              layer,
-              start_row: Math.floor(start / caps.num_cols),
-              start_col: start % caps.num_cols,
-              actions: actions.slice(start, start + pageKeys),
-            }),
-          );
-        }
-      } else {
-        for (let key = 0; key < perLayer; key += 1) {
-          await retryBusy(() =>
-            this.client.set_key(layer, Math.floor(key / caps.num_cols), key % caps.num_cols, actions[key]),
-          );
-        }
-      }
+      await this.writeKeyRun(layer, 0, actions);
     }
+  }
+
+  /** Cells per bulk page, or 0 when the firmware has no bulk write: the
+   *  smaller of the firmware's page and what its flash queue takes whole. */
+  private bulkPageKeys: Promise<number> | null = null;
+
+  private pageKeys(): Promise<number> {
+    this.bulkPageKeys ??= (async () => {
+      const caps = await this.capabilities();
+      if (!caps.bulk_transfer_supported || caps.num_rows * caps.num_cols === 0) return 0;
+      const bulkCapacity = (await this.client.get_keymap_bulk(0, 0, 0)).actions.length;
+      if (bulkCapacity < 1) throw new Error("keymap bulk endpoint returned an empty page");
+      return Math.min(bulkCapacity, KEYMAP_WRITE_PAGE_KEYS);
+    })();
+    return this.bulkPageKeys;
+  }
+
+  private async writeKeyRun(layer: number, start: number, actions: KeyAction[]): Promise<void> {
+    const caps = await this.capabilities();
+    await writeKeyRun(this.client, { rows: caps.num_rows, cols: caps.num_cols, page: await this.pageKeys() }, layer, start, actions);
   }
 
   private async readLayerState(): Promise<LayerSnapshot> {

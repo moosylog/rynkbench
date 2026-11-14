@@ -145,6 +145,9 @@ export interface KeymapOps {
   replaceAll(layers: LayerKeymap[]): Promise<void>;
   /** Write one cell, resending while the firmware answers `Busy`. */
   setKey(layer: number, row: number, col: number, action: KeyAction): Promise<void>;
+  /** Write neighbouring cells of one layer from a row-major `start`, in bulk
+   *  pages where the firmware has them (one request per page, not per key). */
+  writeKeys(layer: number, start: number, actions: KeyAction[]): Promise<void>;
   getEncoder(encoderId: number, layer: number): Promise<EncoderAction>;
   setEncoder(encoderId: number, layer: number, action: EncoderAction): Promise<void>;
   currentLayer(): Promise<number>;

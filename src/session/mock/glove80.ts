@@ -27,14 +27,9 @@ import {
   glove80Enrichment,
   type Glove80Key,
 } from "../../model/boards/glove80";
-import {
-  emptyFork,
-  emptyMorse,
-  emptyMorseProfile,
-  noModifiers,
-  noStateBits,
-} from "../../model/slots";
-import { buildTopology, hid, layerOn, type BoardSpec, type SimLed } from "./board";
+import { emptyFork, emptyMorse, emptyMorseProfile, noModifiers, noStateBits } from "../../model/slots";
+import { hid, layerOn, type BoardSpec } from "./board";
+import { buildTopology, type SimLed } from "./topology";
 
 // Placement + LED-chain data is the shared board table in model/boards —
 // the same real geometry current firmware serves through GetLayout.
