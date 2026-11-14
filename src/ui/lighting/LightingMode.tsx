@@ -11,9 +11,9 @@ import { layerName } from "../layer-names";
 import {
   activeLightingBase,
   activeLightingDraft,
-  stagedBetween,
   useWorkbench,
 } from "../state";
+import { stagedBetween } from "./compare";
 import { ColorPicker } from "./ColorPicker";
 import { BackgroundPanel } from "./BackgroundPanel";
 import { FirmwareRulesPanel } from "./FirmwareRulesPanel";

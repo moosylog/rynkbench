@@ -5,6 +5,7 @@ import { createContext, useContext } from "react";
 import type { Dispatch } from "react";
 import type { MacroOp } from "../vendor/rynk-wasm/rynk_wasm";
 import { same } from "../model/deep-equal";
+import { conditionalTablesEqual, overlaysEqual } from "./lighting/compare";
 import type {
   BehaviorConfig,
   ComboDefinition,
@@ -828,49 +829,6 @@ export function makeWorkbenchReducer(cols: number) {
   };
 }
 
-export function overlaysEqual(
-  a: Record<number, LightingOverlayCell>,
-  b: Record<number, LightingOverlayCell>,
-): boolean {
-  const ak = Object.keys(a);
-  if (ak.length !== Object.keys(b).length) return false;
-  for (const k of ak) {
-    const ka = Number(k);
-    if (!(ka in b)) return false;
-    if (!same(a[ka], b[ka])) return false;
-  }
-  return true;
-}
-
-/** Whether two conditional tables are the same *table*. Order-sensitive by
- *  design: these rules compose in table order and a later rule wins a shared
- *  slot, so permuting them is a real change the device must be told about. */
-export function conditionalTablesEqual(
-  a: RuntimeLightingRule[],
-  b: RuntimeLightingRule[],
-): boolean {
-  if (a.length !== b.length) return false;
-  return a.every((cell, index) => same(cell, b[index]));
-}
-
-/** LED ids where `draft` diverges from its `base` (staged, unapplied edits). */
-export function stagedBetween(
-  draft: Record<number, LightingOverlayCell>,
-  base: Record<number, LightingOverlayCell>,
-): Set<number> {
-  const out = new Set<number>();
-  for (const k of Object.keys(draft)) {
-    const id = Number(k);
-    const b = base[id];
-    if (!b || !same(b, draft[id])) out.add(id);
-  }
-  for (const k of Object.keys(base)) {
-    const id = Number(k);
-    if (!(id in draft)) out.add(id);
-  }
-  return out;
-}
-
 /** The draft a given target edits (overlay draft, or that layer's). */
 export const lightingDraftFor = targetDraft;
 
@@ -945,7 +903,8 @@ export interface WorkbenchContextValue {
   };
 }
 
-export type IoWriteResult = { ok: true } | { ok: false; message: string };
+export type IoWriteResult = { ok: true } | { ok: false; message: string; guarded?: true }; // guarded: Guard said no (ADR 0011)
+export type KeyWrite = { layer: number; row: number; col: number; action: KeyAction };
 
 export interface WorkbenchIo {
   setKey(
@@ -955,6 +914,8 @@ export interface WorkbenchIo {
     action: KeyAction,
     options?: { history?: "record" | "invalidate" },
   ): Promise<IoWriteResult>;
+  /** Several keys as one change (a swap, a transform), so Guard judges them together. All are tried; the first failure is returned. */
+  writeKeys(edits: readonly KeyWrite[], options?: { history?: "record" | "invalidate"; onWritten?: (ok: boolean) => void }): Promise<IoWriteResult>;
   undoKeyEdit(): Promise<IoWriteResult>;
   redoKeyEdit(): Promise<IoWriteResult>;
   /** Write every staged batch edit to the keyboard in one pass. Writes that
@@ -1433,6 +1394,15 @@ export function makeIo(
 
   return {
     setKey,
+    async writeKeys(edits, options) {
+      let first: IoWriteResult = { ok: true };
+      for (const edit of edits) {
+        const result = await setKey(edit.layer, edit.row, edit.col, edit.action, options);
+        options?.onWritten?.(result.ok);
+        if (first.ok && !result.ok) first = result;
+      }
+      return first;
+    },
     undoKeyEdit() {
       return travelKeyHistory("undo");
     },

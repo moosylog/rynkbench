@@ -76,10 +76,8 @@ export function useKeyMoves() {
       ? `Copied ${legend(source)} to ${keyAddressLabel(destination)}`
       : `Swapped ${legend(source)} (${keyAddressLabel(source)}) and ${legend(destination)} (${keyAddressLabel(destination)})`;
     dispatch({ type: "select", selection: { type: "key", row: destination.row, col: destination.col } });
-    for (const write of writes) {
-      const result = await io.setKey(layer, write.place.row, write.place.col, write.action);
-      if (!result.ok) return showToast(`Not finished: ${result.message}`, { tone: "danger" });
-    }
+    const result = await io.writeKeys(writes.map(({ place, action }) => ({ layer, row: place.row, col: place.col, action })));
+    if (!result.ok) return result.guarded ? undefined : showToast(`Not finished: ${result.message}`, { tone: "danger" });
     showToast(text, { tone: "ok" });
   };
 

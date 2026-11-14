@@ -7,7 +7,8 @@ import type { EncoderAction, KeyAction } from "../../model/action-types";
 import type { LightingOverlayCell } from "../../model/lighting-types";
 import type { WorkbenchAction, WorkbenchState } from "../../model/workbench-state";
 import type { Rules } from "../lighting/rules";
-import { lightingBaseFor, lightingDraftFor, stagedBetween } from "../state";
+import { lightingBaseFor, lightingDraftFor } from "../state";
+import { stagedBetween } from "../lighting/compare";
 
 export type DraftArea = "keys" | "encoders" | "lighting" | "lightRules";
 

@@ -16,15 +16,14 @@ import type {
 } from "../vendor/rynk-wasm/rynk_wasm";
 import type { RynkSession } from "../session/types";
 import { initialKeyEditHistory } from "../model/history";
+import { conditionalTablesEqual, stagedBetween } from "./lighting/compare";
 import {
   activeLightingBase,
   activeLightingDraft,
   canTravelKeyEditHistory,
-  conditionalTablesEqual,
   makeIo,
   makeWorkbenchReducer,
   pointingDraftDirty,
-  stagedBetween,
   stagedEditCount,
   type WorkbenchAction,
   type WorkbenchState,

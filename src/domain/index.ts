@@ -5,4 +5,6 @@ export { activators, attributedEdges, dangling, reachableLayers, referencedBy } 
 export type { EdgeKind, Ref, RefKind } from "./refs";
 export { cellRef, layerRef, refKey, sameRef, slotRef } from "./refs";
 export type { EdgeSource, GraphSource, LayerPart, Owner, Reference } from "./sources";
-export { EDGE_SOURCES, actionReferences, keyActionReferences, mapActionLayers, mapKeyActionLayers } from "./sources";
+export { EDGE_SOURCES, actionReferences, keyActionIsBound, keyActionReferences, mapActionLayers, mapKeyActionLayers } from "./sources";
+export type { GuardFinding, GuardInput, GuardRuleId, GuardTier } from "./guard";
+export { GUARD_RULES, judgeChange } from "./guard";

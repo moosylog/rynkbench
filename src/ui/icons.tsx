@@ -294,6 +294,16 @@ export function WarningIcon(props: IconProps) {
   );
 }
 
+/** Rynkbench Guard's mark: a shield. */
+export function ShieldIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M8 1.6l5.4 2v4.1c0 3.2-2.3 5.6-5.4 6.7-3.1-1.1-5.4-3.5-5.4-6.7V3.6z" />
+      <path d="M5.6 8.1l1.7 1.7 3.2-3.3" />
+    </svg>
+  );
+}
+
 export function StarIcon({ filled, ...props }: IconProps & { filled?: boolean }) {
   return (
     <svg {...base(props)} fill={filled ? "currentColor" : "none"}>

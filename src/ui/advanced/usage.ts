@@ -14,7 +14,7 @@ import type {
 } from "../../vendor/rynk-wasm/rynk_wasm";
 import type { LayerMetadata } from "../../session/types";
 import { layerName as nameOfLayer } from "../layer-names";
-import { activators, attributedEdges, buildGraph, keyActionReferences, layerRef, reachableLayers, referencedBy } from "../../domain";
+import { activators, attributedEdges, buildGraph, keyActionIsBound, keyActionReferences, layerRef, reachableLayers, referencedBy } from "../../domain";
 import type { Attributed, Ref } from "../../domain";
 import { comboIsEmpty } from "../../model/combos";
 import { forkIsEmpty, morseIsEmpty } from "../../model/slots";
@@ -127,14 +127,6 @@ export function keyActionRefs(keyAction: KeyAction): Refs {
   return refs;
 }
 
-function isBound(keyAction: KeyAction): boolean {
-  if (keyAction === "No" || keyAction === "Transparent") return false;
-  if (typeof keyAction === "object" && "Single" in keyAction && keyAction.Single === "No") {
-    return false;
-  }
-  return true;
-}
-
 function comboParts(combo: ComboDefinition): {
   triggers: KeyAction[];
   output: KeyAction;
@@ -222,13 +214,13 @@ export function analyzeUsage(input: UsageInput, decode: typeof decodeMacros = de
   const occupied = (layer: number): boolean =>
     input.layerMetadata
       ? (input.layerMetadata[layer]?.occupied ?? false)
-      : input.layers[layer]?.some(isBound) === true;
+      : input.layers[layer]?.some(keyActionIsBound) === true;
 
   const layers: LayerUsage[] = input.layers.map((cells, layer) => {
     const usage: LayerUsage = {
       layer,
       name: layerName(layer),
-      boundKeys: cells.filter(isBound).length,
+      boundKeys: cells.filter(keyActionIsBound).length,
       activators: (activatorsByLayer.get(layer) ?? []).map(siteOfEntry),
       activatorSites: (activatorsByLayer.get(layer) ?? []).map(siteRefOfEntry),
       reachable: reachable.has(layer),
@@ -320,7 +312,7 @@ export function analyzeUsage(input: UsageInput, decode: typeof decodeMacros = de
 
   // Forks fire when their trigger action is typed; a trigger absent from the
   // whole keymap (and every combo output) can never fire.
-  const boundActions = input.layers.flat().filter(isBound);
+  const boundActions = input.layers.flat().filter(keyActionIsBound);
   for (const combo of input.combos) {
     if (!comboIsEmpty(combo)) boundActions.push(comboParts(combo).output);
   }

@@ -48,8 +48,9 @@ export function useDraft() {
     async send(): Promise<boolean> {
       if (sending || size === 0) return size === 0;
       const total = size;
-      resetDraftHistory();
       const keys = await io.applyBatch();
+      if (!keys.ok && keys.guarded) return false; // Guard has said why
+      resetDraftHistory();
       const lighting = await sendLighting();
       const left = draftSize(draftGroups(latest.current));
       if (keys.ok && !lighting && left === 0) {

@@ -19,6 +19,7 @@ import { TopBar } from "./TopBar";
 import { KeymapCenter } from "./keymap/KeymapCenter";
 import { KeymapInspector } from "./keymap/SideInspector";
 import { DraftKeeper } from "./draft/DraftKeeper";
+import { guardIo } from "./guard/guardIo";
 import { useDraftHistory } from "./draft/useDraftHistory";
 import { ComboEditor } from "./keymap/ComboEditor";
 import { ComboFocusCanvas } from "./keymap/ComboFocusCanvas";
@@ -208,14 +209,19 @@ export function Workbench({
   stateRef.current = state;
 
   // The bundle is an immutable connect-time snapshot, so it is the whole
-  // dependency: every feature flag derives from it.
+  // dependency: every feature flag derives from it. Guard stands in front of
+  // every key write (ADR 0011).
   const io = useMemo(
     () =>
-      makeIo(bundle.session, () => stateRef.current, dispatch, {
-        cols: bundle.caps.num_cols,
-        onDisconnect: onClose,
-        features: ioFeaturesFor(bundle),
-      }),
+      guardIo(
+        makeIo(bundle.session, () => stateRef.current, dispatch, {
+          cols: bundle.caps.num_cols,
+          onDisconnect: onClose,
+          features: ioFeaturesFor(bundle),
+        }),
+        bundle,
+        () => stateRef.current,
+      ),
     [bundle, onClose],
   );
 

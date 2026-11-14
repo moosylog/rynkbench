@@ -88,7 +88,9 @@ export function useKeyClipboard(
       report(
         result.ok
           ? `Pasted ${keyActionDescription(pasted)} to Layer ${selectedLayer}, r${row} c${col}.`
-          : `Paste failed: ${result.message}`,
+          : result.guarded
+            ? result.message
+            : `Paste failed: ${result.message}`,
       );
     };
     if (!navigator.clipboard?.readText) {

@@ -10,10 +10,10 @@ const BUDGET = 500;
 
 /** Files already over budget, with the size they may not exceed. */
 const OVER_BUDGET: Record<string, number> = {
-  "src/ui/state.tsx": 1827,
+  "src/ui/state.tsx": 1797,
   "src/session/link-session.ts": 1545,
   "src/session/mock/board.ts": 1529,
-  "src/ui/lighting/ConditionalRulesPanel.tsx": 1066,
+  "src/ui/lighting/ConditionalRulesPanel.tsx": 1059,
   "src/ui/keymap/ActionEditor.tsx": 696,
   "src/config/transfer.ts": 677,
   "src/ui/lighting/LightingMode.tsx": 630,

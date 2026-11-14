@@ -22,7 +22,8 @@ import type {
   LightingSplitForce,
   LightingSplitLink,
 } from "../../vendor/rynk-wasm/rynk_wasm";
-import { conditionalTablesEqual, useWorkbench } from "../state";
+import { useWorkbench } from "../state";
+import { conditionalTablesEqual } from "./compare";
 import { ApplyBar, Button, SectionLabel, Segmented, TextInput, cx } from "../kit";
 import { useCapability } from "../use-capabilities";
 import { ArrowDownIcon, ArrowUpIcon, PlusIcon, TrashIcon } from "../icons";
@@ -32,15 +33,7 @@ import { describeEffect, effectRgb } from "./effect";
 import { EffectEditor } from "./EffectEditor";
 import { keyAddressWithLegend } from "../key-address";
 import { layerName } from "../layer-names";
-import {
-  appendRule,
-  moveRule,
-  newRule,
-  removeRule,
-  replaceRule,
-  retargetLayer,
-  rulesOnLayer,
-} from "./rules";
+import { appendRule, moveRule, newRule, removeRule, replaceRule, retargetLayer, rulesOnLayer } from "./rules";
 import type { Rule, Rules } from "./rules";
 import { RULES, hasLayerIndicatorConditions, hasLightingFeature } from "../../session/lighting-features";
 import { maskHasLayer, setLayerInMask } from "./wakeLayers";

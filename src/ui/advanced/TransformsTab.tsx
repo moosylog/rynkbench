@@ -101,13 +101,9 @@ export function TransformsTab({ nav }: { nav: ReactNode }) {
       setRun({ phase: "running", done, total });
     };
     try {
-      for (const edit of plan.keys) {
-        step(
-          await io.setKey(edit.layer, edit.row, edit.col, edit.after, {
-            history: "invalidate",
-          }),
-        );
-      }
+      const keys = plan.keys.map((edit) => ({ layer: edit.layer, row: edit.row, col: edit.col, action: edit.after }));
+      const written = await io.writeKeys(keys, { history: "invalidate", onWritten: (ok) => step({ ok }) });
+      if (!written.ok && written.guarded) return setRun({ phase: "error", message: written.message });
       for (const edit of plan.combos) step(await io.setSlot("combos", edit.index, edit.after));
       for (const edit of plan.morse) step(await io.setSlot("morse", edit.index, edit.after));
       for (const edit of plan.forks) step(await io.setSlot("forks", edit.index, edit.after));

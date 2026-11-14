@@ -15,6 +15,10 @@ export interface ConfirmRequest {
   cancelLabel?: string;
   /** The action destroys something: the button is drawn in the danger colour. */
   danger?: boolean;
+  /** Rynkbench Guard asks (ADR 0011): its label on top, Reject and Approve. */
+  guard?: boolean;
+  /** Names and places, behind Show details rather than in the message. */
+  details?: string[];
 }
 
 export interface PendingConfirm extends ConfirmRequest {
@@ -28,6 +32,8 @@ export interface Toast {
   tone: Tone;
   /** One button on the toast, such as Undo. */
   action?: { label: string; run: () => void };
+  /** Rynkbench Guard stopped or fixed something: the toast carries its label. */
+  guard?: boolean;
 }
 
 export interface MessagesState {
@@ -87,9 +93,12 @@ export function dismissToast(id: number): void {
 }
 
 /** Show a short note. The newest is last; the oldest goes when there are too many. */
-export function showToast(text: string, options: { tone?: Tone; action?: Toast["action"] } = {}): number {
+export function showToast(
+  text: string,
+  options: { tone?: Tone; action?: Toast["action"]; guard?: boolean } = {},
+): number {
   const id = nextId++;
-  const toast: Toast = { id, text, tone: options.tone ?? "neutral", action: options.action };
+  const toast: Toast = { id, text, tone: options.tone ?? "neutral", action: options.action, guard: options.guard };
   const toasts = [...state.toasts, toast];
   for (const dropped of toasts.slice(0, Math.max(0, toasts.length - MAX_TOASTS))) {
     clearTimeout(timers.get(dropped.id));

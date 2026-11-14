@@ -17,9 +17,9 @@ import {
   lightingBaseFor,
   lightingDraftFor,
   pointingDraftDirty,
-  stagedBetween,
   useWorkbench,
 } from "../state";
+import { stagedBetween } from "../lighting/compare";
 
 import { effectAnim, effectColor } from "../lighting/decor";
 import { targetPreviewEffects } from "../lighting/preview";

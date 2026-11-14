@@ -19,6 +19,7 @@ Live site: https://moosylog.github.io/rynkbench/ (GitHub Pages, deployed from `m
 - A rule about keys, layers or bindings: a pure function in `model/` with its own test (see `model/key-slots.ts`). Screens only show it and call `io`.
 - Which screens and sections exist: `ui/areas.ts`. The app's words, in both voices: `ui/terms.ts`.
 - When changes reach the keyboard: Draft or Live (ADR 0010, `ui/draft/`). New staged state joins the draft (`draft/changes.ts`), never a separate Apply.
+- What protects a layout: Rynkbench Guard (ADR 0011). Rules in `domain/guard.ts` (stop or ask, only what a change breaks); every key write passes `io` (`ui/guard/guardIo.ts`); several keys that form one change go through `io.writeKeys`. Guard speaks with its label: `askConfirm({ guard: true })`, `showToast(…, { guard: true })`.
 - A question before something that cannot be undone: `askConfirm`; a note that something happened: `showToast` (`ui/messages/store.ts`). Never `window.confirm`/`alert`.
 - A greyed-out button says why: `<Button disabled reason="…">`.
 - Lists with row actions: `ui/RowMenu.tsx` (right-click, long press, ⋮). Resizable panes: `ui/panes.tsx`.

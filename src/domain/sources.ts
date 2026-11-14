@@ -67,6 +67,13 @@ function layerOfAction(action: Action): { variant: LayerVariant; layer: number }
   return undefined;
 }
 
+/** Whether a key binding does something: not empty (No) and not falling
+ *  through to the layer below (Transparent). */
+export function keyActionIsBound(keyAction: KeyAction): boolean {
+  if (keyAction === "No" || keyAction === "Transparent") return false;
+  return !(typeof keyAction === "object" && "Single" in keyAction && keyAction.Single === "No");
+}
+
 /** References held by one action, in the order they appear. */
 export function actionReferences(action: Action): Reference[] {
   const carried = layerOfAction(action);

@@ -7,6 +7,7 @@ One word, one meaning. Code, docs and screens use these terms.
 - **Board spec:** declarative data describing one board: how to recognize it, geometry, presets, firmware channel, file formats.
 - **Feature set:** what one keyboard instance offers after merging firmware advertisement, board spec and environment.
 - **Offer:** the policy engine's answer to "is this feature shown here, and how far does it reach", with the reason.
+- **Rynkbench Guard:** what keeps a layout from being broken: one gate every key write passes, which stops or asks only when a change breaks something. See ADR 0011.
 - **Reach:** how far a change goes: `device` (live), `build` (needs a firmware build), `file` (only in the file).
 - **Edge table:** the one list of places a reference can live. The graph is derived from it.
 - **Integrity gate:** the check that refuses a change which adds a broken reference, loop, duplicate or over-capacity table.

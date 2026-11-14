@@ -2,9 +2,10 @@
 // browser's own <dialog>, which keeps focus inside and closes on Escape) and
 // the toasts in a stack at the bottom of the window. Mounted once, beside the app.
 
-import { useEffect, useRef, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Button, cx } from "../kit";
 import { CloseIcon, WarningIcon } from "../icons";
+import { GuardLabel } from "../guard/GuardLabel";
 import { dismissToast, getMessages, subscribeMessages, type PendingConfirm, type Tone } from "./store";
 
 const TOAST_TONE: Record<Tone, string> = {
@@ -15,6 +16,8 @@ const TOAST_TONE: Record<Tone, string> = {
 
 function ConfirmDialog({ request }: { request: PendingConfirm }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const [showDetails, setShowDetails] = useState(false);
+  const details = request.details ?? [];
 
   useEffect(() => {
     const element = dialog.current;
@@ -36,12 +39,14 @@ function ConfirmDialog({ request }: { request: PendingConfirm }) {
         if (event.target === event.currentTarget) request.resolve(false);
       }}
       className={cx(
-        "m-auto w-[min(26rem,calc(100vw-2rem))] rounded-2xl border bg-panel p-0 text-ink shadow-xl",
+        "m-auto rounded-2xl border bg-panel p-0 text-ink shadow-xl",
+        request.guard ? "w-[min(32rem,calc(100vw-2rem))]" : "w-[min(26rem,calc(100vw-2rem))]",
         "backdrop:bg-well/70 backdrop:backdrop-blur-[1px]",
         request.danger ? "border-danger/40" : "border-line",
       )}
     >
       <div className="flex flex-col gap-4 p-5">
+        {request.guard && <GuardLabel />}
         <div className="flex items-start gap-3">
           {request.danger && <WarningIcon size={18} className="mt-0.5 shrink-0 text-danger" />}
           <div className="flex flex-col gap-1.5">
@@ -55,9 +60,21 @@ function ConfirmDialog({ request }: { request: PendingConfirm }) {
             )}
           </div>
         </div>
-        <div className="flex justify-end gap-2">
+        {showDetails && (
+          <ul className="flex max-h-48 flex-col gap-1 overflow-y-auto rounded-lg border border-line bg-well px-3 py-2 text-small text-mute">
+            {details.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        )}
+        <div className="flex items-center justify-end gap-2">
+          {details.length > 0 && (
+            <Button variant="ghost" className="mr-auto" onClick={() => setShowDetails((shown) => !shown)}>
+              {showDetails ? "Hide details" : "Show details"}
+            </Button>
+          )}
           <Button variant="ghost" autoFocus onClick={() => request.resolve(false)}>
-            {request.cancelLabel ?? "Cancel"}
+            {request.cancelLabel ?? (request.guard ? "Reject" : "Cancel")}
           </Button>
           <Button variant={request.danger ? "danger" : "primary"} onClick={() => request.resolve(true)}>
             {request.confirmLabel}
@@ -86,6 +103,7 @@ export function MessageHost() {
               TOAST_TONE[toast.tone],
             )}
           >
+            {toast.guard && <GuardLabel />}
             <span className={cx("text-body", toast.tone === "danger" ? "text-danger" : "text-ink")}>{toast.text}</span>
             {toast.action && (
               <Button
