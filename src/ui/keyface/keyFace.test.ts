@@ -94,6 +94,13 @@ describe("face layout", () => {
   });
 });
 
+describe("empty keys", () => {
+  it("show GLIDE's slash for a key that does nothing", () => {
+    expect(keyFace("No", [], mac).none).toBe(true);
+    expect(keyFace("Transparent", [], mac).none).toBeUndefined();
+  });
+});
+
 describe("special keys", () => {
   it("are Bluetooth keys, then anything but a plain key press", () => {
     expect(specialKind(single({ User: 1 }), mac)).toBe("bluetooth");

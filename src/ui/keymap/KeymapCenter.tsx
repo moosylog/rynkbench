@@ -123,9 +123,8 @@ export function KeymapCenter() {
     const glyph = action !== undefined ? keyFace(action, state.morse, face) : { text: "" };
     // As in GLIDE: what Shift types shows on the base layer, or on every layer.
     if (!shiftedEverywhere && state.uiLayer !== 0) glyph.top = undefined;
-    // As in GLIDE: a key that does nothing shows a faint slash; one with no binding at all, the board's label.
-    if (action === "No") glyph.none = true;
-    else if (!glyph.text && key.label) {
+    // A key with no binding at all shows the board's label.
+    if (action === undefined && key.label) {
       glyph.text = key.label;
       glyph.dim = true;
     }

@@ -86,7 +86,7 @@ export function BoardWell({
     <div
       ref={wellRef}
       className={cx(
-        "canvas-well relative min-h-0 w-full flex-1 overflow-hidden",
+        "canvas-well relative min-h-0 w-full flex-1 overflow-hidden select-none",
         !flush && "rounded-xl border border-line",
         className,
       )}

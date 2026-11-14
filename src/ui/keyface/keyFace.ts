@@ -137,6 +137,8 @@ function modifiersOf(action: Action | undefined): ModifierCombination | undefine
 /** keyActionGlyph, with the pictures and per-OS modifiers the canvas draws. */
 export function keyFace(action: KeyAction, morse: readonly Morse[], ctx: FaceContext): KeyGlyph {
   const glyph = keyActionGlyph(action, morse);
+  // A key that does nothing: GLIDE's faint slash.
+  if (action === "No") return { ...glyph, none: true };
   if (typeof action !== "object") return glyph;
   const tap = "Single" in action ? action.Single : "Tap" in action ? action.Tap : "TapHold" in action ? action.TapHold[0] : undefined;
   const hold = "TapHold" in action ? action.TapHold[1] : undefined;
