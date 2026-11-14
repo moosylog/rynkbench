@@ -86,7 +86,7 @@ describe("Bluetooth and USB lights", () => {
   it("read the preset's rules in any order and with fields in any order", () => {
     const shuffled = bleStatusRules(0, 3, 2)
       .reverse()
-      .map((rule) => JSON.parse(JSON.stringify({ effects: rule.effects, ...rule })) as typeof rule);
+      .map((rule) => Object.fromEntries(Object.entries(rule).reverse()) as typeof rule);
     expect(statusLightOf(shuffled, 0, 3)).toEqual({ kind: "bluetooth", profile: 2 });
   });
 
