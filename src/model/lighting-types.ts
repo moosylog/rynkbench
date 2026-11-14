@@ -19,4 +19,8 @@ export type {
   LightingOverlayCell,
   /** An LED colour, 0–255 per channel. */
   LightingRgb8,
+  /** The firmware's effects: effect, palette, value (0 is off) and speed. */
+  LightingExtensionState,
+  /** One of an effect's own settings, named and bounded by the firmware. */
+  LightingExtensionParam,
 } from "../vendor/rynk-wasm/rynk_wasm";

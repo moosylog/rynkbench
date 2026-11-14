@@ -1,13 +1,16 @@
-// Device-wide lighting state: output enable/brightness and the VIA-style
-// background layer (mode + HSV + speed). Staged locally, applied via
-// lighting.setState; the device's returned state is the source of truth.
+// The keyboard's lights as a whole: on or off, brightness, and the VIA-style
+// background under every key's own light (mode, HSV, speed). Staged locally,
+// applied with io.setLightingState; the keyboard's returned state is the
+// source of truth. In Layout properties' RGB Lighting tab and the Lighting
+// screen.
 
 import { useMemo } from "react";
 import type { LightingBackgroundMode } from "../../vendor/rynk-wasm/rynk_wasm";
 import { useWorkbench } from "../state";
 import { useDeviceDraft } from "../device-draft";
 import { cssRgb, hsvToRgb } from "../color";
-import { ApplyBar, SectionLabel, Segmented, cx } from "../kit";
+import { ApplyBar, Segmented, cx } from "../kit";
+import { BigSwitch } from "../properties/BigSwitch";
 
 const MODES: LightingBackgroundMode[] = ["Solid", "Breathe"];
 
@@ -90,27 +93,17 @@ export function BackgroundPanel() {
     setDraft({ ...draft, background: { ...bg, ...patch } });
 
   return (
-    <div>
-      <div className="flex items-center justify-between">
-        <SectionLabel>Output & background</SectionLabel>
-        {dirty && <span className="text-caption text-warn">unapplied</span>}
-      </div>
-
-      <div className="mt-2 flex flex-col gap-2">
-        <label className="flex cursor-pointer items-center justify-between text-body text-mute">
-          <span>All RGB lighting</span>
-          <input
-            type="checkbox"
-            checked={draft.output_enabled}
-            onChange={(e) => setDraft({ ...draft, output_enabled: e.target.checked })}
-            className="accent-(--color-accent)"
-          />
-        </label>
-        <p className="text-small leading-relaxed text-faint">
-          Applies to layer colors, effects, and indicators. To toggle from a key, select
-          the key in Keymap and use its Lighting tab.
-          {state.lightingOutputMode?.wake_layers ? " Wake layers can temporarily turn lighting back on; disable the wake setting for those layers below to keep it off on every layer." : ""}
-        </p>
+    <div className="flex flex-col gap-2">
+      <BigSwitch
+        name="Lights"
+        state={draft.output_enabled ? "On" : "Off: the keyboard stays dark"}
+        on={draft.output_enabled}
+        onChange={(output_enabled) => setDraft({ ...draft, output_enabled })}
+      />
+      {!draft.output_enabled && state.lightingOutputMode?.wake_layers ? (
+        <p className="text-small leading-relaxed text-warn">A wake layer still turns the lights on while it is active.</p>
+      ) : null}
+      <div className="mt-1 flex flex-col gap-2">
         <Slider
           label="Brightness"
           value={draft.output_brightness}
@@ -138,10 +131,6 @@ export function BackgroundPanel() {
           />
         </label>
 
-        <p className="text-small leading-relaxed text-faint">
-          Background hue, saturation, and speed do not change painted layer colors.
-          Edit those colors with the layer brush. RGB toggle controls the background/effect only.
-        </p>
         {bg.enabled && (
           <>
             <Segmented

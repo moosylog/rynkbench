@@ -1,3 +1,9 @@
+// Status setups: a layer's status lights installed together with the keys
+// that switch what they show. The Glove80 Magic status cluster and stock
+// Magic layer in one go; with a canvas to pick keys on (`picker`), one
+// connection key or a battery bar of chosen keys. The rules join the draft
+// (sent with Review & send; in Live, once you pause), as every light does.
+
 import { useMemo, useState } from "react";
 import type { KeyView } from "../../model/keyboard";
 import { Button, SectionLabel } from "../kit";
@@ -38,14 +44,13 @@ function keyAt(keys: KeyView[], row: number, col: number): KeyView | undefined {
   return keys.find((key) => key.row === row && key.col === col);
 }
 
-export function StatusPresetsPanel({
-  pick,
-  onPick,
-}: {
-  pick: KeyPick | null;
-  onPick: (pick: KeyPick | null) => void;
+export function StatusPresetsPanel({ picker }: {
+  /** Picking keys on the canvas, for a connection key or a battery bar; without it only the presets show. */
+  picker?: { pick: KeyPick | null; onPick: (pick: KeyPick | null) => void };
 }) {
   const { bundle, state, dispatch, io } = useWorkbench();
+  const pick = picker?.pick ?? null;
+  const onPick = picker?.onPick ?? (() => {});
   const ruleTable = useCapability("lighting.rules");
   const numLayers = bundle.caps.num_layers;
   const wakeLayers = state.lightingOutputMode?.wake_layers ?? state.lightingControls.wake_layers;
@@ -117,15 +122,15 @@ export function StatusPresetsPanel({
       (indicator) => keyAt(bundle.model.keys, indicator.row, indicator.col)?.ledId === indicator.led,
     );
 
-  const applyRules = async (rules: typeof state.runtimeConditionalDraft, success: string) => {
+  /** The rules join the draft, like every light. */
+  const stageRules = (rules: typeof state.runtimeConditionalDraft, success: string) => {
     if (rules.length > ruleTable.slots) {
       setMessage(`This setup needs ${rules.length} rules; the keyboard holds ${ruleTable.slots}.`);
       return false;
     }
-    setMessage("Installing and verifying…");
-    const result = await io.applyConditionalScenes(rules);
-    setMessage(result.ok ? success : `Installation failed: ${result.message}`);
-    return result.ok;
+    dispatch({ type: "conditionalDraft", cells: rules });
+    setMessage(success);
+    return true;
   };
 
   const installGlove80 = async () => {
@@ -134,12 +139,14 @@ export function StatusPresetsPanel({
       setMessage(`The complete Glove80 setup needs ${rules.length} rules; this keyboard holds ${ruleTable.slots}.`);
       return;
     }
-    setMessage("Installing and verifying…");
     const result = await writeGlove80StatusSetup(
       {
         setKey: (preset, action) =>
           io.setKey(preset.layer, preset.row, preset.col, action, { history: "invalidate" }),
-        applyRules: (next) => io.applyConditionalScenes(next),
+        applyRules: async (next) => {
+          dispatch({ type: "conditionalDraft", cells: next });
+          return { ok: true };
+        },
       },
       state.runtimeConditionalDraft,
       layer,
@@ -147,8 +154,8 @@ export function StatusPresetsPanel({
     );
     setMessage(
       result.ok
-        ? `Installed and verified ${layout === "stock" ? "MoErgo-style" : "outer-column"} battery bars, three Bluetooth profile keys, and the USB status key on ${nameOf(layer)}.`
-        : `Installation failed: ${result.message}`,
+        ? `${nameOf(layer)} has ${layout === "stock" ? "MoErgo-style" : "outer-column"} battery bars, three Bluetooth profile keys and the USB status key.`
+        : `Not installed: ${result.message}`,
     );
   };
 
@@ -158,7 +165,6 @@ export function StatusPresetsPanel({
     const rules = kind === "ble"
       ? replaceBleStatus(state.runtimeConditionalDraft, layer, selectedKey.ledId, slot)
       : replaceUsbStatus(state.runtimeConditionalDraft, layer, selectedKey.ledId);
-    setMessage("Installing and verifying…");
     const keyResult = await io.setKey(
       layer,
       selectedKey.row,
@@ -167,14 +173,14 @@ export function StatusPresetsPanel({
       { history: "invalidate" },
     );
     if (!keyResult.ok) {
-      setMessage(`Installation failed: ${keyResult.message}`);
+      setMessage(`Not installed: ${keyResult.message}`);
       return;
     }
-    const ok = await applyRules(
+    const ok = stageRules(
       rules,
       kind === "ble"
-        ? `Bound and verified Bluetooth slot ${slot + 1} with status lighting on ${nameOf(layer)}.`
-        : `Bound and verified USB output with status lighting on ${nameOf(layer)}.`,
+        ? `The key switches to Bluetooth profile ${slot + 1} and shows its status on ${nameOf(layer)}.`
+        : `The key switches to USB and shows its status on ${nameOf(layer)}.`,
     );
     if (ok) {
       onPick(null);
@@ -182,7 +188,7 @@ export function StatusPresetsPanel({
     }
   };
 
-  const installBatteryBar = async () => {
+  const installBatteryBar = () => {
     if (!selectedBar) return;
     const rules = replaceBatteryBar(state.runtimeConditionalDraft, {
       layer,
@@ -190,12 +196,7 @@ export function StatusPresetsPanel({
       leds: selectedBar,
       style,
     });
-    if (
-      await applyRules(
-        rules,
-        `Installed and verified a ${selectedBar.length}-segment battery bar for node ${node} on ${nameOf(layer)}.`,
-      )
-    ) {
+    if (stageRules(rules, `${nameOf(layer)} has a ${selectedBar.length}-segment battery bar for node ${node}.`)) {
       onPick(null);
       dispatch({ type: "lightingSelect", leds: [] });
     }
@@ -272,134 +273,138 @@ export function StatusPresetsPanel({
         </p>
       )}
 
-      <div className="mt-3 rounded-lg border border-line-soft bg-well p-3">
-        <div className="text-body font-medium text-ink">Connection key</div>
-        <p className="mt-1 text-small leading-relaxed text-faint">
-          Pick one lit key, then bind its action and status indicator together.
-        </p>
-        <KeyChoice
-          pick={CONNECTION_KEY_PICK}
-          active={pick === CONNECTION_KEY_PICK}
-          keys={selectedKeys}
-          problem={
-            selectedKeys.length > 1 && pick !== BATTERY_BAR_PICK
-              ? `${selectedKeys.length} keys are chosen; a connection key needs exactly one.`
-              : undefined
-          }
-          onPick={onPick}
-        />
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          <label className="text-small text-faint">
-            Action
-            <select
-              value={kind}
-              onChange={(event) => setKind(event.target.value as "ble" | "usb")}
-              className={selectClass}
+      {picker && (
+        <>
+          <div className="mt-3 rounded-lg border border-line-soft bg-well p-3">
+            <div className="text-body font-medium text-ink">Connection key</div>
+            <p className="mt-1 text-small leading-relaxed text-faint">
+              Pick one lit key, then bind its action and status indicator together.
+            </p>
+            <KeyChoice
+              pick={CONNECTION_KEY_PICK}
+              active={pick === CONNECTION_KEY_PICK}
+              keys={selectedKeys}
+              problem={
+                selectedKeys.length > 1 && pick !== BATTERY_BAR_PICK
+                  ? `${selectedKeys.length} keys are chosen; a connection key needs exactly one.`
+                  : undefined
+              }
+              onPick={onPick}
+            />
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <label className="text-small text-faint">
+                Action
+                <select
+                  value={kind}
+                  onChange={(event) => setKind(event.target.value as "ble" | "usb")}
+                  className={selectClass}
+                >
+                  <option value="ble">Bluetooth profile</option>
+                  <option value="usb">USB output</option>
+                </select>
+              </label>
+              {kind === "ble" ? (
+                <label className="text-small text-faint">
+                  Profile
+                  <select
+                    value={slot}
+                    onChange={(event) => setSlot(Number(event.target.value))}
+                    className={selectClass}
+                  >
+                    {Array.from({ length: bundle.caps.num_ble_profiles }, (_, index) => (
+                      <option key={index} value={index}>Slot {index + 1}</option>
+                    ))}
+                  </select>
+                </label>
+              ) : <div />}
+            </div>
+            <Button
+              variant="outline"
+              className="mt-2 w-full"
+              title={selectedKey ? keyHoverTitle(selectedKey) : undefined}
+              disabled={!predicatesSupported || selectedKey === null || state.lightingBusy}
+              onClick={installConnectionKey}
             >
-              <option value="ble">Bluetooth profile</option>
-              <option value="usb">USB output</option>
-            </select>
-          </label>
-          {kind === "ble" ? (
-            <label className="text-small text-faint">
-              Profile
-              <select
-                value={slot}
-                onChange={(event) => setSlot(Number(event.target.value))}
-                className={selectClass}
-              >
-                {Array.from({ length: bundle.caps.num_ble_profiles }, (_, index) => (
-                  <option key={index} value={index}>Slot {index + 1}</option>
-                ))}
-              </select>
-            </label>
-          ) : <div />}
-        </div>
-        <Button
-          variant="outline"
-          className="mt-2 w-full"
-          title={selectedKey ? keyHoverTitle(selectedKey) : undefined}
-          disabled={!predicatesSupported || selectedKey === null || state.lightingBusy}
-          onClick={installConnectionKey}
-        >
-          {selectedKey ? `Configure ${keyAddressLabel(selectedKey)}` : "Choose a key first"}
-        </Button>
-      </div>
+              {selectedKey ? `Configure ${keyAddressLabel(selectedKey)}` : "Choose a key first"}
+            </Button>
+          </div>
 
-      <div className="mt-2 rounded-lg border border-line-soft bg-well p-3">
-        <div className="text-body font-medium text-ink">Battery bar</div>
-        <p className="mt-1 text-small leading-relaxed text-faint">
-          Pick {MIN_BAR_SEGMENTS}–{MAX_BAR_SEGMENTS} keys in a column or a row. Along the fill
-          direction each lights at a rising level; charging turns the lit segments blue.
-        </p>
-        <KeyChoice
-          pick={BATTERY_BAR_PICK}
-          active={pick === BATTERY_BAR_PICK}
-          keys={barPreview ?? selectedKeys}
-          chip={(key, index) =>
-            barLevels ? `${keyAddressLabel(key)} ≥${barLevels[index]}%` : keyAddressLabel(key)
-          }
-          problem={
-            selectedKeys.length > 0 && !barSized && pick !== CONNECTION_KEY_PICK
-              ? `${selectedKeys.length} chosen; a bar needs ${MIN_BAR_SEGMENTS}–${MAX_BAR_SEGMENTS} keys.`
-              : undefined
-          }
-          onPick={onPick}
-        />
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          <label className="text-small text-faint">
-            Battery node
-            <select
-              value={node}
-              onChange={(event) => setNode(Number(event.target.value))}
-              className={selectClass}
+          <div className="mt-2 rounded-lg border border-line-soft bg-well p-3">
+            <div className="text-body font-medium text-ink">Battery bar</div>
+            <p className="mt-1 text-small leading-relaxed text-faint">
+              Pick {MIN_BAR_SEGMENTS}–{MAX_BAR_SEGMENTS} keys in a column or a row. Along the fill
+              direction each lights at a rising level; charging turns the lit segments blue.
+            </p>
+            <KeyChoice
+              pick={BATTERY_BAR_PICK}
+              active={pick === BATTERY_BAR_PICK}
+              keys={barPreview ?? selectedKeys}
+              chip={(key, index) =>
+                barLevels ? `${keyAddressLabel(key)} ≥${barLevels[index]}%` : keyAddressLabel(key)
+              }
+              problem={
+                selectedKeys.length > 0 && !barSized && pick !== CONNECTION_KEY_PICK
+                  ? `${selectedKeys.length} chosen; a bar needs ${MIN_BAR_SEGMENTS}–${MAX_BAR_SEGMENTS} keys.`
+                  : undefined
+              }
+              onPick={onPick}
+            />
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <label className="text-small text-faint">
+                Battery node
+                <select
+                  value={node}
+                  onChange={(event) => setNode(Number(event.target.value))}
+                  className={selectClass}
+                >
+                  {Array.from({ length: 1 + bundle.caps.num_split_peripherals }, (_, index) => (
+                    <option key={index} value={index}>{index === 0 ? "Central · 0" : `Peripheral · ${index}`}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-small text-faint">
+                Fill direction
+                <select
+                  value={order}
+                  onChange={(event) => setOrder(event.target.value as BarOrder | "auto")}
+                  className={selectClass}
+                >
+                  <option value="auto">
+                    Auto{selectedKeys.length > 0
+                      ? ` · ${BAR_ORDERS.find((entry) => entry.id === barOrder)?.label.toLowerCase()}`
+                      : ""}
+                  </option>
+                  {BAR_ORDERS.map((entry) => (
+                    <option key={entry.id} value={entry.id}>{entry.label}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="col-span-2 text-small text-faint">
+                Style
+                <select
+                  value={style}
+                  onChange={(event) => setStyle(event.target.value as BarStyle)}
+                  className={selectClass}
+                >
+                  {BAR_STYLES.map((entry) => (
+                    <option key={entry.id} value={entry.id}>{entry.label}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <Button
+              variant="outline"
+              className="mt-2 w-full"
+              disabled={selectedBar === null || state.lightingBusy}
+              onClick={installBatteryBar}
             >
-              {Array.from({ length: 1 + bundle.caps.num_split_peripherals }, (_, index) => (
-                <option key={index} value={index}>{index === 0 ? "Central · 0" : `Peripheral · ${index}`}</option>
-              ))}
-            </select>
-          </label>
-          <label className="text-small text-faint">
-            Fill direction
-            <select
-              value={order}
-              onChange={(event) => setOrder(event.target.value as BarOrder | "auto")}
-              className={selectClass}
-            >
-              <option value="auto">
-                Auto{selectedKeys.length > 0
-                  ? ` · ${BAR_ORDERS.find((entry) => entry.id === barOrder)?.label.toLowerCase()}`
-                  : ""}
-              </option>
-              {BAR_ORDERS.map((entry) => (
-                <option key={entry.id} value={entry.id}>{entry.label}</option>
-              ))}
-            </select>
-          </label>
-          <label className="col-span-2 text-small text-faint">
-            Style
-            <select
-              value={style}
-              onChange={(event) => setStyle(event.target.value as BarStyle)}
-              className={selectClass}
-            >
-              {BAR_STYLES.map((entry) => (
-                <option key={entry.id} value={entry.id}>{entry.label}</option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <Button
-          variant="outline"
-          className="mt-2 w-full"
-          disabled={selectedBar === null || state.lightingBusy}
-          onClick={installBatteryBar}
-        >
-          {selectedBar
-            ? `Install ${selectedBar.length}-segment node ${node} bar`
-            : `Choose ${MIN_BAR_SEGMENTS}–${MAX_BAR_SEGMENTS} keys first`}
-        </Button>
-      </div>
+              {selectedBar
+                ? `Install ${selectedBar.length}-segment node ${node} bar`
+                : `Choose ${MIN_BAR_SEGMENTS}–${MAX_BAR_SEGMENTS} keys first`}
+            </Button>
+          </div>
+        </>
+      )}
 
       {!predicatesSupported && (
         <p className="mt-2 text-small leading-relaxed text-warn">

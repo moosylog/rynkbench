@@ -4,7 +4,7 @@
 
 import { useSyncExternalStore } from "react";
 
-export type PropertiesTab = "details" | "options" | "lighting";
+export type PropertiesTab = "details" | "options" | "lighting" | "effects";
 
 let shown: PropertiesTab | null = null;
 const listeners = new Set<() => void>();

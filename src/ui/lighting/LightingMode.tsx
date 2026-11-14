@@ -554,7 +554,7 @@ export function LightingMode() {
           {capabilities.has("lighting.rules") && (
             <>
               <div className="border-t border-line-soft pt-4">
-                <StatusPresetsPanel pick={pick} onPick={setPick} />
+                <StatusPresetsPanel picker={{ pick, onPick: setPick }} />
               </div>
               <div className="border-t border-line-soft pt-4">
                 <ConditionalRulesPanel />

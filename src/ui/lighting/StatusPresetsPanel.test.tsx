@@ -45,7 +45,7 @@ function render(selection: number[], pick = null as typeof CONNECTION_KEY_PICK |
   });
   return renderToStaticMarkup(
     <WorkbenchContext value={value}>
-      <StatusPresetsPanel pick={pick} onPick={() => {}} />
+      <StatusPresetsPanel picker={{ pick, onPick: () => {} }} />
     </WorkbenchContext>,
   );
 }
@@ -120,7 +120,7 @@ describe("Glove80 presets", () => {
     });
     return renderToStaticMarkup(
       <WorkbenchContext value={value}>
-        <StatusPresetsPanel pick={null} onPick={() => {}} />
+        <StatusPresetsPanel />
       </WorkbenchContext>,
     );
   }
@@ -145,6 +145,12 @@ describe("Glove80 presets", () => {
     const html = renderGlove80("Glove80", 1 << 17);
     expect(html).toContain("Install stock Magic layer on Layer 2");
     expect(html).not.toContain("Update firmware to install the stock Magic layer");
+  });
+
+  it("offers only the presets without a canvas to pick keys on", () => {
+    const html = renderGlove80("Glove80");
+    expect(html).not.toContain("Connection key");
+    expect(html).not.toContain("Battery bar<");
   });
 
   it("offers the stock Magic layer template only on a Glove80 with the stock LED map", () => {

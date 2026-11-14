@@ -1,17 +1,20 @@
 // Layout properties, as GLIDE's (ui/layoutProperties.jsx there): one large
 // window with its parts as tabs on the left. Rynkbench's parts: Details (name,
-// keyboard, what it holds), Firmware options (keyboard-wide timings) and
-// Lighting (output, brightness, background). Each part saves the way it does
-// elsewhere (the draft, or the keyboard); opened from the sliders by the name.
+// keyboard, what it holds), Firmware options (keyboard-wide timings), RGB
+// Lighting (the lights as a whole; Advanced: status setups and rules) and RGB
+// Effects (ADR 0016). Each part saves the way it does elsewhere (the draft, or
+// the keyboard); opened from the sliders by the name.
 
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { cx } from "../kit";
 import { CloseIcon } from "../icons";
 import { useWorkbench } from "../state";
+import { useCapabilities } from "../use-capabilities";
 import { useSharedDocumentTransfer } from "../transfer-actions";
-import { BackgroundPanel } from "../lighting/BackgroundPanel";
 import { DetailsSection } from "./DetailsSection";
+import { EffectsSection } from "./EffectsSection";
+import { LightingSection } from "./LightingSection";
 import { FirmwareOptions } from "./FirmwareOptions";
 import { closeProperties, openProperties, usePropertiesTab, type PropertiesTab } from "./store";
 
@@ -24,16 +27,24 @@ const TABS: { id: PropertiesTab; name: string; help: string }[] = [
   },
   {
     id: "lighting",
-    name: "Lighting",
-    help: "Your keyboard's RGB lights: on or off, brightness and the background. Each layer's own colours are set in Lighting.",
+    name: "RGB Lighting",
+    help: "The lights as a whole. Each key's own light is set on the key, in its RGB Lighting tab.",
   },
+  { id: "effects", name: "RGB Effects", help: "The firmware's effects across the whole keyboard." },
 ];
 
 export function LayoutProperties() {
   const tab = usePropertiesTab();
   const { bundle } = useWorkbench();
+  const capabilities = useCapabilities();
   const { workspaceName } = useSharedDocumentTransfer();
-  const tabs = TABS.filter((entry) => entry.id !== "lighting" || bundle.caps.lighting_enabled);
+  const offered: Record<PropertiesTab, boolean> = {
+    details: true,
+    options: true,
+    lighting: bundle.caps.lighting_enabled,
+    effects: bundle.caps.lighting_enabled && capabilities.has("lighting.extension"),
+  };
+  const tabs = TABS.filter((entry) => offered[entry.id]);
 
   useEffect(() => {
     if (tab === null) return;
@@ -97,7 +108,12 @@ export function LayoutProperties() {
             )}
             {current.id === "lighting" && (
               <div className="max-w-xl">
-                <BackgroundPanel />
+                <LightingSection />
+              </div>
+            )}
+            {current.id === "effects" && (
+              <div className="max-w-xl">
+                <EffectsSection />
               </div>
             )}
           </div>

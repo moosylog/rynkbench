@@ -9,7 +9,7 @@ GLIDE has one Layout properties window (sliders by the layout's name): Details (
 - **One window, GLIDE's frame** (`ui/properties/`): tabs on the left, opened from the sliders by the layout's name or from links elsewhere (`openProperties(tab)`, `properties/store.ts`). Settings keeps GLIDE's cog.
 - **Details:** the layout's name (the saved file takes it), the keyboard with Convert to the other board (the existing migration), and what the keyboard can hold, from its capabilities.
 - **Firmware options:** the keyboard-wide timings. The Behaviors area's Behavior section is gone; Combos links here for the combo timeout.
-- **Lighting:** the output, brightness and background panel, the same component as in Lighting.
+- **Lighting:** the output, brightness and background panel, the same component as in Lighting. Now RGB Lighting and RGB Effects (ADR 0016).
 - **No Notes, Tags or code tabs** until the file format can keep them.
 - Each part saves as it does elsewhere (Draft or the keyboard). GLIDE's one Apply for the whole window waits for one history (ADR 0013).
 
