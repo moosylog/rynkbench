@@ -319,9 +319,30 @@ function KeyRingImpl({ view, decor }: { view: KeyView; decor: KeyDecor }) {
  * or overlap (thumb clusters), and a later cap must never cover an earlier
  * key's legend — "Esc" turning into "sc".
  */
+/** GLIDE's empty key (&none): a faint slash across the middle of the cap. */
+function NoneMark({ view, decor }: { view: KeyView; decor: KeyDecor }) {
+  const { x, y, w, r } = { ...view.shape.rect, r: view.shape.r };
+  const half = (w - CAP_INSET * 2) * 0.18;
+  const ink = decor.special ? `var(--color-special-${decor.special}-ink)` : "var(--color-cap-ink)";
+  return (
+    <line
+      x1={x - half}
+      y1={y + half}
+      x2={x + half}
+      y2={y - half}
+      transform={`rotate(${r} ${x} ${y})`}
+      stroke={ink}
+      strokeWidth={0.021}
+      opacity={decor.lifted ? 0.05 : 0.14}
+      style={{ pointerEvents: "none" }}
+    />
+  );
+}
+
 function KeyLabelImpl({ view, decor }: { view: KeyView; decor: KeyDecor }) {
   const { shape } = view;
   const glyph = decor.glyph;
+  if (glyph?.none) return <NoneMark view={view} decor={decor} />;
   if (!glyph?.text && !glyph?.face) return null;
 
   const legend = legendLayout(glyph.text, shape.rect.w, { sub: glyph.sub, top: glyph.top });

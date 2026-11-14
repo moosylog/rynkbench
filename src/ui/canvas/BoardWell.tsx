@@ -7,6 +7,7 @@ import type { KeyboardModel } from "../../model/keyboard";
 
 import { cx } from "../kit";
 import { boardViewBox } from "./geometry";
+import { clampPan, startsPan } from "./pan";
 
 /* ------------------------------------------------------------------ */
 /* Fit-to-container canvas                                             */
@@ -23,7 +24,7 @@ const ZOOM_STEP = 0.1;
  * grid. The board fits 95% of it and refits whenever the pane changes size;
  * the zoom control (−, the percentage that returns to the fit, +) and Ctrl/⌘
  * with the scroll wheel zoom on top of the fit, and dragging the empty canvas
- * moves a zoomed board. `top` floats at the top centre (GLIDE's hint pill),
+ * moves the board at any zoom, as in GLIDE (canvas/pan.ts keeps most of it in view). `top` floats at the top centre (GLIDE's hint pill),
  * `tools` sit left of the zoom control; `flush` drops the frame for a canvas
  * that is the whole pane.
  */
@@ -49,12 +50,19 @@ export function BoardWell({
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const panning = useRef<{ id: number; x: number; y: number; from: { x: number; y: number } } | null>(null);
   const wellRef = useRef<HTMLDivElement>(null);
+  const boardRef = useRef<HTMLDivElement>(null);
+  const [grabbing, setGrabbing] = useState(false);
+  /** `pan`, kept inside what the canvas and the board's size on screen allow. */
+  const clamped = (next: { x: number; y: number }) => {
+    const well = wellRef.current?.getBoundingClientRect();
+    const board = boardRef.current?.getBoundingClientRect();
+    if (!well || !board) return next;
+    return clampPan(next, { w: well.width, h: well.height }, { w: board.width, h: board.height });
+  };
   // Each step works from the zoom as it is now, so quick clicks all count.
   const zoomBy = (step: number) =>
     setZoom((current) => {
-      const next = Math.round(Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, current + step)) * 100) / 100;
-      if (next <= 1) setPan({ x: 0, y: 0 });
-      return next;
+      return Math.round(Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, current + step)) * 100) / 100;
     });
 
   const zoomByRef = useRef(zoomBy);
@@ -82,22 +90,30 @@ export function BoardWell({
         !flush && "rounded-xl border border-line",
         className,
       )}
-      style={{ containerType: "size", cursor: zoom > 1 ? "grab" : undefined }}
+      style={{ containerType: "size", cursor: grabbing ? "grabbing" : "grab" }}
       onPointerDown={(event) => {
-        // Only the empty canvas pans; keys, rings and labels keep their own pointer handling.
-        if (zoom <= 1 || event.target !== event.currentTarget) return;
+        // The empty canvas pans; keys and the controls over the canvas keep their own pointer handling.
+        if (event.button !== 0 || !startsPan(event.target)) return;
         panning.current = { id: event.pointerId, x: event.clientX, y: event.clientY, from: pan };
         event.currentTarget.setPointerCapture(event.pointerId);
+        setGrabbing(true);
       }}
       onPointerMove={(event) => {
         const drag = panning.current;
         if (!drag || drag.id !== event.pointerId) return;
-        setPan({ x: drag.from.x + event.clientX - drag.x, y: drag.from.y + event.clientY - drag.y });
+        setPan(clamped({ x: drag.from.x + event.clientX - drag.x, y: drag.from.y + event.clientY - drag.y }));
       }}
-      onPointerUp={() => (panning.current = null)}
-      onPointerCancel={() => (panning.current = null)}
+      onPointerUp={() => {
+        panning.current = null;
+        setGrabbing(false);
+      }}
+      onPointerCancel={() => {
+        panning.current = null;
+        setGrabbing(false);
+      }}
     >
       <div
+        ref={boardRef}
         className="pointer-events-none absolute left-1/2 top-1/2"
         style={{
           width: `min(95cqw, ${capPx}px, 95cqh * ${ratio.toFixed(4)})`,

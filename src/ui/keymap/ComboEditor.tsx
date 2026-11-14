@@ -6,10 +6,12 @@ import { useEffect, useState } from "react";
 import type { Action, KeyAction } from "../../model/action-types";
 import { comboLayer, comboOutput } from "../../model/combos";
 import { planSlotWrites, putSlot, slotsOf, withProfile, type Slot } from "../../model/key-slots";
-import { keyActionDescription, keyActionGlyph } from "../labels";
+import { keyActionDescription } from "../labels";
 import { layerName } from "../layer-names";
 import { SectionLabel } from "../kit";
 import { useWorkbench } from "../state";
+import { keyFace } from "../keyface/keyFace";
+import { useFaceContext } from "../keyface/useFaceContext";
 import { ActionEditor } from "./ActionEditor";
 import { EditorHeading, EditorPanel } from "./EditorPanel";
 import { useEditorTabs, type EditorTab } from "./editorTabs";
@@ -42,6 +44,7 @@ function LayerChoice({ focus }: { focus: ComboFocus }) {
 
 export function ComboEditor({ focus, size }: { focus: ComboFocus; size: number }) {
   const { bundle, state } = useWorkbench();
+  const faceContext = useFaceContext();
   const tabs = useEditorTabs(false);
   const [tab, setTab] = useState<EditorTab>("pick");
   const [slot, setSlot] = useState<Slot>("tap");
@@ -68,7 +71,7 @@ export function ComboEditor({ focus, size }: { focus: ComboFocus; size: number }
   const side = (
     <>
       <EditorHeading
-        glyph={keyActionGlyph(output).text}
+        glyph={keyFace(output, state.morse, faceContext)}
         title={`Combo C${focus.index}`}
         detail={`${focus.keys} of ${focus.maxKeys} keys pressed together`}
         onDone={focus.done}

@@ -75,10 +75,12 @@ export function legendLayout(
 }
 
 /** A row of pictures and short text (keyface/keyFace.ts), laid out centred on
- *  the cap, as GLIDE's .kc-icons: one picture fills about half the face; a
- *  picture with its "+" or "−" shows that one smaller; a number beside a
- *  picture (the Bluetooth profile) reads large. The small tiers (a hold, a
- *  chord's modifiers) use GLIDE's 13 px pictures and the hold's text size. */
+ *  the cap with GLIDE's proportions (its .kc-icons rules, measured on its 62 px
+ *  cap): one picture is 40% of the cap; with more parts the first picture is
+ *  36% and the next ones 23% (GLIDE's .kc-dual, .kc-icon-2), and a number
+ *  beside a picture (the Bluetooth profile) is 26% of the cap tall. The small
+ *  tiers (a hold, a chord's modifiers) use GLIDE's 13 px pictures and the
+ *  hold's text size. Sizes are in key units; the cap is 62/70 of the pitch. */
 export interface FaceItem {
   kind: "icon" | "text";
   /** Index into the face's parts. */
@@ -88,14 +90,15 @@ export interface FaceItem {
   size: number;
 }
 
+const CAP = 62 / PITCH_PX;
 const FACE = {
-  icon: 0.42,
-  /** The "+"/"−" after a picture. */
-  step: 0.26,
-  text: 0.27,
+  alone: 0.402 * CAP,
+  first: 0.356 * CAP,
+  next: 0.232 * CAP,
+  text: 0.263 * CAP,
   smallIcon: 13 / PITCH_PX,
-  gap: 0.03,
-  smallGap: 0.015,
+  gap: 0.03 * CAP,
+  smallGap: 1 / PITCH_PX,
 } as const;
 
 export function faceLayout(
@@ -104,10 +107,10 @@ export function faceLayout(
   tier: "main" | "small",
 ): FaceItem[] {
   const small = tier === "small";
-  const sizes = parts.map((part) => {
+  const sizes = parts.map((part, i) => {
     if ("text" in part) return small ? SIZE.sub : FACE.text;
     if (small) return FACE.smallIcon;
-    return part.icon === "increase" || part.icon === "decrease" ? FACE.step : FACE.icon;
+    return parts.length === 1 ? FACE.alone : i === 0 ? FACE.first : FACE.next;
   });
   const widths = parts.map((part, i) => ("text" in part ? [...part.text].length * GLYPH_WIDTH * sizes[i] : sizes[i]));
   const gap = small ? FACE.smallGap : FACE.gap;

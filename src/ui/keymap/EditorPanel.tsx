@@ -6,6 +6,8 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { cx } from "../kit";
+import { KeyPreview } from "../canvas/KeyPreview";
+import type { KeyGlyph } from "../labels";
 import { PREFERENCES, usePreference } from "../preferences";
 import { CloseIcon, KeymapIcon, LightingIcon, MenuIcon, SettingsIcon } from "../icons";
 import type { EditorTab } from "./editorTabs";
@@ -119,7 +121,8 @@ export function EditorHeading({
   onDone,
   doneLabel,
 }: {
-  glyph: string;
+  /** The key's face, drawn as on the keyboard (canvas/KeyPreview.tsx). */
+  glyph: KeyGlyph;
   title: string;
   detail: ReactNode;
   onDone: () => void;
@@ -127,8 +130,8 @@ export function EditorHeading({
 }) {
   return (
     <div className="flex items-center gap-2.5">
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-md border-2 border-accent px-1 text-title font-bold text-ink">
-        {glyph || "·"}
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-md border-2 border-accent bg-cap">
+        <KeyPreview glyph={glyph} />
       </div>
       <div className="min-w-0 flex-1">
         <div className="text-ui leading-5 font-semibold text-ink">{title}</div>

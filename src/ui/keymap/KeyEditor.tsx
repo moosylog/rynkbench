@@ -6,7 +6,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { Action, KeyAction } from "../../model/action-types";
-import { keyActionGlyph, keyActionDescription } from "../labels";
+import { keyActionDescription } from "../labels";
+import { keyFace } from "../keyface/keyFace";
+import { useFaceContext } from "../keyface/useFaceContext";
 import { keyAddressLabel, keyPlaceName } from "../key-address";
 import { keyPendingId, useWorkbench } from "../state";
 import { useCapabilities } from "../use-capabilities";
@@ -34,6 +36,7 @@ import { SwitchLayer, type LayerKind } from "./SwitchLayer";
 
 export function KeyEditor({ size = 310 }: { size?: number }) {
   const { bundle, state, dispatch, io } = useWorkbench();
+  const faceContext = useFaceContext();
   const capabilities = useCapabilities();
   const [tab, setTab] = useState<EditorTab>("pick");
   const [slot, setSlot] = useState<Slot>("tap");
@@ -84,12 +87,12 @@ export function KeyEditor({ size = 310 }: { size?: number }) {
     }
     void fill({ [kind]: target } as unknown as Action);
   };
-  const glyph = keyActionGlyph(action, state.morse);
+  const glyph = keyFace(action, state.morse, faceContext);
 
   const side = (
     <>
       <EditorHeading
-        glyph={glyph.text}
+        glyph={glyph}
         title={keyPlaceName(addressable)}
         detail={`Key ${keyAddressLabel(addressable).replace("-", " ")}`}
         onDone={() => dispatch({ type: "select", selection: null })}

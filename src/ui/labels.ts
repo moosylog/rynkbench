@@ -271,6 +271,8 @@ export interface KeyGlyph {
   subFace?: FacePart[];
   /** A chord's modifiers, drawn small above the key (⌘ over Z). */
   chord?: FacePart[];
+  /** A key that does nothing: GLIDE's faint slash. */
+  none?: boolean;
 }
 
 /** The character a plain key types with Shift, when it is not just its own

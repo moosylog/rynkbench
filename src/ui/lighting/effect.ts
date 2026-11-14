@@ -38,6 +38,12 @@ export function effectRgb(effect: LightingEffect): LightingRgb8 {
   return effect.Breathe.color;
 }
 
+/** A light set to black: the LED is off, so the key shows as itself. */
+export function isDark(effect: LightingEffect): boolean {
+  const { r, g, b } = effectRgb(effect);
+  return r === 0 && g === 0 && b === 0;
+}
+
 export function effectTiming(effect: LightingEffect): EffectTiming {
   if ("Blink" in effect) {
     return {

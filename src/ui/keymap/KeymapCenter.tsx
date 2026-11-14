@@ -25,6 +25,7 @@ import {
 import { stagedBetween } from "../lighting/compare";
 
 import { effectAnim, effectColor } from "../lighting/decor";
+import { isDark } from "../lighting/effect";
 import { targetPreviewEffects } from "../lighting/preview";
 import { RowMenu, type MenuEntry } from "../RowMenu";
 import { KeyHoverCard } from "./KeyHoverCard";
@@ -115,13 +116,16 @@ export function KeymapCenter() {
       state.pending[keyPendingId(state.uiLayer, key.row, key.col)];
     const stagedBinding =
       state.stagedKeys[keyPendingId(state.uiLayer, key.row, key.col)] !== undefined;
-    const sceneEffect =
+    const scene =
       sceneEffects && key.ledId !== undefined ? sceneEffects.get(key.ledId) : undefined;
+    // A light that is off (black) leaves the key as it is: its own face and special colour.
+    const sceneEffect = scene && !isDark(scene) ? scene : undefined;
     const glyph = action !== undefined ? keyFace(action, state.morse, face) : { text: "" };
     // As in GLIDE: what Shift types shows on the base layer, or on every layer.
     if (!shiftedEverywhere && state.uiLayer !== 0) glyph.top = undefined;
-    // Enrichment label as fallback for unbound keys.
-    if (!glyph.text && key.label) {
+    // As in GLIDE: a key that does nothing shows a faint slash; one with no binding at all, the board's label.
+    if (action === "No") glyph.none = true;
+    else if (!glyph.text && key.label) {
       glyph.text = key.label;
       glyph.dim = true;
     }

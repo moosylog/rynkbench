@@ -85,9 +85,12 @@ describe("face layout", () => {
     const right = wide.at(-1)!;
     expect(right.dx + right.size / 2).toBeLessThanOrEqual(0.4 + 1e-9);
   });
-  it("draws a step (+ or −) smaller than its picture", () => {
+  it("sizes pictures as GLIDE does: 40% of the cap alone, 36% and 23% as a pair", () => {
+    const cap = 62 / 70;
+    expect(faceLayout([{ icon: "bootloader" }], 1, "main")[0].size).toBeCloseTo(0.402 * cap);
     const [picture, step] = faceLayout([{ icon: "rgb-hue" }, { icon: "increase" }], 1, "main");
-    expect(step.size).toBeLessThan(picture.size);
+    expect(picture.size).toBeCloseTo(0.356 * cap);
+    expect(step.size).toBeCloseTo(0.232 * cap);
   });
 });
 
