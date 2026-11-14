@@ -7,6 +7,7 @@ import type { MacroOp } from "../vendor/rynk-wasm/rynk_wasm";
 import { same } from "../model/deep-equal";
 import { conditionalTablesEqual, overlaysEqual } from "./lighting/compare";
 import { planSync, readImage, writePlan } from "../sync";
+import { sendStaged, type SendOptions } from "./draft/sendStaged";
 import type {
   BehaviorConfig,
   ComboDefinition,
@@ -919,9 +920,9 @@ export interface WorkbenchIo {
   writeKeys(edits: readonly KeyWrite[], options?: { history?: "record" | "invalidate"; onWritten?: (ok: boolean) => void }): Promise<IoWriteResult>;
   undoKeyEdit(): Promise<IoWriteResult>;
   redoKeyEdit(): Promise<IoWriteResult>;
-  /** Write every staged batch edit to the keyboard in one pass. Writes that
-   *  fail stay staged, so apply can simply be retried. */
-  applyBatch(): Promise<IoWriteResult>;
+  /** Send the draft: only what differs from a fresh read, checked for changes made
+   *  on the keyboard since (ADR 0012). What fails stays in the draft. */
+  applyBatch(options?: SendOptions): Promise<IoWriteResult>;
   loadEncoder(layer: number, id: number): void;
   setEncoder(layer: number, id: number, action: EncoderAction): void;
   setDefaultLayer(layer: number): void;
@@ -1317,43 +1318,8 @@ export function makeIo(
     redoKeyEdit() {
       return travelKeyHistory("redo");
     },
-    async applyBatch() {
-      const start = getState();
-      if (start.batchBusy) return { ok: false, message: "a batch apply is already running" };
-      const keys = Object.values(start.stagedKeys);
-      const encoders = Object.values(start.stagedEncoders);
-      if (keys.length === 0 && encoders.length === 0) return { ok: true };
-      dispatch({ type: "batchApplyStart" });
-      const failures: string[] = [];
-      let appliedKeys = 0;
-      for (const edit of keys) {
-        try {
-          await session.keymap.setKey(edit.layer, edit.row, edit.col, edit.action);
-          appliedKeys += 1;
-          dispatch({ type: "keyStageApplied", layer: edit.layer, row: edit.row, col: edit.col });
-        } catch (error) {
-          failures.push(
-            `layer ${edit.layer} r${edit.row} c${edit.col}: ${errorMessage(error)}`,
-          );
-        }
-      }
-      for (const edit of encoders) {
-        try {
-          await session.keymap.setEncoder(edit.id, edit.layer, edit.action);
-          dispatch({ type: "encoderStageApplied", layer: edit.layer, id: edit.id });
-        } catch (error) {
-          failures.push(`layer ${edit.layer} encoder ${edit.id}: ${errorMessage(error)}`);
-        }
-      }
-      // A batch apply is a bulk write outside per-key history, like an import.
-      if (appliedKeys > 0) dispatch({ type: "keyHistoryClear" });
-      const message =
-        failures.length > 0
-          ? `${failures.length} of ${keys.length + encoders.length} staged write(s) failed ` +
-            `and remain staged: ${failures.join("; ")}`
-          : null;
-      dispatch({ type: "batchApplyDone", error: message });
-      return message ? { ok: false, message } : { ok: true };
+    applyBatch(options) {
+      return sendStaged({ session, getState, dispatch, cols, features }, options);
     },
     loadEncoder(layer, id) {
       session.keymap.getEncoder(id, layer).then(

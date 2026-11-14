@@ -2,6 +2,7 @@
 // counts; names and places go behind Show details (ADR 0011).
 
 import type { GuardFinding, Ref } from "../../domain";
+import type { SyncItem } from "../../sync";
 import type { ConfirmRequest } from "../messages/store";
 
 /** How the layout names its parts, for the words. */
@@ -54,5 +55,37 @@ export function askRequest(asks: readonly GuardFinding[], names: GuardNames): Co
         : `${layer}: reached through a layer this cuts off`;
     }),
     confirmLabel: "Approve",
+  };
+}
+
+/** A drafted item in words, as the overwrite question lists it. */
+export function itemName(item: SyncItem, names: GuardNames): string {
+  switch (item.kind) {
+    case "key":
+      return placeName({ kind: "cell", layer: item.layer, offset: item.offset }, names);
+    case "encoder":
+      return `${names.layerName(item.layer)} · encoder ${item.id}`;
+    case "slot":
+      return placeName({ kind: item.table === "combos" ? "combo" : item.table === "forks" ? "fork" : "morse", index: item.index }, names);
+    case "layerMetadata":
+      return `${names.layerName(item.layer)}: name`;
+    case "scenes":
+      return "Layer lighting";
+    case "rules":
+      return "Lock and battery lights";
+    default:
+      return item.kind.replace(/([A-Z])/g, " $1").toLowerCase();
+  }
+}
+
+/** The question before Send overwrites changes made on the keyboard since the draft began. */
+export function overwriteRequest(items: readonly SyncItem[], names: GuardNames): ConfirmRequest {
+  return {
+    guard: true,
+    title: `Send overwrites ${plural(items.length, "change")} made on the keyboard`,
+    body: "They were made after you started this draft: on another computer, by another tool or by the keyboard itself. Send replaces them with yours.",
+    details: items.map((item) => itemName(item, names)),
+    confirmLabel: "Send anyway",
+    cancelLabel: "Don't send",
   };
 }

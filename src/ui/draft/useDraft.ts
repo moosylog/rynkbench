@@ -48,12 +48,11 @@ export function useDraft() {
     async send(): Promise<boolean> {
       if (sending || size === 0) return size === 0;
       const total = size;
-      const keys = await io.applyBatch();
-      if (!keys.ok && keys.guarded) return false; // Guard has said why
+      const sent = await io.applyBatch();
+      if (!sent.ok && sent.guarded) return false; // Guard has said why
       resetDraftHistory();
-      const lighting = await sendLighting();
       const left = draftSize(draftGroups(latest.current));
-      if (keys.ok && !lighting && left === 0) {
+      if (sent.ok && left === 0) {
         showToast(`${plural(total, "change")} sent: the keyboard has them all`, { tone: "ok" });
         return true;
       }

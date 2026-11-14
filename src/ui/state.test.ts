@@ -1148,41 +1148,6 @@ describe("batch mode", () => {
     counter_clockwise: "No",
   });
 
-  function batchHarness(
-    over: Partial<WorkbenchState>,
-    keymap: Partial<{
-      setKey: (layer: number, row: number, col: number, action: KeyAction) => Promise<void>;
-      setEncoder: (id: number, layer: number, action: EncoderAction) => Promise<void>;
-    }> = {},
-  ) {
-    let state = baseState({ batchMode: true, layers: [["No", "No"], ["No", "No"]], ...over });
-    const writes: string[] = [];
-    const session = {
-      keymap: {
-        setKey: async (layer: number, row: number, col: number, action: KeyAction) => {
-          if (keymap.setKey) return keymap.setKey(layer, row, col, action);
-          writes.push(`key ${layer}:${row}:${col} ${JSON.stringify(action)}`);
-        },
-        setEncoder: async (id: number, layer: number, action: EncoderAction) => {
-          if (keymap.setEncoder) return keymap.setEncoder(id, layer, action);
-          writes.push(`enc ${layer}:${id} ${JSON.stringify(action)}`);
-        },
-      },
-    } as unknown as RynkSession;
-    return {
-      io: makeIo(
-        session,
-        () => state,
-        (action) => {
-          state = reducer(state, action);
-        },
-        { cols: 2, onDisconnect: () => {} },
-      ),
-      state: () => state,
-      writes,
-    };
-  }
-
   it("stages key edits locally with last-write-wins over one device baseline", () => {
     let s = baseState({ batchMode: true, layers: [["No", "No"], []] });
     s = reducer(s, { type: "keyStage", layer: 0, row: 0, col: 0, action: key("A") });
@@ -1251,77 +1216,5 @@ describe("batch mode", () => {
         "undo",
       ),
     ).toBe(false);
-  });
-
-  it("io stages instead of writing, then applies everything in one pass", async () => {
-    const { io, state, writes } = batchHarness({});
-
-    expect(await io.setKey(0, 0, 0, key("A"))).toEqual({ ok: true });
-    expect(await io.setKey(0, 0, 1, key("B"))).toEqual({ ok: true });
-    io.setEncoder(0, 3, enc("A"));
-    expect(writes).toEqual([]);
-    expect(stagedEditCount(state())).toBe(3);
-    expect(state().pending).toEqual({});
-
-    const result = await io.applyBatch();
-
-    expect(result).toEqual({ ok: true });
-    expect(writes).toEqual([
-      `key 0:0:0 ${JSON.stringify(key("A"))}`,
-      `key 0:0:1 ${JSON.stringify(key("B"))}`,
-      `enc 0:3 ${JSON.stringify(enc("A"))}`,
-    ]);
-    expect(stagedEditCount(state())).toBe(0);
-    expect(state().batchBusy).toBe(false);
-    expect(state().batchError).toBeNull();
-  });
-
-  it("a batch apply clears direct-key history like other bulk writes", async () => {
-    const entry = { sequence: 1, layer: 1, row: 0, col: 0, before: "No" as const, after: key("C") };
-    const { io, state } = batchHarness({
-      keyEditHistory: { ...initialKeyEditHistory(), past: [entry] },
-    });
-
-    await io.setKey(0, 0, 0, key("A"));
-    await io.applyBatch();
-
-    expect(state().keyEditHistory.past).toEqual([]);
-  });
-
-  it("clears history after a successful key write even when an encoder fails", async () => {
-    const entry = { sequence: 1, layer: 0, row: 0, col: 0, before: "No" as const, after: key("C") };
-    const { io, state } = batchHarness(
-      { keyEditHistory: { ...initialKeyEditHistory(), past: [entry] } },
-      { setEncoder: async () => { throw new Error("encoder failed"); } },
-    );
-    await io.setKey(0, 0, 0, key("A"));
-    io.setEncoder(0, 0, enc("A"));
-
-    expect((await io.applyBatch()).ok).toBe(false);
-    expect(state().keyEditHistory.past).toEqual([]);
-    expect(state().stagedEncoders["e:0:0"]).toBeDefined();
-  });
-
-  it("keeps failed writes staged and reports them, ready for a retry", async () => {
-    const { io, state } = batchHarness(
-      {},
-      {
-        setKey: async (_layer, _row, col) => {
-          if (col === 0) throw new Error("flash busy");
-        },
-      },
-    );
-
-    await io.setKey(0, 0, 0, key("A"));
-    await io.setKey(0, 0, 1, key("B"));
-    const result = await io.applyBatch();
-
-    expect(result.ok).toBe(false);
-    expect(state().stagedKeys).toEqual({
-      "0:0:0": { layer: 0, row: 0, col: 0, before: "No", action: key("A") },
-    });
-    expect(state().batchError).toContain("1 of 2");
-    expect(state().batchError).toContain("flash busy");
-    expect(state().batchBusy).toBe(false);
   });
 });

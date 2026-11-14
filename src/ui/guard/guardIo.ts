@@ -11,7 +11,7 @@ import { keyAtPosition, keyPlaceName } from "../key-address";
 import { layerName } from "../layer-names";
 import { askConfirm, showToast } from "../messages/store";
 import type { IoWriteResult, KeyWrite, WorkbenchIo, WorkbenchState } from "../state";
-import { askRequest, stopText, type GuardNames } from "./words";
+import { askRequest, overwriteRequest, stopText, type GuardNames } from "./words";
 
 function sideOf(state: WorkbenchState, cols: number, layers: KeyAction[][]): GuardInput {
   return {
@@ -76,14 +76,17 @@ export function guardIo(io: WorkbenchIo, bundle: ConnectedBundle, getState: () =
       return pass.ok ? io.writeKeys(edits, options) : pass;
     },
     // Each change in the draft was judged when it was made; Send only makes
-    // sure nothing broken goes, such as a draft kept from an older session.
-    async applyBatch() {
+    // sure nothing broken goes, such as a draft kept from an older session,
+    // and asks before overwriting changes made on the keyboard since (ADR 0012).
+    async applyBatch(options) {
       const state = getState();
       const staged = Object.values(state.stagedKeys).map((edit) => ({ ...edit, action: edit.before }));
       const onKeyboard = withKeys(state.layers, cols, staged);
       const findings = judgeChange(sideOf(state, cols, onKeyboard), sideOf(state, cols, state.layers));
       const refused = await verdict(findings, names(state, state.layers), false);
-      return refused ? { ok: false, message: refused, guarded: true } : io.applyBatch();
+      if (refused) return { ok: false, message: refused, guarded: true };
+      const named = names(state, state.layers);
+      return io.applyBatch({ confirmOverwrite: (items) => askConfirm(overwriteRequest(items, named)), ...options });
     },
   };
 }
