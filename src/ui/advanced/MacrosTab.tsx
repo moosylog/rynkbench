@@ -17,6 +17,7 @@ import {
 import { Button, InspectorShell, SectionLabel, Segmented, TextInput, cx } from "../kit";
 import { CloseIcon, PlusIcon, TrashIcon } from "../icons";
 import { CenterScroll, SlotCard } from "./bits";
+import { takeBehaviorFocus } from "../behaviors/focus";
 
 function stepSummary(step: MacroStep): { tag: string; body: string } {
   switch (step.kind) {
@@ -130,7 +131,10 @@ export function MacrosTab({ nav }: { nav: ReactNode }) {
   const savedMacros = useMemo(() => decodeMacros(state.macroOps), [state.macroOps]);
   const pending = state.pending.macros?.status === "pending";
   const { draft: drafts, setDraft: setDrafts, dirty, reset } = useDeviceDraft(savedMacros, pending);
-  const [sel, setSel] = useState<number | null>(null);
+  const [sel, setSel] = useState<number | null>(() => {
+    const focus = takeBehaviorFocus("macros");
+    return focus === "new" ? null : focus;
+  });
 
   const usedBytes = drafts.reduce((n, m) => n + macroByteCost(m), Math.max(0, bundle.caps.max_macros - drafts.length));
   const overCapacity = usedBytes > capacity || drafts.length > bundle.caps.max_macros || !bundle.caps.macros_writable;

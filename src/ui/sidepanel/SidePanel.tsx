@@ -1,7 +1,8 @@
 // The left side panel, as in GLIDE: the keymap's contents as lists. Layers
 // (pick one, and from its ⋮ menu or a right-click: rename, duplicate, move,
-// make default, delete) and Combos (ComboList.tsx; a row opens Focus Mode). The
-// panel never edits a key; it chooses what the canvas and the editor show.
+// make default, delete) and Combos (ComboList.tsx; a row opens Focus Mode), and
+// under them the way into the Behavior Library (behaviors/BehaviorLibrary.tsx).
+// The panel never edits a key; it chooses what the canvas and the editor show.
 
 import { useEffect, useState } from "react";
 import { layerName } from "../layer-names";
@@ -14,11 +15,14 @@ import { cx } from "../kit";
 import { GripIcon, MoreIcon, StarIcon } from "../icons";
 import { RowMenu, useRowMenu, type MenuEntry } from "../RowMenu";
 import { ComboList } from "./ComboList";
+import { BehaviorLibrary, LibraryEntry } from "../behaviors/BehaviorLibrary";
+import type { LibraryKind } from "../behaviors/library";
 import { useRowDrag } from "./useRowDrag";
 
 type List = "layers" | "combos";
 
-function ListSwitch({ value, onChange }: { value: List; onChange: (list: List) => void }) {
+/** `value` null: neither list is on show (the Behavior Library is). */
+function ListSwitch({ value, onChange }: { value: List | null; onChange: (list: List) => void }) {
   const term = useTerms();
   return (
     <div className="flex gap-1 rounded-lg border border-line bg-raised p-1 shadow-inner">
@@ -271,16 +275,23 @@ function LayerList({ onPicked }: { onPicked?: () => void }) {
   );
 }
 
-/** The panel; on a phone it is a drawer the top bar opens. */
-export function SidePanel({ onPicked }: { onPicked?: () => void }) {
+/** The panel; on a phone it is a drawer the top bar opens. `libraryKinds`:
+ *  the Behavior Library lists this keyboard has (none: no library). */
+export function SidePanel({ onPicked, libraryKinds = [] }: { onPicked?: () => void; libraryKinds?: LibraryKind[] }) {
   const [list, setList] = useState<List>("layers");
+  const [library, setLibrary] = useState(false);
+  const pick = (next: List) => {
+    setList(next);
+    setLibrary(false);
+  };
   return (
     <aside className="flex h-full w-full min-w-0 flex-col border-r border-line bg-bg">
       <div className="shrink-0 border-b border-line bg-panel p-3">
-        <ListSwitch value={list} onChange={setList} />
+        <ListSwitch value={library ? null : list} onChange={pick} />
+        {libraryKinds.length > 0 && <LibraryEntry open={library} onToggle={() => setLibrary((shown) => !shown)} />}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-3">
-        {list === "layers" ? <LayerList onPicked={onPicked} /> : <ComboList />}
+        {library ? <BehaviorLibrary kinds={libraryKinds} /> : list === "layers" ? <LayerList onPicked={onPicked} /> : <ComboList />}
       </div>
     </aside>
   );

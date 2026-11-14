@@ -1,6 +1,6 @@
 // The fields under a chosen light in the Lighting tab: a custom colour and its
-// effect, a lock light's lock and two colours, a battery light's level and two
-// colours. Every colour is the same ColorChoice.
+// effect, a lock light's lock and two colours, a battery light's half, level
+// and two colours. Every colour is the same ColorChoice.
 
 import type { ReactNode } from "react";
 import type { LightingRgb8 } from "../../model/lighting-types";
@@ -19,6 +19,11 @@ const SPEEDS = [
   { id: 500, label: "Fast" },
   { id: 1000, label: "Normal" },
   { id: 2000, label: "Slow" },
+];
+/** Whose battery a light shows: the firmware numbers the halves 0 (left) and 1 (right). */
+const HALVES = [
+  { id: 0, label: "Left half" },
+  { id: 1, label: "Right half" },
 ];
 const LOCKS: Array<{ id: Lock; label: string }> = [
   { id: "caps_lock", label: "Caps Lock" },
@@ -109,6 +114,11 @@ export function KeyLightFields({ light, lights, onChange }: {
   if (light.kind === "battery") {
     return (
       <>
+        {lights.split && (
+          <Field label="Battery">
+            <Segments options={HALVES} value={light.node ?? 0} onPick={(node) => onChange({ ...light, node })} />
+          </Field>
+        )}
         <Field label="Level">
           <Segments
             options={BATTERY_LEVELS.map((level) => ({ id: level as number, label: `${level}%` }))}

@@ -4,6 +4,7 @@
 // so "add" means claiming the first free index rather than appending.
 
 import { useState } from "react";
+import { takeBehaviorFocus } from "../behaviors/focus";
 import type { SlotKind, SlotValueOf } from "../state";
 import { slotPendingId, useWorkbench } from "../state";
 import { same } from "../../model/deep-equal";
@@ -101,7 +102,12 @@ export function useSlotEditor<K extends SlotKind>(
   onSelectionChange?: () => void,
 ): SlotEditor<K> {
   const { state } = useWorkbench();
-  const [selection, setSelection] = useState<SlotSelection<SlotValueOf<K>>>(NO_SLOT);
+  // Opened from the Behavior Library: start on that slot, or on a new one.
+  const [selection, setSelection] = useState<SlotSelection<SlotValueOf<K>>>(() => {
+    const focus = takeBehaviorFocus(kind);
+    if (focus === null) return NO_SLOT;
+    return (focus === "new" ? claimFreeSlot(slots, isEmpty, blank) : openSlot(slots, focus)) ?? NO_SLOT;
+  });
   const { sel, draft } = selection;
 
   const select = (next: SlotSelection<SlotValueOf<K>> | null) => {

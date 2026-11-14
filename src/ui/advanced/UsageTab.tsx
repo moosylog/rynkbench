@@ -1,13 +1,14 @@
 // Usage: where every layer, morse slot, macro, tap-hold profile, fork, and
 // combo is referenced — and which of them are orphaned or unreachable.
 
-import { Fragment, useMemo } from "react";
+import { Fragment } from "react";
 import type { ReactNode } from "react";
 import { useWorkbench } from "../state";
 import { Chip, Panel, SectionLabel } from "../kit";
 import { WarningIcon } from "../icons";
 import { CenterScroll } from "./bits";
-import { analyzeUsage, type LayerUsage, type SiteRef, type SiteTarget } from "./usage";
+import type { LayerUsage, SiteRef, SiteTarget } from "./usage";
+import { useUsageReport } from "../behaviors/useUsage";
 
 /** The places something is used. A key is a link: it opens the keymap on that
  *  key. Combos and forks are listed as text. */
@@ -108,33 +109,9 @@ function CountRow({
 }
 
 export function UsageTab({ nav }: { nav: ReactNode }) {
-  const { bundle, state } = useWorkbench();
+  const { state } = useWorkbench();
 
-  const report = useMemo(
-    () =>
-      analyzeUsage({
-        layers: state.layers,
-        cols: bundle.caps.num_cols,
-        defaultLayer: state.defaultLayer,
-        layerMetadata: state.layerMetadata,
-        combos: state.combos,
-        morse: state.morse,
-        forks: state.forks,
-        macroOps: state.macroOps,
-        morseProfiles: state.morseProfiles,
-      }),
-    [
-      state.layers,
-      bundle.caps.num_cols,
-      state.defaultLayer,
-      state.layerMetadata,
-      state.combos,
-      state.morse,
-      state.forks,
-      state.macroOps,
-      state.morseProfiles,
-    ],
-  );
+  const report = useUsageReport();
 
   const usedMorse = report.morse.filter((slot) => slot.refs.length > 0);
   const orphanedMorse = report.morse.filter(

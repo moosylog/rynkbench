@@ -43,6 +43,8 @@ export function useKeyLights() {
     writable: scenes !== undefined,
     /** Lock and battery lights need the firmware's rule table. */
     statusLights: rulesTable !== undefined,
+    /** A split board has a battery on each half. */
+    split: bundle.caps.is_split,
     preview,
     lightOf: (led: number): KeyLight => keyLightOf(preview.get(led), statusLightOf(rules, layer, led)),
 

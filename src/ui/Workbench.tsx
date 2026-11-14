@@ -32,6 +32,7 @@ import { AdvancedSection } from "./advanced/AdvancedMode";
 import { ProfilesMode } from "./ProfilesMode";
 import { DeviceMode } from "./device/DeviceMode";
 import { SidePanel } from "./sidepanel/SidePanel";
+import { LIBRARY_ORDER } from "./behaviors/library";
 import { ResizeHandle, usePaneSize } from "./panes";
 import { SETTING_KEYS } from "./settings";
 import { InspectorShell, cx } from "./kit";
@@ -186,6 +187,11 @@ export function Workbench({
       }),
     [bundle, capabilities],
   );
+  // The Behavior Library lists the behavior sections this keyboard has.
+  const libraryKinds = useMemo(() => {
+    const sections: readonly string[] = areas.find((area) => area.id === "behaviors")?.sections ?? [];
+    return LIBRARY_ORDER.filter((kind) => sections.includes(kind));
+  }, [areas]);
   // A section the board does not offer (a link from elsewhere) falls back to
   // the keymap, which every board has.
   const currentArea = areaOfSection(areas, state.mode);
@@ -371,7 +377,7 @@ export function Workbench({
           {section === "keymap" && (
             <div className="flex shrink-0 max-sm:hidden" style={{ width: sidePane.size + 12 }}>
               <div className="min-w-0 flex-1">
-                <SidePanel />
+                <SidePanel libraryKinds={libraryKinds} />
               </div>
               <ResizeHandle edge="right" label="Side panel width" pane={sidePane} />
             </div>
@@ -380,7 +386,7 @@ export function Workbench({
             <div className="fixed inset-0 z-[60] sm:hidden" onClick={() => setDrawer(false)}>
               <div className="absolute inset-0 bg-well/70" />
               <div className="absolute inset-y-0 left-0 w-[86vw] max-w-sm bg-bg shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                <SidePanel onPicked={() => setDrawer(false)} />
+                <SidePanel onPicked={() => setDrawer(false)} libraryKinds={libraryKinds} />
               </div>
             </div>
           )}

@@ -7,6 +7,8 @@ export type {
   /** A combo: keys pressed together and what they do. */
   ComboDefinition,
   EncoderAction,
+  /** A key that becomes another while certain modifiers are held. */
+  Fork,
   HidKeyCode,
   KeyAction,
   KeyboardAction,
@@ -15,4 +17,6 @@ export type {
   ModifierCombination,
   /** A morse (tap-dance) entry a key can be bound to. */
   Morse,
+  /** A named tap-hold timing profile in its slot. */
+  MorseProfileEntry,
 } from "../vendor/rynk-wasm/rynk_wasm";

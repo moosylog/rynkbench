@@ -23,7 +23,9 @@ export type KeyLight =
   | { kind: "color"; color: LightingRgb8; effect: EffectKind; timing: EffectTiming }
   /** `off` null: dark while the lock is off. */
   | { kind: "lock"; lock: Lock; on: LightingRgb8; off: LightingRgb8 | null }
-  | { kind: "battery"; level: number; below: LightingRgb8; above: LightingRgb8 };
+  /** `node`: whose battery, on a split board 0 the left half and 1 the right;
+   *  unset, the half the key is on. */
+  | { kind: "battery"; level: number; below: LightingRgb8; above: LightingRgb8; node?: number };
 
 export type StatusLight = Extract<KeyLight, { kind: "lock" | "battery" }>;
 
@@ -79,6 +81,7 @@ export function statusLightOf(rules: Rules, layer: number, led: number): StatusL
     const level = above?.cell.conditions.battery?.min_level ?? (below?.cell.conditions.battery?.max_level ?? 39) + 1;
     return {
       kind: "battery",
+      node: (above ?? below)?.cell.conditions.battery?.node ?? 0,
       level,
       below: colorOf(below) ?? { r: 0, g: 0, b: 0 },
       above: colorOf(above) ?? { r: 0, g: 0, b: 0 },
@@ -88,7 +91,7 @@ export function statusLightOf(rules: Rules, layer: number, led: number): StatusL
 }
 
 /** The rules with this key's lock or battery light replaced by `light` (none: removed). */
-export function withStatusLight(rules: Rules, layer: number, led: number, light: StatusLight | null, node = 0): Rules {
+export function withStatusLight(rules: Rules, layer: number, led: number, light: StatusLight | null, keyNode = 0): Rules {
   const kept = rules.filter((rule) => !isKeyRule(rule, layer, led));
   if (!light) return kept;
   if (light.kind === "lock") {
@@ -99,6 +102,7 @@ export function withStatusLight(rules: Rules, layer: number, led: number, light:
     };
     return [...kept, state(false, light.off ?? { r: 0, g: 0, b: 0 }), state(true, light.on)];
   }
+  const node = light.node ?? keyNode;
   const level = (color: LightingRgb8, min: number | undefined, max: number | undefined) => {
     const rule = newRule(layer, led, color);
     rule.cell.conditions.battery = { node, min_level: min, max_level: max, charge: "Any" };

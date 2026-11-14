@@ -35,7 +35,7 @@ describe("a key's light", () => {
 
 describe("lock and battery lights", () => {
   const lock = { kind: "lock" as const, lock: "caps_lock" as const, on: RED, off: null };
-  const battery = { kind: "battery" as const, level: 40, below: RED, above: BLUE };
+  const battery = { kind: "battery" as const, node: 0, level: 40, below: RED, above: BLUE };
 
   it("write two rules on the key's LED and layer, and read back the same light", () => {
     const rules = withStatusLight([], 2, 7, lock);
@@ -43,6 +43,15 @@ describe("lock and battery lights", () => {
     expect(rules.every((rule) => rule.cell.led_id === 7 && rule.cell.conditions.layer?.layer === 2)).toBe(true);
     expect(statusLightOf(rules, 2, 7)).toEqual(lock);
     expect(statusLightOf(withStatusLight([], 2, 7, battery), 2, 7)).toEqual(battery);
+  });
+
+  it("show either half's battery: the right half's on a left-hand key, and the key's own half when unset", () => {
+    const right = { ...battery, node: 1 };
+    const rules = withStatusLight([], 2, 7, right);
+    expect(rules.every((rule) => rule.cell.conditions.battery?.node === 1)).toBe(true);
+    expect(statusLightOf(rules, 2, 7)).toEqual(right);
+    const { node: _unset, ...ownHalf } = battery;
+    expect(statusLightOf(withStatusLight([], 2, 7, ownHalf, 1), 2, 7)).toEqual(right);
   });
 
   it("replace a key's own rules, and leave the Lighting screen's rules alone", () => {
