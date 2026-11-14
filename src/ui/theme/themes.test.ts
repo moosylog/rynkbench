@@ -68,6 +68,7 @@ for (const id of THEME_IDS) {
     it("has readable text on every special-key colour", () => {
       for (const kind of ["special-custom", "special-bluetooth", "special-action"]) {
         expect(contrast(keyTextOn(tokens[kind], tokens), tokens[kind]), kind).toBeGreaterThanOrEqual(4.5);
+        expect(tokens[`${kind}-ink`], kind).toBe(keyTextOn(tokens[kind], tokens));
       }
     });
   });

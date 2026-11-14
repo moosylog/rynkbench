@@ -29,7 +29,6 @@
   "ui-never-imports-wire-types src/ui/lighting/decor.ts -> src/vendor/rynk-wasm/rynk_wasm",
   "ui-never-imports-wire-types src/ui/lighting/effect.ts -> src/vendor/rynk-wasm/rynk_wasm",
   "ui-never-imports-wire-types src/ui/lighting/firmwareRules.ts -> src/vendor/rynk-wasm/rynk_wasm",
-  "ui-never-imports-wire-types src/ui/lighting/keyLegend.ts -> src/vendor/rynk-wasm/rynk_wasm",
   "ui-never-imports-wire-types src/ui/lighting/lightingKeyPresets.ts -> src/vendor/rynk-wasm/rynk_wasm",
   "ui-never-imports-wire-types src/ui/lighting/preview.ts -> src/vendor/rynk-wasm/rynk_wasm",
   "ui-never-imports-wire-types src/ui/lighting/rules.ts -> src/vendor/rynk-wasm/rynk_wasm",

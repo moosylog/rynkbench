@@ -12,6 +12,7 @@ import type {
 import { activeLocale, characterFor, keycapCharacter } from "./locale";
 import { DEFAULT_TAP_HOLD_PROFILE } from "../model/morse";
 import { slotsOf } from "../model/key-slots";
+import type { FacePart } from "./keyface/keyFace";
 
 /** Compact keycap symbols for HID codes that deserve better than their name. */
 const HID_SYMBOLS: Partial<Record<HidKeyCode, string>> = {
@@ -263,6 +264,12 @@ export interface KeyGlyph {
   top?: string;
   /** Render dimmed (Transparent). */
   dim?: boolean;
+  /** Pictures drawn instead of `text` (keyface/keyFace.ts). */
+  face?: FacePart[];
+  /** Pictures drawn instead of `sub`. */
+  subFace?: FacePart[];
+  /** A chord's modifiers, drawn small above the key (⌘ over Z). */
+  chord?: FacePart[];
 }
 
 /** The character a plain key types with Shift, when it is not just its own

@@ -218,7 +218,7 @@ export function themeTokens(id: ThemeId): ThemeTokens {
   const raised = pins["bg-card"] ?? shade(dark ? 0.065 : 0.025);
   // Text that may sit on the app background, a panel or a card reads on all three.
   const onSurfaces = [surface, raised, bg];
-  return {
+  const tokens: ThemeTokens = {
     bg,
     well: main.canvas,
     plate: main.canvas,
@@ -256,7 +256,13 @@ export function themeTokens(id: ThemeId): ThemeTokens {
     "special-action": main["special-action"],
     ...POM,
   };
+  for (const kind of SPECIAL_KEYS) tokens[`special-${kind}-ink`] = keyTextOn(tokens[`special-${kind}`], tokens);
+  return tokens;
 }
+
+/** "Highlight special keys": the kinds that get a cap colour, as in GLIDE. */
+export const SPECIAL_KEYS = ["custom", "bluetooth", "action"] as const;
+export type SpecialKey = (typeof SPECIAL_KEYS)[number];
 
 /** The colour of the text on a key with a colour of its own: the key's legend
  *  colour when it reads (4.5:1), else the theme's text or background colour that does. */

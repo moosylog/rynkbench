@@ -13,6 +13,12 @@ export const SETTING_KEYS = {
   keyEditorHeight: "rynk:key-editor-height",
   canvasHintDismissed: "rynk:canvas-hint-dismissed",
   comboView: "rynk:combo-view",
+  /** Preferences (ui/preferences.ts). */
+  os: "rynk:os",
+  highlightSpecialKeys: "rynk:highlight-special-keys",
+  shiftedCharacters: "rynk:shifted-characters",
+  keyEditorSide: "rynk:key-editor-side",
+  sidePanelSide: "rynk:side-panel-side",
   /** Changes not yet sent to a keyboard, kept per device (ADR 0010). */
   draft: (serial: string) => `rynk:draft:${serial || "unknown"}`,
   /** Layer lighting presets on boards without scene storage, per device. */

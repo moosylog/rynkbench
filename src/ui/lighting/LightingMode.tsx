@@ -6,7 +6,9 @@ import type { KeyView } from "../../model/keyboard";
 import { BoardWell, KeyboardCanvas } from "../KeyboardCanvas";
 import type { KeyDecor } from "../KeyboardCanvas";
 import { keyAddressLabel } from "../key-address";
-import { lightingKeyLegend } from "./keyLegend";
+import { lightingKeyAction } from "./keyLegend";
+import { keyFace } from "../keyface/keyFace";
+import { useFaceContext } from "../keyface/useFaceContext";
 import { layerName } from "../layer-names";
 import {
   activeLightingBase,
@@ -70,6 +72,7 @@ function brushCell(brush: Brush, ledId: number, allowTtl: boolean): LightingOver
 
 export function LightingMode() {
   const { bundle, state, dispatch, io } = useWorkbench();
+  const face = useFaceContext();
   const capabilities = useCapabilities();
   const [brush, setBrush] = useState<Brush>(DEFAULT_BRUSH);
   const [pick, setPick] = useState<KeyPick | null>(null);
@@ -220,10 +223,7 @@ export function LightingMode() {
   };
 
   const legendFor = (key: KeyView): KeyDecor["glyph"] => ({
-    text: lightingKeyLegend(
-      key, state.layers, bundle.caps.num_cols,
-      target, state.activeLayers, state.defaultLayer,
-    ),
+    ...keyFace(lightingKeyAction(key, state.layers, bundle.caps.num_cols, target, state.activeLayers, state.defaultLayer), state.morse, face),
     dim: true,
   });
 

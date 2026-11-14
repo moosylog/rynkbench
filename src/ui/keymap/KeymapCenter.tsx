@@ -8,7 +8,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { KeyView } from "../../model/keyboard";
 import { BoardWell, KeyboardCanvas } from "../KeyboardCanvas";
 import type { KeyDecor } from "../KeyboardCanvas";
-import { keyActionGlyph, keyActionDescription } from "../labels";
+import { keyActionDescription } from "../labels";
+import { keyFace, specialKind } from "../keyface/keyFace";
+import { PREFERENCES, usePreference } from "../preferences";
+import { useFaceContext } from "../keyface/useFaceContext";
 import { keyAddressLabel } from "../key-address";
 
 import {
@@ -45,6 +48,8 @@ import { useCapabilities } from "../use-capabilities";
 
 export function KeymapCenter() {
   const { bundle, state, dispatch, io } = useWorkbench();
+  const face = useFaceContext();
+  const highlightSpecial = usePreference(PREFERENCES.highlightSpecialKeys);
   const capabilities = useCapabilities();
   const cols = bundle.caps.num_cols;
   const layer = state.layers[state.uiLayer];
@@ -111,7 +116,7 @@ export function KeymapCenter() {
       state.stagedKeys[keyPendingId(state.uiLayer, key.row, key.col)] !== undefined;
     const sceneEffect =
       sceneEffects && key.ledId !== undefined ? sceneEffects.get(key.ledId) : undefined;
-    const glyph = action !== undefined ? keyActionGlyph(action, state.morse) : { text: "" };
+    const glyph = action !== undefined ? keyFace(action, state.morse, face) : { text: "" };
     // Enrichment label as fallback for unbound keys.
     if (!glyph.text && key.label) {
       glyph.text = key.label;
@@ -142,6 +147,7 @@ export function KeymapCenter() {
       selected,
       highlight: dropTarget,
       lifted,
+      special: highlightSpecial && action !== undefined ? specialKind(action, face) : undefined,
       pending: pending?.status === "pending",
       error: pending?.status === "error",
       ...(light.open
@@ -287,7 +293,7 @@ export function KeymapCenter() {
       {drag && moves.carry && (
         <CarriedKey
           carry={moves.carry}
-          glyph={keyActionGlyph(layer?.[drag.source.row * cols + drag.source.col] ?? "No", state.morse)}
+          glyph={keyFace(layer?.[drag.source.row * cols + drag.source.col] ?? "No", state.morse, face)}
           over={drag.destination !== null}
         />
       )}

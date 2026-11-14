@@ -13,6 +13,7 @@ import { same } from "../../model/deep-equal";
 
 import type { KeyDecor } from "./decor";
 import { legendLayout } from "./legend";
+import { FaceRow } from "./FaceRow";
 import { CORNER, CAP_INSET, CAP_GRADIENT, CAP_RELIEF, CAP_SHADOW, LED_GLOW, rectAttrs } from "./geometry";
 
 export function CapDefs() {
@@ -123,7 +124,8 @@ function KeyShapeImpl({
 
   const hoverTitle = keyHoverTitle({ ...view, label: decor.glyph?.text ?? view.label });
 
-  const capFill = decor.lit ? "var(--color-pom)" : (decor.fill ?? decor.backgroundFill ?? `url(#${CAP_GRADIENT})`);
+  const special = decor.special ? `var(--color-special-${decor.special})` : undefined;
+  const capFill = decor.lit ? "var(--color-pom)" : (decor.fill ?? decor.backgroundFill ?? special ?? `url(#${CAP_GRADIENT})`);
 
   const anim = decor.lit ? decor.lit.anim : decor.fillAnim;
   const fillStyle = anim
@@ -320,19 +322,21 @@ function KeyRingImpl({ view, decor }: { view: KeyView; decor: KeyDecor }) {
 function KeyLabelImpl({ view, decor }: { view: KeyView; decor: KeyDecor }) {
   const { shape } = view;
   const glyph = decor.glyph;
-  if (!glyph?.text) return null;
+  if (!glyph?.text && !glyph?.face) return null;
 
   const legend = legendLayout(glyph.text, shape.rect.w, { sub: glyph.sub, top: glyph.top });
   const cx = shape.rect.x;
   const cy = shape.rect.y;
-  const block = (legend.lines.length - 1) * legend.size * 1.1;
+  const block = glyph.face ? 0 : (legend.lines.length - 1) * legend.size * 1.1;
+  const above = glyph.top ?? glyph.chord;
   // As in GLIDE: a shifted character sits in the upper part of the cap with the
   // legend below it; a hold sits under the legend; otherwise the legend is centred.
-  const mainY = glyph.top
+  const mainY = above
     ? cy + shape.rect.h * 0.14
     : cy - block / 2 - (glyph.sub ? legend.subSize * 0.7 : 0);
-  const ink = decor.lit ? "var(--color-pom-ink)" : glyph.dim ? "var(--color-cap-ink-dim)" : "var(--color-cap-ink)";
-  const quiet = decor.lit ? "var(--color-pom-ink)" : "var(--color-mute)";
+  const specialInk = decor.special && !decor.fill ? `var(--color-special-${decor.special}-ink)` : undefined;
+  const ink = decor.lit ? "var(--color-pom-ink)" : (specialInk ?? (glyph.dim ? "var(--color-cap-ink-dim)" : "var(--color-cap-ink)"));
+  const quiet = decor.lit ? "var(--color-pom-ink)" : (specialInk ?? "var(--color-mute)");
   const halo = decor.fill && !decor.lit
     ? { stroke: "var(--color-legend-halo)", strokeWidth: 0.04, paintOrder: "stroke fill" as const, strokeLinejoin: "round" as const }
     : {};
@@ -356,19 +360,35 @@ function KeyLabelImpl({ view, decor }: { view: KeyView; decor: KeyDecor }) {
             fill: quiet,
             children: glyph.top,
           })}
-        {text({
-          x: cx,
-          y: mainY,
-          fontSize: legend.size,
-          fontWeight: 700,
-          fill: ink,
-          children: legend.lines.map((line, i) => (
-            <tspan key={i} x={cx} dy={i === 0 ? 0 : legend.size * 1.1}>
-              {line}
-            </tspan>
-          )),
-        })}
-        {glyph.sub &&
+        {glyph.chord && (
+          <FaceRow parts={glyph.chord} x={cx} y={cy - shape.rect.h * 0.2} capWidth={shape.rect.w} tier="small" fill={decor.lit || specialInk ? ink : "var(--color-accent)"} />
+        )}
+        {glyph.face ? (
+          <FaceRow parts={glyph.face} x={cx} y={mainY} capWidth={shape.rect.w} tier="main" fill={ink} />
+        ) : (
+          text({
+            x: cx,
+            y: mainY,
+            fontSize: legend.size,
+            fontWeight: 700,
+            fill: ink,
+            children: legend.lines.map((line, i) => (
+              <tspan key={i} x={cx} dy={i === 0 ? 0 : legend.size * 1.1}>
+                {line}
+              </tspan>
+            )),
+          })
+        )}
+        {glyph.subFace ? (
+          <FaceRow
+            parts={glyph.subFace}
+            x={cx}
+            y={mainY + block + legend.size * 0.5 + legend.subSize * 0.75}
+            capWidth={shape.rect.w}
+            tier="small"
+            fill={quiet}
+          />
+        ) : glyph.sub &&
           text({
             x: cx,
             y: mainY + block + legend.size * 0.5 + legend.subSize * 0.75,

@@ -73,3 +73,51 @@ export function legendLayout(
     topSize: top ? fit(SIZE.top, width(top), capWidth) : 0,
   };
 }
+
+/** A row of pictures and short text (keyface/keyFace.ts), laid out centred on
+ *  the cap, as GLIDE's .kc-icons: one picture fills about half the face; a
+ *  picture with its "+" or "−" shows that one smaller; a number beside a
+ *  picture (the Bluetooth profile) reads large. The small tiers (a hold, a
+ *  chord's modifiers) use GLIDE's 13 px pictures and the hold's text size. */
+export interface FaceItem {
+  kind: "icon" | "text";
+  /** Index into the face's parts. */
+  part: number;
+  /** Centre, from the cap's centre, and size (an icon's side, a text's font size), in key units. */
+  dx: number;
+  size: number;
+}
+
+const FACE = {
+  icon: 0.42,
+  /** The "+"/"−" after a picture. */
+  step: 0.26,
+  text: 0.27,
+  smallIcon: 13 / PITCH_PX,
+  gap: 0.03,
+  smallGap: 0.015,
+} as const;
+
+export function faceLayout(
+  parts: readonly ({ icon: string } | { text: string })[],
+  capWidth: number,
+  tier: "main" | "small",
+): FaceItem[] {
+  const small = tier === "small";
+  const sizes = parts.map((part) => {
+    if ("text" in part) return small ? SIZE.sub : FACE.text;
+    if (small) return FACE.smallIcon;
+    return part.icon === "increase" || part.icon === "decrease" ? FACE.step : FACE.icon;
+  });
+  const widths = parts.map((part, i) => ("text" in part ? [...part.text].length * GLYPH_WIDTH * sizes[i] : sizes[i]));
+  const gap = small ? FACE.smallGap : FACE.gap;
+  const total = widths.reduce((sum, w) => sum + w, 0) + gap * (parts.length - 1);
+  const scale = Math.min(1, (capWidth - MARGIN) / total);
+  let x = -(total * scale) / 2;
+  return parts.map((part, i) => {
+    const w = widths[i] * scale;
+    const item: FaceItem = { kind: "text" in part ? "text" : "icon", part: i, dx: x + w / 2, size: sizes[i] * scale };
+    x += w + gap * scale;
+    return item;
+  });
+}

@@ -2,6 +2,7 @@
 // that draws it, passed in, never worked out here.
 
 import type { KeyGlyph } from "../labels";
+import type { SpecialKey } from "../theme/themes";
 
 export interface KeyDecor {
   glyph?: KeyGlyph;
@@ -10,6 +11,8 @@ export interface KeyDecor {
   ariaKeyShortcuts?: string;
   /** Per-key lighting color (CSS), rendered as a flat cap fill. */
   fill?: string;
+  /** "Highlight special keys": the cap takes that theme colour (keyface/keyFace.ts specialKind). */
+  special?: SpecialKey;
   /** Device-wide base lighting, rendered across the full cap below labels. */
   backgroundFill?: string;
   fillAnim?: {
