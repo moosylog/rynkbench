@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { KeyAction, ModifierCombination } from "../../model/action-types";
 import { faceLayout } from "../canvas/legend";
 import { actionFace, keyFace, specialKind, type FaceContext } from "./keyFace";
-import { KEY_ICON_DATA } from "./keyIconData";
+import { KEY_ICON_DATA, type KeyIconName } from "./keyIconData";
 import { chordLook, chordText } from "./modifiers";
 
 const NONE: ModifierCombination = {
@@ -10,7 +10,7 @@ const NONE: ModifierCombination = {
   right_ctrl: false, right_shift: false, right_alt: false, right_gui: false,
 } as ModifierCombination;
 const mods = (...held: string[]) => ({ ...NONE, ...Object.fromEntries(held.map((m) => [m, true])) }) as ModifierCombination;
-const mac: FaceContext = { os: "mac", bleProfiles: 4, userIcons: new Map([[10, "bt-clr"]]) };
+const mac: FaceContext = { os: "mac", bleProfiles: 4, userIcons: new Map<number, KeyIconName>([[10, "bt-clr"]]) };
 const win: FaceContext = { ...mac, os: "win" };
 const hid = (code: string): KeyAction => ({ Single: { Key: { Hid: code } } }) as KeyAction;
 const single = (action: object) => ({ Single: action }) as KeyAction;

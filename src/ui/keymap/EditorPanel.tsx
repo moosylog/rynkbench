@@ -1,9 +1,12 @@
 // The panel below the keyboard, as in GLIDE: what is being edited and its
 // slots on the left, the tabs that fill the active slot in the middle, the
 // tab's content on the right. The key editor and the combo editor share it.
+// With the Key editor preference on Side it is a column beside the keyboard,
+// its parts stacked as on a narrow screen.
 
 import type { CSSProperties, ReactNode } from "react";
 import { cx } from "../kit";
+import { PREFERENCES, usePreference } from "../preferences";
 import { CloseIcon, KeymapIcon, LightingIcon, MenuIcon, SettingsIcon } from "../icons";
 import type { EditorTab } from "./editorTabs";
 
@@ -14,12 +17,29 @@ const TABS: Record<EditorTab, { label: string; Icon: (props: { size?: number }) 
   all: { label: "Every action", Icon: SettingsIcon },
 };
 
-/** The panel's frame at its resizable height (a column on narrow screens). */
-function Frame({ height, className, children }: { height: number; className: string; children: ReactNode }) {
+/** The editor's parts stacked, as on a narrow screen and beside the keyboard. */
+const STACKED = {
+  side: "flex w-full shrink-0 flex-col gap-4 border-b border-line p-6",
+  tabs: "flex w-full shrink-0 flex-row gap-2 overflow-x-auto border-b border-line bg-raised px-2 py-4",
+} as const;
+
+/** Whether the editor sits beside the keyboard (wide screens only). */
+export function useEditorBeside(): boolean {
+  return usePreference(PREFERENCES.keyEditorSide) === "right";
+}
+
+/** The panel's frame at its resizable size: its height below the keyboard, its
+ *  width beside it (a column on narrow screens either way). */
+function Frame({ size, className, children }: { size: number; className: string; children: ReactNode }) {
+  const beside = useEditorBeside();
   return (
     <section
-      style={{ "--editor-h": `${height}px` } as CSSProperties}
-      className={cx("flex h-(--editor-h) shrink-0 border-t border-line bg-panel max-lg:h-auto", className)}
+      style={{ "--editor-size": `${size}px` } as CSSProperties}
+      className={cx(
+        "flex shrink-0 bg-panel max-lg:h-auto max-lg:border-t max-lg:border-line",
+        beside ? "lg:w-(--editor-size) lg:flex-col lg:overflow-y-auto lg:border-l lg:border-line" : "lg:h-(--editor-size) lg:border-t lg:border-line",
+        className,
+      )}
     >
       {children}
     </section>
@@ -27,23 +47,24 @@ function Frame({ height, className, children }: { height: number; className: str
 }
 
 /** Shown while nothing is selected. */
-export function EditorPlaceholder({ height, children }: { height: number; children: ReactNode }) {
+export function EditorPlaceholder({ size, children }: { size: number; children: ReactNode }) {
   return (
-    <Frame height={height} className="min-h-[132px] items-center justify-center px-6 py-8 text-center">
+    <Frame size={size} className="min-h-[132px] items-center justify-center px-6 py-8 text-center">
       <p className="text-ui font-semibold text-mute">{children}</p>
     </Frame>
   );
 }
 
 export function EditorPanel({
-  height,
+  size,
   side,
   tabs,
   tab,
   onTab,
   children,
 }: {
-  height: number;
+  /** Height below the keyboard, width beside it (px). */
+  size: number;
   /** The left column: what is edited and its slots. */
   side: ReactNode;
   tabs: readonly EditorTab[];
@@ -52,15 +73,16 @@ export function EditorPanel({
   /** The content of the open tab. */
   children: ReactNode;
 }) {
+  const beside = useEditorBeside();
   return (
-    <Frame height={height} className="min-h-0 overflow-hidden max-lg:flex-col">
-      <div className="flex w-[360px] shrink-0 flex-col gap-4 overflow-y-auto border-r border-line p-6 max-lg:w-full max-lg:border-r-0 max-lg:border-b">
+    <Frame size={size} className={cx("min-h-0 max-lg:flex-col", !beside && "overflow-hidden")}>
+      <div className={cx(STACKED.side, !beside && "lg:w-[360px] lg:overflow-y-auto lg:border-r lg:border-b-0")}>
         {side}
       </div>
       <div
         role="tablist"
         aria-orientation="vertical"
-        className="flex w-[84px] shrink-0 flex-col gap-2 border-r border-line bg-raised px-2 py-4 max-lg:w-full max-lg:flex-row max-lg:overflow-x-auto max-lg:border-r-0 max-lg:border-b"
+        className={cx(STACKED.tabs, !beside && "lg:w-[84px] lg:flex-col lg:overflow-x-visible lg:border-r lg:border-b-0")}
       >
         {tabs.map((id) => {
           const { label, Icon } = TABS[id];
@@ -82,7 +104,9 @@ export function EditorPanel({
           );
         })}
       </div>
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto px-6 pt-4 pb-4 max-lg:max-h-[420px]">{children}</div>
+      <div className={cx("flex min-h-0 min-w-0 flex-1 flex-col px-6 pt-4 pb-4", beside ? "max-lg:max-h-[420px] max-lg:overflow-y-auto" : "overflow-y-auto max-lg:max-h-[420px]")}>
+        {children}
+      </div>
     </Frame>
   );
 }

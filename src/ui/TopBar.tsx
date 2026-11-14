@@ -24,7 +24,7 @@ import { useTerms } from "./terms";
 import { layerName } from "./layer-names";
 import type { Area, AreaId } from "./areas";
 import { ConnectionChip } from "./draft/ConnectionChip";
-import { SettingsMenu } from "./SettingsMenu";
+import { SettingsPanel } from "./SettingsPanel";
 
 function BatteryReadout({ battery, split }: { battery: BatteryStatus; split: boolean }) {
   const available = battery !== "Unavailable" ? battery.Available : null;
@@ -204,7 +204,7 @@ export function TopBar({
 
       <div className="h-6 w-px bg-line-soft" />
 
-      <SettingsMenu />
+      <SettingsPanel />
 
       {offline && (
         <Button variant="ghost" onClick={io.disconnect} title="Close file">

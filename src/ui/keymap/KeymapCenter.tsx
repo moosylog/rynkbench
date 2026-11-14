@@ -50,6 +50,7 @@ export function KeymapCenter() {
   const { bundle, state, dispatch, io } = useWorkbench();
   const face = useFaceContext();
   const highlightSpecial = usePreference(PREFERENCES.highlightSpecialKeys);
+  const shiftedEverywhere = usePreference(PREFERENCES.shiftedCharacters) === "all";
   const capabilities = useCapabilities();
   const cols = bundle.caps.num_cols;
   const layer = state.layers[state.uiLayer];
@@ -117,6 +118,8 @@ export function KeymapCenter() {
     const sceneEffect =
       sceneEffects && key.ledId !== undefined ? sceneEffects.get(key.ledId) : undefined;
     const glyph = action !== undefined ? keyFace(action, state.morse, face) : { text: "" };
+    // As in GLIDE: what Shift types shows on the base layer, or on every layer.
+    if (!shiftedEverywhere && state.uiLayer !== 0) glyph.top = undefined;
     // Enrichment label as fallback for unbound keys.
     if (!glyph.text && key.label) {
       glyph.text = key.label;

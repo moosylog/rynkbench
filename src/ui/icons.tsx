@@ -449,3 +449,13 @@ export function Wordmark({ size = 28 }: { size?: number }) {
     </svg>
   );
 }
+
+/** An (i): a setting with a word that needs explaining. */
+export function InfoIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="8" cy="8" r="6" />
+      <path d="M8 7.2v3.6M8 5.2v.01" />
+    </svg>
+  );
+}

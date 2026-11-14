@@ -10,6 +10,7 @@ export const SETTING_KEYS = {
   wording: "rynk:wording",
   locale: "rynk:locale",
   sidePanelWidth: "rynk:side-panel-width",
+  keyEditorWidth: "rynk:key-editor-width",
   keyEditorHeight: "rynk:key-editor-height",
   canvasHintDismissed: "rynk:canvas-hint-dismissed",
   comboView: "rynk:combo-view",

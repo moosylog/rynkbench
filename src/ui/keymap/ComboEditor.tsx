@@ -40,7 +40,7 @@ function LayerChoice({ focus }: { focus: ComboFocus }) {
   );
 }
 
-export function ComboEditor({ focus, height }: { focus: ComboFocus; height: number }) {
+export function ComboEditor({ focus, size }: { focus: ComboFocus; size: number }) {
   const { bundle, state } = useWorkbench();
   const tabs = useEditorTabs(false);
   const [tab, setTab] = useState<EditorTab>("pick");
@@ -97,7 +97,7 @@ export function ComboEditor({ focus, height }: { focus: ComboFocus; height: numb
   );
 
   return (
-    <EditorPanel height={height} side={side} tabs={tabs} tab={tab} onTab={setTab}>
+    <EditorPanel size={size} side={side} tabs={tabs} tab={tab} onTab={setTab}>
       {tab === "pick" && <PickKey onPick={fill} disabled={false} />}
       {tab === "layer" && <SwitchLayer onPick={pickLayer} disabled={false} />}
       {tab === "all" && (

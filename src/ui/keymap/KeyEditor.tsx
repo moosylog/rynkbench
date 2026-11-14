@@ -32,7 +32,7 @@ import { PickKey } from "./PickKey";
 import { SlotList } from "./SlotList";
 import { SwitchLayer, type LayerKind } from "./SwitchLayer";
 
-export function KeyEditor({ height = 310 }: { height?: number }) {
+export function KeyEditor({ size = 310 }: { size?: number }) {
   const { bundle, state, dispatch, io } = useWorkbench();
   const capabilities = useCapabilities();
   const [tab, setTab] = useState<EditorTab>("pick");
@@ -45,7 +45,7 @@ export function KeyEditor({ height = 310 }: { height?: number }) {
   const tabs = useEditorTabs(true);
 
   if (!selection) {
-    return <EditorPlaceholder height={height}>↑ Click a key on the keyboard to change what it does</EditorPlaceholder>;
+    return <EditorPlaceholder size={size}>↑ Click a key on the keyboard to change what it does</EditorPlaceholder>;
   }
 
   const { row, col } = selection;
@@ -151,7 +151,7 @@ export function KeyEditor({ height = 310 }: { height?: number }) {
   );
 
   return (
-    <EditorPanel height={height} side={side} tabs={tabs} tab={tab} onTab={setTab}>
+    <EditorPanel size={size} side={side} tabs={tabs} tab={tab} onTab={setTab}>
       {tab === "pick" && <PickKey onPick={fill} disabled={false} />}
       {tab === "layer" && <SwitchLayer onPick={pickLayer} disabled={false} />}
       {tab === "lighting" && <LayerLighting ledId={key?.ledId} />}

@@ -29,7 +29,8 @@ Live site: https://moosylog.github.io/rynkbench/ (GitHub Pages, deployed from `m
 - A board's own facts (geometry, labels, LEDs): `model/boards/` (Glove80 geometry is generated from GLIDE's board file).
 
 ## Style (tests enforce these)
-- Colours only from theme tokens in `src/index.css` (Tailwind `text-ink`, `bg-panel`, `border-line`, `var(--color-…)`), never a literal or Tailwind's palette (`ui/theme/colours.test.ts`). Both themes stay legible (`themes.test.ts`). A new token goes in both theme blocks.
+- Colours only from theme tokens (Tailwind `text-ink`, `bg-panel`, `border-line`, `var(--color-…)`), never a literal or Tailwind's palette (`ui/theme/colours.test.ts`). The six themes are data in `ui/theme/themes.ts` (ADR 0014); a new token is named in `src/index.css` `@theme` and given a value in `themeTokens`; every theme stays legible (`themes.test.ts`).
+- Browser-local preferences (computer, special keys, panel sides …): `ui/preferences.ts`; Settings: `ui/SettingsPanel.tsx`. Key pictures and per-computer modifiers: `ui/keyface/` (`keyFace`), never in a screen.
 - Text only in the named sizes: `text-caption` 10, `small` 11, `body` 12, `ui` 13, `title` 15, `heading` 20, `display` 30 (`ui/theme/typography.test.ts`). Fonts: Inter, JetBrains Mono (`src/assets/fonts`).
 - Files at most 500 lines (`src/architecture/file-size.test.ts`); a few older ones are listed and may only shrink. Split by job, not by size.
 - Less text: a control that explains itself needs no hint. Messages lead with the consequence.

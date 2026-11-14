@@ -31,21 +31,21 @@ export function usePaneSize(key: string, initial: number, min: number, max: numb
 
 /**
  * The handle on a pane's edge. `edge` says which edge it sits on: "right" grows
- * the pane as it moves right (a left side panel); "top" grows it as it moves up
- * (a panel along the bottom).
+ * the pane as it moves right (a panel on the left); "left" as it moves left (a
+ * panel on the right); "top" as it moves up (a panel along the bottom).
  */
 export function ResizeHandle({
   edge,
   label,
   pane,
 }: {
-  edge: "right" | "top";
+  edge: "right" | "left" | "top";
   label: string;
   pane: ReturnType<typeof usePaneSize>;
 }) {
   const drag = useRef<{ id: number; start: number; from: number } | null>(null);
-  const horizontal = edge === "right";
-  const sign = horizontal ? 1 : -1;
+  const horizontal = edge !== "top";
+  const sign = edge === "right" ? 1 : -1;
   const at = (event: ReactPointerEvent) => (horizontal ? event.clientX : event.clientY);
 
   return (
@@ -72,8 +72,8 @@ export function ResizeHandle({
       onPointerCancel={() => (drag.current = null)}
       onDoubleClick={pane.reset}
       onKeyDown={(event: ReactKeyboardEvent) => {
-        const grow = horizontal ? "ArrowRight" : "ArrowUp";
-        const shrink = horizontal ? "ArrowLeft" : "ArrowDown";
+        const grow = edge === "right" ? "ArrowRight" : edge === "left" ? "ArrowLeft" : "ArrowUp";
+        const shrink = edge === "right" ? "ArrowLeft" : edge === "left" ? "ArrowRight" : "ArrowDown";
         if (event.key === grow) pane.setSize(pane.size + KEY_STEP);
         else if (event.key === shrink) pane.setSize(pane.size - KEY_STEP);
         else return;

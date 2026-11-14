@@ -8,7 +8,7 @@ One short page per decision that shapes the code, so the reason survives the peo
 | [0002](0002-capability-contract.md) | Every keyboard function is a declared capability | Proposed |
 | [0003](0003-derived-graph-and-policy.md) | Entities are stored, the graph is derived, one policy engine decides | Proposed |
 | [0004](0004-own-model-rmk-first.md) | A neutral model of our own; first release is RMK only | Accepted |
-| [0005](0005-themes.md) | Dark and light themes under one set of token names | Accepted |
+| [0005](0005-themes.md) | Dark and light themes under one set of token names | Accepted; how themes are made replaced by 0014 |
 | [0006](0006-wording.md) | Two voices for the app's own words, from one table | Accepted |
 | [0007](0007-areas-and-type-scale.md) | Six areas from the capability set; named type sizes | Partly superseded by 0008 |
 | [0008](0008-glide-main-screen.md) | GLIDE's main screen and look | Accepted |
@@ -17,5 +17,6 @@ One short page per decision that shapes the code, so the reason survives the peo
 | [0011](0011-guard.md) | Rynkbench Guard: one gate for every key write | Accepted |
 | [0012](0012-sync.md) | One write path: plan the difference, write only that | Accepted |
 | [0013](0013-one-history-one-gate.md) | One document, one history, one gate: adopted module by module | Accepted |
+| [0014](0014-themes-preferences-key-faces.md) | GLIDE's themes, Settings and key faces | Accepted |
 
 The glossary is in [../glossary.md](../glossary.md).

@@ -32,7 +32,7 @@ function Focus() {
   return focus ? (
     <>
       <ComboFocusCanvas focus={focus} />
-      <ComboEditor focus={focus} height={300} />
+      <ComboEditor focus={focus} size={300} />
     </>
   ) : null;
 }

@@ -25,6 +25,8 @@ import { ComboEditor } from "./keymap/ComboEditor";
 import { ComboFocusCanvas } from "./keymap/ComboFocusCanvas";
 import { useComboFocus } from "./keymap/useComboFocus";
 import { KeyEditor } from "./keymap/KeyEditor";
+import { useEditorBeside } from "./keymap/EditorPanel";
+import { PREFERENCES, usePreference } from "./preferences";
 import { LightingMode } from "./lighting/LightingMode";
 import { EffectsMode } from "./effects/EffectsMode";
 import { LiveMode } from "./live/LiveMode";
@@ -92,21 +94,24 @@ function KeymapScreen() {
   const combo = useComboFocus();
   const selected = state.selection?.type;
   const side = selected === "encoder" || selected === "pointing";
-  const editorPane = usePaneSize(SETTING_KEYS.keyEditorHeight, 310, 180, 640);
+  const beside = useEditorBeside();
+  const heightPane = usePaneSize(SETTING_KEYS.keyEditorHeight, 310, 180, 640);
+  const widthPane = usePaneSize(SETTING_KEYS.keyEditorWidth, 480, 360, 760);
+  const editorPane = beside ? widthPane : heightPane;
   return (
     <>
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div className={cx("flex min-h-0 min-w-0 flex-1 flex-col", beside && "lg:flex-row")}>
         {combo ? <ComboFocusCanvas focus={combo} /> : <KeymapCenter />}
         {selected !== "encoder" && selected !== "pointing" && (
           <>
-            <div className="max-lg:hidden">
-              <ResizeHandle edge="top" label="Editor height" pane={editorPane} />
+            <div className="flex max-lg:hidden">
+              {beside ? (
+                <ResizeHandle edge="left" label="Editor width" pane={widthPane} />
+              ) : (
+                <ResizeHandle edge="top" label="Editor height" pane={heightPane} />
+              )}
             </div>
-            {combo ? (
-              <ComboEditor focus={combo} height={editorPane.size} />
-            ) : (
-              <KeyEditor height={editorPane.size} />
-            )}
+            {combo ? <ComboEditor focus={combo} size={editorPane.size} /> : <KeyEditor size={editorPane.size} />}
           </>
         )}
       </div>
@@ -200,6 +205,7 @@ export function Workbench({
   // The phone's side-panel drawer, and the side panel's width elsewhere.
   const [drawer, setDrawer] = useState(false);
   const sidePane = usePaneSize(SETTING_KEYS.sidePanelWidth, 300, 220, 440);
+  const panelRight = usePreference(PREFERENCES.sidePanelSide) === "right";
   // Each area remembers the section last shown in it.
   const lastSection = useRef<Partial<Record<AreaId, SectionId>>>({});
   useEffect(() => {
@@ -375,17 +381,23 @@ export function Workbench({
         />
         <div className="flex min-h-0 flex-1">
           {section === "keymap" && (
-            <div className="flex shrink-0 max-sm:hidden" style={{ width: sidePane.size + 12 }}>
+            <div
+              className={cx("flex shrink-0 max-sm:hidden", panelRight && "order-last flex-row-reverse")}
+              style={{ width: sidePane.size + 12 }}
+            >
               <div className="min-w-0 flex-1">
                 <SidePanel libraryKinds={libraryKinds} />
               </div>
-              <ResizeHandle edge="right" label="Side panel width" pane={sidePane} />
+              <ResizeHandle edge={panelRight ? "left" : "right"} label="Side panel width" pane={sidePane} />
             </div>
           )}
           {section === "keymap" && drawer && (
             <div className="fixed inset-0 z-[60] sm:hidden" onClick={() => setDrawer(false)}>
               <div className="absolute inset-0 bg-well/70" />
-              <div className="absolute inset-y-0 left-0 w-[86vw] max-w-sm bg-bg shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <div
+                className={cx("absolute inset-y-0 w-[86vw] max-w-sm bg-bg shadow-2xl", panelRight ? "right-0" : "left-0")}
+                onClick={(e) => e.stopPropagation()}
+              >
                 <SidePanel onPicked={() => setDrawer(false)} libraryKinds={libraryKinds} />
               </div>
             </div>
