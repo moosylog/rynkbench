@@ -52,7 +52,7 @@ describe("lighting key presets", () => {
     const html = render(false);
     expect(html).toMatch(/<button[^>]*>[^<]*<div[^>]*>Toggle RGB effects/);
     expect(html).toMatch(/<button[^>]*disabled[^>]*>[^<]*<div[^>]*>Cycle lighting policy/);
-    expect(html).toContain("wake setting");
+    expect(html).toContain("let that layer wake them");
     expect(html).not.toContain("MoErgo");
   });
 
