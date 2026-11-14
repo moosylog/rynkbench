@@ -14,6 +14,7 @@ import { ChevronDownIcon, SpinnerIcon, UndoIcon } from "../icons";
 import { useEarlierDraft, useRestoreEarlier } from "./earlier";
 import { ReviewWindow } from "./ReviewWindow";
 import { useDraft } from "./useDraft";
+import { useLink } from "./link";
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
@@ -87,6 +88,7 @@ export function ConnectionChip() {
   const { restore, forget } = useRestoreEarlier();
   const [menu, setMenu] = useState<DOMRect | null>(null);
   const [review, setReview] = useState(false);
+  const link = useLink();
 
   if (draft.offline) {
     return (
@@ -108,8 +110,12 @@ export function ConnectionChip() {
         title="Connection, and when changes go to the keyboard"
         className="flex h-8 cursor-pointer items-center gap-2 rounded-full border border-line-strong pr-2 pl-3 text-body font-semibold text-ink transition-colors hover:border-mute"
       >
-        <span className="size-2 rounded-full bg-ok shadow-[0_0_6px_var(--color-ok)]" aria-hidden />
+        <span
+          className={cx("size-2 rounded-full", link.lost ? "bg-danger" : "bg-ok shadow-[0_0_6px_var(--color-ok)]")}
+          aria-hidden
+        />
         <span className="max-w-32 truncate max-lg:hidden">{bundle.info.product_name || "Keyboard"}</span>
+        {link.lost && <span className="text-danger">not connected</span>}
         <span
           className={cx(
             "rounded-full px-2 py-0.5 text-small font-semibold",
@@ -121,7 +127,16 @@ export function ConnectionChip() {
         <ChevronDownIcon size={11} className="text-mute" />
       </button>
 
-      {earlier ? (
+      {link.lost ? (
+        <span className="flex h-8 items-center gap-1 rounded-full border border-line-strong pr-1 pl-3 text-body text-mute">
+          {draft.size > 0 ? `${plural(draft.size, "change")} kept for when it is back` : "Your changes are kept"}
+          {link.reconnect && (
+            <button type="button" onClick={link.reconnect} className="cursor-pointer rounded-full bg-accent-fill px-2.5 py-0.5 font-semibold text-on-accent">
+              Reconnect
+            </button>
+          )}
+        </span>
+      ) : earlier ? (
         <span className="flex h-8 items-center gap-1 rounded-full border border-warn/60 bg-warn/10 pr-1 pl-3 text-body text-ink">
           {plural(earlier.size, "change")} from before, not on the keyboard
           <button type="button" onClick={() => restore(earlier)} className="cursor-pointer rounded-full bg-accent-fill px-2.5 py-0.5 font-semibold text-on-accent">

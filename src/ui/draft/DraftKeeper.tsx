@@ -11,12 +11,13 @@ import { useWorkbench } from "../state";
 import { draftSnapshot, parseStoredDraft } from "./changes";
 import { earlierDraft, setEarlier } from "./earlier";
 import { useDraft } from "./useDraft";
+import { useLink } from "./link";
 
 /** How long Live waits after the last change before writing it. */
 const LIVE_PAUSE_MS = 600;
 
 export function DraftKeeper() {
-  const { bundle, state } = useWorkbench();
+  const { bundle, state, dispatch } = useWorkbench();
   const draft = useDraft();
   const key = SETTING_KEYS.draft(bundle.info.serial_number);
   const offered = useRef(false);
@@ -41,6 +42,12 @@ export function DraftKeeper() {
     }, 400);
     return () => clearTimeout(timer);
   }, [state, key, draft.offline]);
+
+  // Without the keyboard, everything waits in the draft (ADR 0012).
+  const { lost } = useLink();
+  useEffect(() => {
+    if (lost && !state.batchMode) dispatch({ type: "batchMode", enabled: true });
+  }, [lost, state.batchMode, dispatch]);
 
   // Ask before closing the page with changes not on the keyboard.
   useEffect(() => {

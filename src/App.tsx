@@ -11,6 +11,7 @@ import type { ConnectAttempt } from "./ui/ConnectScreen";
 import { ConnectScreen } from "./ui/ConnectScreen";
 import { SpinnerIcon } from "./ui/icons";
 import { Workbench } from "./ui/Workbench";
+import { setLink } from "./ui/draft/link";
 import type { ConnectedBundle } from "./ui/state";
 import { errorMessage } from "./ui/state";
 
@@ -61,6 +62,7 @@ export default function App() {
     bundleRef.current = loaded;
     providerIndexRef.current = providerIndex;
     setBundle(loaded);
+    setLink({ lost: false });
     setConnectionId((id) => id + 1);
     reconnectingSessionRef.current = null;
     setReconnectAttempt(null);
@@ -100,6 +102,7 @@ export default function App() {
     bundleRef.current = null;
     providerIndexRef.current = null;
     setBundle(null);
+    setLink({ lost: false });
     setReconnectAttempt(null);
     setAttempt(null);
   }, []);
@@ -190,9 +193,9 @@ export default function App() {
           adopt(loaded, providerIndex);
         } catch (error) {
           if (reconnectingSessionRef.current !== droppedSession) return;
-          bundleRef.current = null;
-          setBundle(null);
-          setNotice(`Connection to ${current.model.name} was lost and could not be restored.`);
+          // Keep working without the keyboard: the workbench stays in Draft and
+          // offers Reconnect (ADR 0012).
+          setLink({ lost: true, reconnect: () => unexpectedDisconnectRef.current(droppedSession) });
           setAttempt({ providerIndex, status: "error", message: errorMessage(error) });
         } finally {
           if (reconnectingSessionRef.current === droppedSession) {
@@ -204,6 +207,8 @@ export default function App() {
     },
     [adopt, providers],
   );
+  const unexpectedDisconnectRef = useRef(unexpectedDisconnect);
+  unexpectedDisconnectRef.current = unexpectedDisconnect;
 
   if (bundle) {
     return (
