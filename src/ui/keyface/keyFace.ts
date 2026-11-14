@@ -86,6 +86,8 @@ const withIcon = (parts: FacePart[]) => (parts.some((part) => "icon" in part) ? 
 /** The picture face of one action, or undefined when its text reads best. */
 export function actionFace(action: Action, ctx: FaceContext): FacePart[] | undefined {
   if (typeof action !== "object") return undefined;
+  const mods = modifiersOf(action);
+  if (mods) return withIcon(chordLook(mods, ctx.os).map((m) => (m.icon ? icon(m.icon) : text(m.word))));
   if ("Key" in action) {
     const key = action.Key;
     if (typeof key !== "object") return undefined;
@@ -95,7 +97,6 @@ export function actionFace(action: Action, ctx: FaceContext): FacePart[] | undef
     const face = name !== undefined ? KEY_FACES[name] : undefined;
     return face ? [icon(face)] : undefined;
   }
-  if ("Modifier" in action) return withIcon(chordLook(action.Modifier, ctx.os).map((m) => (m.icon ? icon(m.icon) : text(m.word))));
   if ("Light" in action) return LIGHT_FACES[action.Light];
   if ("KeyboardControl" in action) return CONTROL_FACES[action.KeyboardControl];
   if ("User" in action) {
@@ -117,8 +118,21 @@ function chordFace(action: Action, ctx: FaceContext): { chord: FacePart[]; key: 
   return { chord: looks.map((m) => (m.icon ? icon(m.icon) : text(m.word))), key: hidLabel(key) };
 }
 
-const isModifier = (action: Action | undefined): action is { Modifier: ModifierCombination } =>
-  typeof action === "object" && "Modifier" in action;
+const MODIFIER_KEYS: Record<string, keyof ModifierCombination> = {
+  LCtrl: "left_ctrl", LShift: "left_shift", LAlt: "left_alt", LGui: "left_gui",
+  RCtrl: "right_ctrl", RShift: "right_shift", RAlt: "right_alt", RGui: "right_gui",
+};
+
+/** The modifiers an action holds: a Modifier action, or a modifier key (LShift …). */
+function modifiersOf(action: Action | undefined): ModifierCombination | undefined {
+  if (typeof action !== "object") return undefined;
+  if ("Modifier" in action) return action.Modifier;
+  if (!("Key" in action) || typeof action.Key !== "object" || !("Hid" in action.Key)) return undefined;
+  const held = MODIFIER_KEYS[action.Key.Hid];
+  if (!held) return undefined;
+  const none = Object.fromEntries(Object.values(MODIFIER_KEYS).map((name) => [name, false]));
+  return { ...none, [held]: true } as ModifierCombination;
+}
 
 /** keyActionGlyph, with the pictures and per-OS modifiers the canvas draws. */
 export function keyFace(action: KeyAction, morse: readonly Morse[], ctx: FaceContext): KeyGlyph {
@@ -129,7 +143,8 @@ export function keyFace(action: KeyAction, morse: readonly Morse[], ctx: FaceCon
   if (tap === undefined) return glyph;
 
   const out: KeyGlyph = { ...glyph };
-  if (isModifier(tap)) out.text = chordText(tap.Modifier, ctx.os);
+  const tapMods = modifiersOf(tap);
+  if (tapMods) out.text = chordText(tapMods, ctx.os);
   const face = actionFace(tap, ctx);
   if (face) out.face = face;
   const chord = chordFace(tap, ctx);
@@ -138,7 +153,8 @@ export function keyFace(action: KeyAction, morse: readonly Morse[], ctx: FaceCon
     out.chord = chord.chord;
   }
   if (hold !== undefined) {
-    if (isModifier(hold)) out.sub = chordText(hold.Modifier, ctx.os);
+    const holdMods = modifiersOf(hold);
+    if (holdMods) out.sub = chordText(holdMods, ctx.os);
     const subFace = actionFace(hold, ctx);
     if (subFace) out.subFace = subFace;
   }

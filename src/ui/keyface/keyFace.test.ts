@@ -51,6 +51,9 @@ describe("key faces", () => {
     expect(keyFace(ctrl, [], mac).face).toEqual([{ icon: "macos-ctrl" }]);
     expect(keyFace(ctrl, [], win)).toEqual({ text: "Ctrl", top: undefined });
     expect(keyFace(single({ Modifier: mods("left_gui") }), [], win).face).toEqual([{ icon: "windows" }]);
+    expect(keyFace(hid("LShift"), [], mac).face).toEqual([{ icon: "shift" }]);
+    expect(keyFace(hid("LShift"), [], { ...mac, os: "linux" })).toEqual({ text: "Shift", top: undefined });
+    expect(keyFace(hid("RAlt"), [], win).text).toBe("AltGr");
   });
   it("put a chord's modifiers above its key, unless it types a character", () => {
     const undo = single({ KeyWithModifier: ["Z", mods("left_gui")] });
