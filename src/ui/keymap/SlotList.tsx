@@ -1,6 +1,7 @@
 // A key's slots in the key editor, as in GLIDE: On Tap always, On Hold and On
 // Double Tap when set, else a chip that adds them. The slot being filled is
-// marked; the tabs beside the list fill it.
+// marked; the tabs beside the list fill it. A slot's handle drags it onto
+// another slot to swap their actions (model/key-slots.ts swapSlots).
 
 import type { Action } from "../../model/action-types";
 import type { Slot, SlotsOf } from "../../model/key-slots";
@@ -11,6 +12,9 @@ import { cx } from "../kit";
 import { GripIcon, TrashIcon } from "../icons";
 import { morseProfileSummary } from "../morse-profile";
 import { useKeyText } from "../useKeyText";
+import { useRowDrag } from "../sidepanel/useRowDrag";
+
+const SLOTS: readonly Slot[] = ["tap", "hold", "doubleTap"];
 
 const SLOT_NAME: Record<Slot, string> = { tap: "On Tap", hold: "On Hold", doubleTap: "On Double Tap" };
 
@@ -32,12 +36,15 @@ function SlotRow({
   slot,
   value,
   active,
+  drag,
   onSelect,
   onClear,
 }: {
   slot: Slot;
   value: Action;
   active: boolean;
+  /** Its handle, and whether it is being dragged or is where a dragged slot would land. */
+  drag: { handle: ReturnType<ReturnType<typeof useRowDrag>["handle"]>; lifted: boolean; over: boolean } | null;
   onSelect: () => void;
   onClear: () => void;
 }) {
@@ -45,18 +52,31 @@ function SlotRow({
   const empty = value === "No";
   return (
     <div
+      data-row={SLOTS.indexOf(slot)}
       className={cx(
         "flex h-[42px] items-center gap-1.5 rounded-xl border pr-3 transition-colors",
         active ? "border-accent bg-accent-dim" : "border-line bg-raised hover:border-line-strong",
+        drag?.lifted && "border-dashed opacity-40",
+        drag?.over && "ring-2 ring-accent",
       )}
     >
+      {drag ? (
+        <span
+          {...drag.handle}
+          title="Drag onto another action to swap"
+          className="-mr-1.5 flex h-full shrink-0 cursor-grab items-center pr-1 pl-3 text-ink opacity-70 select-none hover:opacity-100"
+        >
+          <GripIcon size={12} />
+        </span>
+      ) : (
+        <span className="w-1.5 shrink-0" />
+      )}
       <button
         type="button"
         onClick={onSelect}
         aria-pressed={active}
-        className="flex h-full min-w-0 flex-1 cursor-pointer items-center gap-1.5 pl-3 text-left"
+        className="flex h-full min-w-0 flex-1 cursor-pointer items-center gap-1.5 text-left"
       >
-        <GripIcon size={12} className="shrink-0 text-ink opacity-70" />
         <span className="shrink-0 pl-1.5 text-body font-semibold text-ink">{SLOT_NAME[slot]}:</span>
         <span
           className={cx(
@@ -87,6 +107,7 @@ export function SlotList({
   profiles,
   onSelect,
   onClear,
+  onSwap,
   onProfile,
 }: {
   slots: SlotsOf;
@@ -96,17 +117,30 @@ export function SlotList({
   profiles: ConnectedBundle["morseProfiles"];
   onSelect: (slot: Slot) => void;
   onClear: (slot: Slot) => void;
+  /** Swap two slots' actions (a slot dragged by its handle onto another). */
+  onSwap: (from: Slot, to: Slot) => void;
   onProfile: (profile: number) => void;
 }) {
+  const rows = useRowDrag((from, to) => onSwap(SLOTS[from], SLOTS[to]));
   const extra: Array<Exclude<Slot, "tap">> = offerDoubleTap ? ["hold", "doubleTap"] : ["hold"];
   const set = extra.filter((slot) => slots[slot] !== null);
   const unset = extra.filter((slot) => slots[slot] === null);
+  const shown = 1 + set.length;
   const row = (slot: Slot, value: Action) => (
     <SlotRow
       key={slot}
       slot={slot}
       value={value}
       active={active === slot}
+      drag={
+        shown > 1
+          ? {
+              handle: rows.handle(SLOTS.indexOf(slot)),
+              lifted: rows.drag?.from === SLOTS.indexOf(slot),
+              over: rows.drag !== null && rows.drag.over === SLOTS.indexOf(slot) && rows.drag.from !== rows.drag.over,
+            }
+          : null
+      }
       onSelect={() => onSelect(slot)}
       onClear={() => onClear(slot)}
     />

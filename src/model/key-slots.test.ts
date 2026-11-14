@@ -12,6 +12,7 @@ import {
   planSlotWrites,
   putSlot,
   slotsOf,
+  swapSlots,
   withProfile,
 } from "./key-slots";
 
@@ -138,5 +139,14 @@ describe("planning slot writes", () => {
     expect(planSlotWrites({ Morse: 0 } as KeyAction, "Transparent", morse, new Map([[0, 1]]))).toEqual([
       { kind: "key", binding: "Transparent" },
     ]);
+  });
+
+  it("swaps two slots as GLIDE does, dropping a hold left empty", () => {
+    const tapHold = slotsOf({ TapHold: [A, SHIFT, DEFAULT_TAP_HOLD_PROFILE] } as unknown as KeyAction);
+    expect(swapSlots(tapHold, "tap", "hold")).toEqual({ tap: SHIFT, hold: A, doubleTap: null });
+    const holdOnly = slotsOf({ TapHold: ["No", SHIFT, DEFAULT_TAP_HOLD_PROFILE] } as unknown as KeyAction);
+    expect(swapSlots(holdOnly, "hold", "tap")).toEqual({ tap: SHIFT, hold: null, doubleTap: null });
+    expect(swapSlots(tapHold, "tap", "tap")).toBeNull();
+    expect(swapSlots({ kind: "transparent" }, "tap", "hold")).toBeNull();
   });
 });

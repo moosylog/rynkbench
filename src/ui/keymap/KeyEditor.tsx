@@ -19,6 +19,7 @@ import {
   morseUses,
   planSlotWrites,
   putSlot,
+  swapSlots,
   slotsOf,
   withProfile,
   type Slot,
@@ -108,6 +109,12 @@ export function KeyEditor({ size = 310 }: { size?: number }) {
           offerDoubleTap={capabilities.has("keys.doubleTap")}
           profiles={state.morseProfiles}
           onSelect={setSlot}
+          onSwap={(from, to) => {
+            const next = swapSlots(slots, from, to);
+            if (next === null) return;
+            void apply(next);
+            setSlot(to);
+          }}
           onClear={(target) => {
             if (target !== "tap") setSlot("tap");
             void put(target, null);

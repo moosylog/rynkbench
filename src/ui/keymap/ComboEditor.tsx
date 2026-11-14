@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 import type { Action, KeyAction } from "../../model/action-types";
 import { comboLayer, comboOutput } from "../../model/combos";
-import { planSlotWrites, putSlot, slotsOf, withProfile, type Slot } from "../../model/key-slots";
+import { planSlotWrites, putSlot, slotsOf, swapSlots, withProfile, type Slot } from "../../model/key-slots";
 
 import { layerName } from "../layer-names";
 import { SectionLabel } from "../kit";
@@ -86,6 +86,12 @@ export function ComboEditor({ focus, size }: { focus: ComboFocus; size: number }
           offerDoubleTap={false}
           profiles={state.morseProfiles}
           onSelect={setSlot}
+          onSwap={(from, to) => {
+            const next = swapSlots(slots, from, to);
+            const [write] = next ? (planSlotWrites(output, next, [], new Map()) ?? []) : [];
+            if (write?.kind === "key") void focus.setOutput(write.binding);
+            setSlot(to);
+          }}
           onClear={(target) => {
             if (target !== "tap") setSlot("tap");
             put(target, null);

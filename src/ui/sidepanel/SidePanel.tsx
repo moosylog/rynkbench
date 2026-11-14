@@ -19,6 +19,11 @@ import { BehaviorLibrary, LibraryEntry } from "../behaviors/BehaviorLibrary";
 import type { LibraryKind } from "../behaviors/library";
 import { useRowDrag } from "./useRowDrag";
 
+/** GLIDE's drop line (its .drop-line-before/after): where a dragged layer lands,
+ *  a 3 px accent line with a glow in the gap above or below the row. */
+const DROP_LINE =
+  "before:pointer-events-none before:absolute before:inset-x-1.5 before:z-20 before:h-[3px] before:rounded-full before:bg-accent before:shadow-[0_0_10px_var(--color-accent)] before:content-['']";
+
 type List = "layers" | "combos";
 
 /** `value` null: neither list is on show (the Behavior Library is). */
@@ -56,7 +61,10 @@ function LayerList({ onPicked }: { onPicked?: () => void }) {
   const rows = useRowDrag((from, to) => void io.moveLayer(from, to));
   const [renaming, setRenaming] = useState<number | null>(null);
   const [name, setName] = useState("");
-  useEffect(() => setRenaming(null), [state.layerMetadata]);
+  // A layer added or removed elsewhere ends a rename; a refreshed copy of the
+  // same names (switching layer on a keyboard) must not, or double-click never sticks.
+  const layerCount = state.layerMetadata?.length;
+  useEffect(() => setRenaming(null), [layerCount]);
 
   const numLayers = bundle.caps.num_layers;
   const layers = state.layerMetadata
@@ -196,9 +204,10 @@ function LayerList({ onPicked }: { onPicked?: () => void }) {
             {...menu.rowProps(layer)}
             className={cx(
               "group relative flex items-center rounded-xl border transition-all duration-200",
-              rows.drag?.from === layer && "opacity-40",
-              rows.edge(layer) === "top" && "shadow-[0_-2px_0_0_var(--color-accent)]",
-              rows.edge(layer) === "bottom" && "shadow-[0_2px_0_0_var(--color-accent)]",
+              rows.drag?.from === layer && "border-dashed opacity-30",
+              rows.edge(layer) && DROP_LINE,
+              rows.edge(layer) === "top" && "before:-top-1.5",
+              rows.edge(layer) === "bottom" && "before:-bottom-1.5",
               active
                 ? "border-accent bg-raised shadow-sm"
                 : menu.openFor === layer

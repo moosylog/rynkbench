@@ -109,6 +109,28 @@ export function putSlot(current: KeySlots, slot: Slot, value: Action | null): Sl
   return { ...values, [slot]: value };
 }
 
+/** The slots after swapping two of them, as GLIDE does when a slot is dragged
+ *  by its handle onto another (core/slots.js swapSlots): each takes the other's
+ *  action; a hold or double tap left empty goes away, an empty tap stays an
+ *  empty tap. `null` when there is nothing to swap. */
+export function swapSlots(current: KeySlots, a: Slot, b: Slot): SlotValues | null {
+  if (a === b || current.kind !== "slots") return null;
+  const valueOf = (slot: Slot) => {
+    const value = current[slot];
+    return value === null || value === "No" ? null : value;
+  };
+  const [first, second] = [valueOf(a), valueOf(b)];
+  if (first === null && second === null) return null;
+  const next: SlotValues = { tap: current.tap, hold: current.hold, doubleTap: current.doubleTap };
+  const put = (slot: Slot, value: Action | null) => {
+    if (slot === "tap") next.tap = value ?? "No";
+    else next[slot] = value;
+  };
+  put(a, second);
+  put(b, first);
+  return next;
+}
+
 /** How many keys, on every layer, are bound to each morse entry. */
 export function morseUses(layers: readonly (readonly KeyAction[])[]): Map<number, number> {
   const uses = new Map<number, number>();
