@@ -9,14 +9,14 @@ import { cx } from "../kit";
 import { KeyPreview } from "../canvas/KeyPreview";
 import type { KeyGlyph } from "../labels";
 import { PREFERENCES, usePreference } from "../preferences";
-import { CloseIcon, KeymapIcon, LightingIcon, MenuIcon, SettingsIcon } from "../icons";
+import { CloseIcon, KeymapIcon, LightingIcon, MenuIcon, SlidersIcon } from "../icons";
 import type { EditorTab } from "./editorTabs";
 
 const TABS: Record<EditorTab, { label: string; Icon: (props: { size?: number }) => ReactNode }> = {
   pick: { label: "Pick Key", Icon: KeymapIcon },
   layer: { label: "Switch Layer", Icon: MenuIcon },
   lighting: { label: "Lighting", Icon: LightingIcon },
-  all: { label: "Every action", Icon: SettingsIcon },
+  all: { label: "Every action", Icon: SlidersIcon },
 };
 
 /** The editor's parts stacked, as on a narrow screen and beside the keyboard. */

@@ -4,6 +4,8 @@
 
 export type {
   Action,
+  /** The keyboard-wide timings (combo, one-shot, tap intervals). */
+  BehaviorConfig,
   /** A combo: keys pressed together and what they do. */
   ComboDefinition,
   EncoderAction,

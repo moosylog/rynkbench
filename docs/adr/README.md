@@ -18,5 +18,6 @@ One short page per decision that shapes the code, so the reason survives the peo
 | [0012](0012-sync.md) | One write path: plan the difference, write only that | Accepted |
 | [0013](0013-one-history-one-gate.md) | One document, one history, one gate: adopted module by module | Accepted |
 | [0014](0014-themes-preferences-key-faces.md) | GLIDE's themes, Settings and key faces | Accepted |
+| [0015](0015-layout-properties.md) | Layout properties, as in GLIDE | Accepted |
 
 The glossary is in [../glossary.md](../glossary.md).

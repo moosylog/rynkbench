@@ -5,8 +5,11 @@
 import type { BatteryStatus } from "../vendor/rynk-wasm/rynk_wasm";
 import { useWorkbench } from "./state";
 import { useSharedDocumentTransfer } from "./transfer-actions";
+import { LayoutProperties } from "./properties/LayoutProperties";
+import { openProperties } from "./properties/store";
 import { Chip, Button, cx } from "./kit";
 import {
+  SlidersIcon,
   BatteryGlyph,
   CombinatorIcon,
   DeviceIcon,
@@ -131,7 +134,18 @@ export function TopBar({
         <span className="max-w-[220px] truncate text-body font-semibold text-mute max-sm:hidden" title={workspaceName}>
           {workspaceName}
         </span>
+        {/* As in GLIDE: the sliders beside the layout's name open Layout properties. */}
+        <button
+          type="button"
+          onClick={() => openProperties()}
+          aria-label="Layout properties"
+          title="Layout properties: name, keyboard, firmware options and lighting"
+          className="-ml-1.5 flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink hover:bg-hover"
+        >
+          <SlidersIcon size={16} />
+        </button>
       </div>
+      <LayoutProperties />
 
       <FileMenus />
       <div className="h-5 w-px shrink-0 bg-line max-sm:hidden" />

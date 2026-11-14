@@ -25,6 +25,8 @@ export interface DocumentTransfer {
   dismissReport: () => void;
   /** Display name of the workspace; follows the file an offline import opened. */
   workspaceName: string;
+  /** Renames it (Layout properties); a file saved later takes this name. */
+  renameWorkspace: (name: string) => void;
   importFile: (event: ChangeEvent<HTMLInputElement>) => Promise<void>;
   exportFile: (format: ConfigFormat) => Promise<void>;
 }
@@ -192,8 +194,9 @@ export function useDocumentTransfer(): DocumentTransfer {
       const link = document.createElement("a");
       link.href = url;
       const stem =
-        (offline ? workspaceName.replace(/\.(toml|json)$/i, "") : bundle.model.name)
-          ?.replace(/[^a-z0-9]+/gi, "-")
+        workspaceName
+          .replace(/\.(toml|json)$/i, "")
+          .replace(/[^a-z0-9]+/gi, "-")
           .replace(/^-|-$/g, "")
           .toLowerCase() || "keyboard";
       link.download = `${stem}-rynkbench.${FORMAT_EXTENSION[format]}`;
@@ -218,6 +221,7 @@ export function useDocumentTransfer(): DocumentTransfer {
     previewMigration,
     dismissReport: () => setReport(null),
     workspaceName,
+    renameWorkspace: setWorkspaceName,
     importFile,
     exportFile,
   };

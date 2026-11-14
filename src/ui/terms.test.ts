@@ -19,7 +19,6 @@ describe("terms", () => {
       "section.macros": "Macros",
       "section.forks": "Forks",
       "section.profiles": "Profiles",
-      "section.behavior": "Behavior",
       "section.transforms": "Transforms",
       "section.usage": "Usage",
       "section.live": "Live",

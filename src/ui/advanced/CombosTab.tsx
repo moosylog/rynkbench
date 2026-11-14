@@ -345,7 +345,7 @@ export function CombosTab({
                 className="cursor-pointer underline underline-offset-2 transition-colors duration-120 hover:text-mute"
                 onClick={goBehavior}
               >
-                set in Behavior
+                set in Layout properties
               </button>
             </div>
 

@@ -133,7 +133,6 @@ function SectionView({ section }: { section: SectionId }) {
     case "morse":
     case "macros":
     case "forks":
-    case "behavior":
     case "transforms":
     case "usage":
       return <AdvancedSection section={section} />;

@@ -27,7 +27,7 @@ const ids = (facts: AreaFacts) => areasFor(facts).map((area) => area.id);
 describe("areas", () => {
   it("shows a plain RMK board everything but Lighting", () => {
     expect(ids(plainRmk)).toEqual(["layout", "behaviors", "device", "insights"]);
-    expect(areasFor(plainRmk).find((a) => a.id === "behaviors")?.sections).toEqual(["behavior", "transforms"]);
+    expect(areasFor(plainRmk).find((a) => a.id === "behaviors")?.sections).toEqual(["transforms"]);
   });
 
   it("adds Lighting, and Effects inside it, for an RGB board", () => {
@@ -45,7 +45,6 @@ describe("areas", () => {
       "macros",
       "forks",
       "profiles",
-      "behavior",
       "transforms",
     ]);
   });

@@ -31,7 +31,6 @@ export const TERMS = {
   "section.macros": { technical: "Macros", friendly: "Macros" },
   "section.forks": { technical: "Forks", friendly: "Conditional keys" },
   "section.profiles": { technical: "Profiles", friendly: "Tap timing" },
-  "section.behavior": { technical: "Behavior", friendly: "Behavior" },
   "section.transforms": { technical: "Transforms", friendly: "Quick changes" },
   "section.lighting": { technical: "Lighting", friendly: "Colors" },
   "section.effects": { technical: "Effects", friendly: "Effects" },

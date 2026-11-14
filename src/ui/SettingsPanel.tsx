@@ -14,7 +14,7 @@ import { setWording, useWording } from "./terms";
 import { PREFERENCES, detectOs, resetPreferences, usePreference, type Os } from "./preferences";
 import type { Setting as Stored } from "./settings";
 import { cx } from "./kit";
-import { CloseIcon, InfoIcon, SettingsIcon } from "./icons";
+import { CloseIcon, GearIcon, InfoIcon } from "./icons";
 
 const OS_NAMES: Record<Os, string> = { mac: "Mac", win: "Windows", linux: "Linux" };
 
@@ -290,7 +290,7 @@ export function SettingsPanel() {
           open ? "bg-raised text-ink" : "text-mute hover:bg-hover hover:text-ink",
         )}
       >
-        <SettingsIcon size={16} />
+        <GearIcon size={18} />
       </button>
       {open &&
         createPortal(
@@ -307,7 +307,7 @@ export function SettingsPanel() {
             >
               <div className="flex shrink-0 items-center gap-2 border-b border-line px-5 py-4">
                 <span className="text-accent">
-                  <SettingsIcon size={18} />
+                  <GearIcon size={18} />
                 </span>
                 <h3 className="flex-1 text-title font-bold text-ink">Settings</h3>
                 <button type="button" onClick={() => setOpen(false)} aria-label="Close settings" className="cursor-pointer text-mute hover:text-ink">

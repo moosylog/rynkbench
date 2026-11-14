@@ -66,7 +66,6 @@ export type Mode =
   | "macros"
   | "forks"
   | "profiles"
-  | "behavior"
   | "transforms"
   | "lighting"
   | "effects"
