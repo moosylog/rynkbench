@@ -22,7 +22,6 @@ describe("terms", () => {
       "section.transforms": "Transforms",
       "section.usage": "Usage",
       "section.live": "Live",
-      "section.effects": "RGB Effects",
     };
     for (const [id, label] of Object.entries(technical)) expect(termFor(id as TermId, "technical")).toBe(label);
   });

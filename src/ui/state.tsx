@@ -217,8 +217,6 @@ export function initialWorkbenchState(bundle: ConnectedBundle): WorkbenchState {
     lightingBusy: false,
     lightingError: null,
     hoverLeds: null,
-    lightingSelection: [],
-    paintTick: {},
     combos: bundle.combos,
     morse: bundle.morse,
     forks: bundle.forks,
@@ -556,27 +554,14 @@ export function makeWorkbenchReducer(cols: number) {
       case "paint": {
         const target = act.target ?? state.lightingTarget;
         const draft = { ...targetDraft(state, target) };
-        const paintTick = { ...state.paintTick };
-        for (const cell of act.cells) {
-          draft[cell.led_id] = cell;
-          paintTick[cell.led_id] = (paintTick[cell.led_id] ?? 0) + 1;
-        }
-        return {
-          ...state,
-          ...setTargetDraft(state, target, draft),
-          paintTick,
-          lightingError: null,
-        };
+        for (const cell of act.cells) draft[cell.led_id] = cell;
+        return { ...state, ...setTargetDraft(state, target, draft), lightingError: null };
       }
       case "erase": {
         const target = act.target ?? state.lightingTarget;
         const draft = { ...targetDraft(state, target) };
-        const paintTick = { ...state.paintTick };
-        for (const id of act.ledIds) {
-          delete draft[id];
-          paintTick[id] = (paintTick[id] ?? 0) + 1;
-        }
-        return { ...state, ...setTargetDraft(state, target, draft), paintTick };
+        for (const id of act.ledIds) delete draft[id];
+        return { ...state, ...setTargetDraft(state, target, draft) };
       }
       case "draftReset": {
         const target = act.target ?? state.lightingTarget;
@@ -605,9 +590,6 @@ export function makeWorkbenchReducer(cols: number) {
           draft: { ...applied },
           lightingBusy: false,
           lightingError: null,
-          // A bulk selection is a staging aid; once applied it has served
-          // its purpose and lingering outlines would read as pending work.
-          lightingSelection: [],
         };
       }
       case "scenesApplied":
@@ -700,26 +682,6 @@ export function makeWorkbenchReducer(cols: number) {
         };
       case "hoverLeds":
         return { ...state, hoverLeds: act.leds };
-      case "lightingSelect": {
-        if (act.mode === undefined || act.mode === "replace")
-          return { ...state, lightingSelection: act.leds };
-        const next = new Set(state.lightingSelection);
-        for (const led of act.leds) {
-          if (act.mode === "add") next.add(led);
-          else next.delete(led);
-        }
-        // Preserve selection order so the count and paint order stay stable.
-        const selection = [...state.lightingSelection.filter((led) => next.has(led))];
-        if (act.mode === "add") {
-          const seen = new Set(selection);
-          for (const led of act.leds) {
-            if (seen.has(led)) continue;
-            seen.add(led);
-            selection.push(led);
-          }
-        }
-        return { ...state, lightingSelection: selection };
-      }
       case "lightingStateSet":
         return { ...state, lightingState: act.state, lightingBusy: false, lightingError: null };
       case "slotWriteStart": {
@@ -906,8 +868,6 @@ export interface WorkbenchIo {
   moveLayer(layer: number, to: number): Promise<IoWriteResult>;
   deleteLayer(layer: number): Promise<IoWriteResult>;
   refreshLayerState(): void;
-  applyOverlay(cells: LightingOverlayCell[]): void;
-  clearOverlay(): void;
   refreshLighting(): void;
   setLightingState(state: LightingMutableState): void;
   /** Replace the on-device scene table (only when scenes are supported). */
@@ -1377,21 +1337,6 @@ export function makeIo(
             complete: snapshot.complete,
           }),
         () => {},
-      );
-    },
-    applyOverlay(cells) {
-      dispatch({ type: "lightingBusy", busy: true, error: null });
-      session.lighting.replaceOverlay(cells).then(
-        (lightingState) =>
-          dispatch({ type: "overlayApplied", state: lightingState, cells }),
-        (err) => dispatch({ type: "lightingBusy", busy: false, error: errorMessage(err) }),
-      );
-    },
-    clearOverlay() {
-      dispatch({ type: "lightingBusy", busy: true, error: null });
-      session.lighting.clearOverlay().then(
-        (lightingState) => dispatch({ type: "overlayApplied", state: lightingState, cells: [] }),
-        (err) => dispatch({ type: "lightingBusy", busy: false, error: errorMessage(err) }),
       );
     },
     refreshLighting() {

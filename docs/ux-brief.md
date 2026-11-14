@@ -36,12 +36,12 @@ Organize by what the person is trying to do, not by protocol area. Today’s sev
 | --- | --- | --- | --- |
 | Layout | Keymap, layers, encoders | keymap | every board |
 | Behaviors | Advanced (combos, forks, macros, morse), Profiles | combos, morse, forks, macros | boards that have any of them |
-| Lighting | Lighting, Effects, status presets | `lighting.state` and its surfaces | boards with RGB |
+| (Lighting) | no area since ADR 0016: each key's light in the key editor's RGB Lighting tab and Paint; the lights as a whole, effects, status setups and rules in Layout properties (RGB Lighting, RGB Effects) | `lighting.state` and its surfaces | boards with RGB |
 | Device | Device, connection, firmware update | device, `firmware.update` on desktop | connected boards |
 | Library | Import and export, board transfer, backups | none | always |
 | Insights | Usage, Live, health check | the graph; `live.*` for Live | always; Live when connected |
 
-A plain-RMK board shows Layout, Behaviors (without lighting), Device, Library and Insights. An RGB board adds Lighting. The area list comes from the capability set, never from a hard-coded list.
+A plain-RMK board shows Layout, Behaviors (without lighting), Device, Library and Insights. An RGB board adds the key editor's RGB Lighting tab and Layout properties' RGB tabs. The area list comes from the capability set, never from a hard-coded list.
 
 ## 5. Flows to design first
 
@@ -83,7 +83,7 @@ Build on what exists rather than replace it.
 | --- | --- | --- | --- | --- |
 | Layout | yes | yes | yes, touch layout | yes |
 | Behaviors | the surfaces the board has | same | yes | yes |
-| Lighting | hidden | shown | shown | shown |
+| RGB Lighting and RGB Effects (key editor, Layout properties) | hidden | shown | shown | shown |
 | Device | connection and info | plus lighting output | Bluetooth only, USB explained | plus firmware update |
 | Library | file import and export | same | same | same |
 | Insights | usage, health check | plus lighting findings | usage | plus Live |

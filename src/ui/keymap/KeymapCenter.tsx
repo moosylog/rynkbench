@@ -33,12 +33,11 @@ import { CanvasPill } from "./CanvasPill";
 import { CarriedKey } from "./CarriedKey";
 import { useKeyMoves } from "./useKeyMoves";
 import { useLightView } from "./lightView";
+import { LightsButton } from "./LightsButton";
 import { beginStroke } from "../draft/useDraftHistory";
 import { shownColor, type KeyLight } from "../lighting/keyLight";
 import { useKeyLights } from "./useKeyLights";
 import { cssEmissiveRgb } from "../color";
-import { cx } from "../kit";
-import { LightingIcon } from "../icons";
 import { useKeyClipboard } from "./useKeyClipboard";
 import {
   activePointingDevices,
@@ -87,13 +86,13 @@ export function KeymapCenter() {
   };
 
   // The layer's staged scene, previewed under the legends so bindings and
-  // lighting can be judged together. Lighting mode remains the place to paint.
+  // lighting can be judged together; the RGB Lighting tab paints it.
   const light = useLightView();
   const lights = useKeyLights();
   // The lit board shows the layer's lighting whatever the switch says.
   const lit = light.open || (layerLightingAvailable && showLighting);
   // The compiled firmware cells are part of what the layer shows, so the
-  // canvas previews the same composition Lighting mode does.
+  // canvas previews the same composition the keyboard shows.
   const sceneEffects = useMemo(
     () =>
       lit
@@ -211,19 +210,8 @@ export function KeymapCenter() {
         tools={
           <>
             {hovered && !drag && <KeyHoverCard keyView={hovered} />}
-                  {layerLightingAvailable && (
-              <button
-                type="button"
-                aria-pressed={showLighting}
-                title={showLighting ? "Hide the layer's lighting" : "Show the layer's lighting"}
-                onClick={() => setShowLighting(!showLighting)}
-                className={cx(
-                  "flex size-9 cursor-pointer items-center justify-center rounded-xl border bg-raised shadow-2xl transition-colors",
-                  showLighting ? "border-accent text-accent" : "border-line-strong text-mute hover:text-ink",
-                )}
-              >
-                <LightingIcon size={15} />
-              </button>
+            {bundle.caps.lighting_enabled && (
+              <LightsButton shown={layerLightingAvailable ? showLighting : undefined} onShown={setShowLighting} />
             )}
           </>
         }

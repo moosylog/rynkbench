@@ -1,4 +1,4 @@
-// While the key editor's Lighting tab is open the canvas shows the real board
+// While the key editor's RGB Lighting tab is open the canvas shows the real board
 // under its lights (GLIDE's lit view), and with Paint on, clicking or dragging
 // over keys gives them the tab's light. The tab and the canvas share this.
 

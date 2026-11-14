@@ -1,13 +1,37 @@
 // Layout properties' RGB Effects tab (ADR 0016): the firmware's effects across
 // the keyboard. One big Effects switch first, then the effect (and the overlay
 // effect, where the firmware has one), palette, speed and the effect's own
-// settings. Applied to the keyboard in one go, as on the Effects screen.
+// settings. Applied to the keyboard in one go.
 
 import { ApplyBar, ErrorBanner, cx } from "../kit";
 import { Slider } from "../lighting/BackgroundPanel";
-import { NameSelect } from "../effects/EffectsMode";
 import { BigSwitch } from "./BigSwitch";
-import { useEffectsDraft } from "../effects/useEffectsDraft";
+import { useEffectsDraft } from "./useEffectsDraft";
+
+/** One of the firmware's named lists (effects, palettes) as a select. */
+function NameSelect({ label, names, value, onChange }: {
+  label: string;
+  names: string[];
+  value: number;
+  onChange: (index: number) => void;
+}) {
+  return (
+    <label className="flex items-center justify-between gap-3 text-body text-mute">
+      {label}
+      <select
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="min-w-0 max-w-[60%] rounded-lg border border-line bg-well px-2 py-1 text-body text-ink"
+      >
+        {names.map((name, index) => (
+          <option key={index} value={index}>
+            {name}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
 
 export function EffectsSection() {
   const fx = useEffectsDraft();

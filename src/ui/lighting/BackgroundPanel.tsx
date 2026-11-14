@@ -1,8 +1,7 @@
 // The keyboard's lights as a whole: on or off, brightness, and the VIA-style
 // background under every key's own light (mode, HSV, speed). Staged locally,
 // applied with io.setLightingState; the keyboard's returned state is the
-// source of truth. In Layout properties' RGB Lighting tab and the Lighting
-// screen.
+// source of truth. In Layout properties' RGB Lighting tab.
 
 import { useMemo } from "react";
 import type { LightingBackgroundMode } from "../../vendor/rynk-wasm/rynk_wasm";

@@ -4,9 +4,10 @@
 // Paint, which makes the choice a brush for the canvas (one undo step per
 // stroke). While the tab is open the canvas shows the board under its lights.
 // Changes join the draft (sent with Review & send; in Live, once painting
-// pauses). Zones and condition rules stay in the Lighting screen for now.
+// pauses). The lights as a whole are in Layout properties (RGB settings…).
 
 import { useEffect, useState } from "react";
+import { openProperties } from "../properties/store";
 import type { LightingEffect } from "../../model/lighting-types";
 import { useWorkbench } from "../state";
 import { effectColor } from "../lighting/decor";
@@ -55,7 +56,7 @@ function ReadOnlyLight({ effect }: { effect: LightingEffect }) {
 }
 
 export function LayerLighting({ ledId }: { ledId: number | undefined }) {
-  const { state, dispatch } = useWorkbench();
+  const { state } = useWorkbench();
   const view = useLightView();
   const lights = useKeyLights();
   const layer = state.uiLayer;
@@ -84,6 +85,7 @@ export function LayerLighting({ ledId }: { ledId: number | undefined }) {
     if (ledId !== undefined && !sameLight(light, current)) lights.set(light, [ledId]);
   };
   const unusable = ledId === undefined && !view.brush;
+  const lightsOff = state.lightingState?.output_enabled === false;
 
   return (
     <div className="flex flex-col gap-3">
@@ -106,6 +108,18 @@ export function LayerLighting({ ledId }: { ledId: number | undefined }) {
       {view.brush && <p className="text-small text-accent">Click or drag over keys to give them this lighting.</p>}
       {ledId === undefined && !view.brush && (
         <p className="text-small text-mute">This key has no LED. Turn on Paint to light other keys.</p>
+      )}
+      {lightsOff && (
+        <div className="flex items-center gap-2 rounded-xl bg-warn/10 p-3 text-body text-warn">
+          <span className="mr-auto">None of these show while the keyboard's lights are off.</span>
+          <button
+            type="button"
+            onClick={() => openProperties("lighting")}
+            className="shrink-0 cursor-pointer rounded-full border border-warn px-3 py-1 text-small font-semibold hover:bg-warn/10"
+          >
+            RGB settings…
+          </button>
+        </div>
       )}
       {state.lightingError && <ErrorBanner message={state.lightingError} />}
 
@@ -153,12 +167,9 @@ export function LayerLighting({ ledId }: { ledId: number | undefined }) {
       <button
         type="button"
         className="self-start cursor-pointer text-small text-mute underline-offset-2 hover:text-ink hover:underline"
-        onClick={() => {
-          dispatch({ type: "lightingTarget", target: layer });
-          dispatch({ type: "mode", mode: "lighting" });
-        }}
+        onClick={() => openProperties("lighting")}
       >
-        Zones and rules: open the Lighting screen
+        RGB settings…
       </button>
     </div>
   );

@@ -23,4 +23,6 @@ export type {
   LightingExtensionState,
   /** One of an effect's own settings, named and bounded by the firmware. */
   LightingExtensionParam,
+  /** Whether only the top active layer lights, or every active one. */
+  LightingLayerPolicy,
 } from "../vendor/rynk-wasm/rynk_wasm";

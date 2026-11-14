@@ -1,137 +1,61 @@
-// Status setups: a layer's status lights installed together with the keys
-// that switch what they show. The Glove80 Magic status cluster and stock
-// Magic layer in one go; with a canvas to pick keys on (`picker`), one
-// connection key or a battery bar of chosen keys. The rules join the draft
-// (sent with Review & send; in Live, once you pause), as every light does.
+// Status setups, in Layout properties' RGB Lighting tab under Advanced: a
+// layer's status lights installed together with the keys that switch what
+// they show. On a Glove80, the Magic status cluster (a battery bar per half,
+// Bluetooth 1–3 and USB) and MoErgo's stock Magic layer. One key's status
+// light is set on the key itself (its RGB Lighting tab). The rules join the
+// draft (sent with Review & send; in Live, once you pause), as every light does.
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type { KeyView } from "../../model/keyboard";
 import { Button, SectionLabel } from "../kit";
 import { useCapability } from "../use-capabilities";
-import { keyAddressLabel, keyHoverTitle } from "../key-address";
-import { KeyChoice } from "./KeyChoice";
-import { BATTERY_BAR_PICK, CONNECTION_KEY_PICK } from "./keyPick";
-import type { KeyPick } from "./keyPick";
 import { layerName } from "../layer-names";
 import { useWorkbench } from "../state";
 import { StockMagicLayerPanel } from "./StockMagicLayerPanel";
 import { stockMagicIndicatorKeys } from "./stockMagicLayer";
-import {
-  BAR_ORDERS,
-  BAR_STYLES,
-  GLOVE80_BAR_LAYOUTS,
-  MAX_BAR_SEGMENTS,
-  MIN_BAR_SEGMENTS,
-  batteryBarLevels,
-  connectionKeyAction,
-  detectBarOrder,
-  glove80ConnectionKeys,
-  installGlove80StatusRules,
-  orderBatteryBar,
-  replaceBatteryBar,
-  replaceBleStatus,
-  replaceUsbStatus,
-  writeGlove80StatusSetup,
-} from "./statusPresets";
-import type { BarOrder, BarStyle, Glove80BarLayout } from "./statusPresets";
+import { GLOVE80_BAR_LAYOUTS, glove80ConnectionKeys, installGlove80StatusRules, writeGlove80StatusSetup } from "./statusPresets";
+import type { Glove80BarLayout } from "./statusPresets";
 import { layersInMask } from "./wakeLayers";
 import { hasConnectionEffectsConditions, hasLayerIndicatorConditions } from "../../session/lighting-features";
 
-const selectClass =
-  "mt-1 w-full rounded-md border border-line bg-raised px-2 py-1.5 text-body text-ink";
+const selectClass = "mt-1 w-full rounded-md border border-line bg-raised px-2 py-1.5 text-body text-ink";
 
 function keyAt(keys: KeyView[], row: number, col: number): KeyView | undefined {
   return keys.find((key) => key.row === row && key.col === col);
 }
 
-export function StatusPresetsPanel({ picker }: {
-  /** Picking keys on the canvas, for a connection key or a battery bar; without it only the presets show. */
-  picker?: { pick: KeyPick | null; onPick: (pick: KeyPick | null) => void };
-}) {
+export function StatusPresetsPanel() {
   const { bundle, state, dispatch, io } = useWorkbench();
-  const pick = picker?.pick ?? null;
-  const onPick = picker?.onPick ?? (() => {});
   const ruleTable = useCapability("lighting.rules");
   const numLayers = bundle.caps.num_layers;
   const wakeLayers = state.lightingOutputMode?.wake_layers ?? state.lightingControls.wake_layers;
   const [wakeLayer] = layersInMask(wakeLayers, numLayers);
   const preferredLayer = bundle.boardProfile?.defaultStatusLayer;
-  const defaultLayer = wakeLayer ?? (
-    preferredLayer !== undefined && preferredLayer < numLayers ? preferredLayer : state.currentLayer
-  );
-  // Follow the current wake policy until the user explicitly chooses a layer.
+  const defaultLayer = wakeLayer ?? (preferredLayer !== undefined && preferredLayer < numLayers ? preferredLayer : state.currentLayer);
+  // Follow the current wake policy until a layer is chosen.
   const [chosenLayer, setChosenLayer] = useState<number | null>(null);
   const layer = chosenLayer !== null && chosenLayer < numLayers ? chosenLayer : defaultLayer;
-  const [node, setNode] = useState(0);
-  const [kind, setKind] = useState<"ble" | "usb">("ble");
-  const [slot, setSlot] = useState(0);
-  const [order, setOrder] = useState<BarOrder | "auto">("auto");
-  const [style, setStyle] = useState<BarStyle>("bands");
   const [layout, setLayout] = useState<Glove80BarLayout>("outer-columns");
   const [message, setMessage] = useState<string | null>(null);
-
-  const selectedKeys = useMemo(() => {
-    const byLed = new Map(
-      bundle.model.keys
-        .filter((key): key is KeyView & { ledId: number } => key.ledId !== undefined)
-        .map((key) => [key.ledId, key]),
-    );
-    return state.lightingSelection.flatMap((led) => {
-      const key = byLed.get(led);
-      return key ? [key] : [];
-    });
-  }, [bundle.model.keys, state.lightingSelection]);
-
-  const selectedKey = selectedKeys.length === 1 && state.lightingSelection.length === 1 ? selectedKeys[0] : null;
-  const barKeys = selectedKeys.map((key) => ({
-    ledId: key.ledId!,
-    x: key.shape.rect.x,
-    y: key.shape.rect.y,
-  }));
-  const barOrder = order === "auto" ? detectBarOrder(barKeys) : order;
-  const barSized =
-    selectedKeys.length >= MIN_BAR_SEGMENTS && selectedKeys.length <= MAX_BAR_SEGMENTS;
-  const selectedBar = barSized ? orderBatteryBar(barKeys, barOrder) : null;
-  const barLevels = selectedBar ? batteryBarLevels(selectedBar.length, style) : null;
-  const barPreview = selectedBar?.map(
-    (led) => selectedKeys.find((key) => key.ledId === led)!,
-  );
 
   if (ruleTable === undefined) return null;
 
   const nameOf = (n: number) => layerName(state.layerMetadata, n);
   const predicatesSupported = hasConnectionEffectsConditions(bundle.lightingCaps);
   // The tagged rule API carries the layer and lock-indicator predicates the
-  // stock Magic layer needs, so firmware shipping RULES alone qualifies. Gating
-  // on the retired bit told users on current firmware to update it.
+  // stock Magic layer needs, so firmware shipping RULES alone qualifies.
   const magicSupported = hasLayerIndicatorConditions(bundle.lightingCaps);
-  const exactKeys = glove80ConnectionKeys(layer).map((preset) => ({
-    preset,
-    key: keyAt(bundle.model.keys, preset.row, preset.col),
-  }));
   const glove80Available =
     bundle.boardProfile?.presets.includes("glove80-status") &&
     numLayers > 2 &&
     bundle.caps.num_split_peripherals > 0 &&
     bundle.caps.num_ble_profiles >= 3 &&
-    exactKeys.every(({ preset, key }) => key?.ledId === preset.led);
+    glove80ConnectionKeys(layer).every((preset) => keyAt(bundle.model.keys, preset.row, preset.col)?.ledId === preset.led);
   const stockMagicAvailable =
     glove80Available &&
     bundle.boardProfile?.presets.includes("glove80-stock-magic") &&
-    stockMagicIndicatorKeys().every(
-      (indicator) => keyAt(bundle.model.keys, indicator.row, indicator.col)?.ledId === indicator.led,
-    );
-
-  /** The rules join the draft, like every light. */
-  const stageRules = (rules: typeof state.runtimeConditionalDraft, success: string) => {
-    if (rules.length > ruleTable.slots) {
-      setMessage(`This setup needs ${rules.length} rules; the keyboard holds ${ruleTable.slots}.`);
-      return false;
-    }
-    dispatch({ type: "conditionalDraft", cells: rules });
-    setMessage(success);
-    return true;
-  };
+    stockMagicIndicatorKeys().every((indicator) => keyAt(bundle.model.keys, indicator.row, indicator.col)?.ledId === indicator.led);
+  if (!glove80Available) return null;
 
   const installGlove80 = async () => {
     const rules = installGlove80StatusRules(state.runtimeConditionalDraft, layer, layout);
@@ -141,8 +65,7 @@ export function StatusPresetsPanel({ picker }: {
     }
     const result = await writeGlove80StatusSetup(
       {
-        setKey: (preset, action) =>
-          io.setKey(preset.layer, preset.row, preset.col, action, { history: "invalidate" }),
+        setKey: (preset, action) => io.setKey(preset.layer, preset.row, preset.col, action, { history: "invalidate" }),
         applyRules: async (next) => {
           dispatch({ type: "conditionalDraft", cells: next });
           return { ok: true };
@@ -159,95 +82,31 @@ export function StatusPresetsPanel({ picker }: {
     );
   };
 
-  const installConnectionKey = async () => {
-    if (!selectedKey || selectedKey.ledId === undefined) return;
-    const connectionKind = kind === "ble" ? { type: "ble" as const, slot } : { type: "usb" as const };
-    const rules = kind === "ble"
-      ? replaceBleStatus(state.runtimeConditionalDraft, layer, selectedKey.ledId, slot)
-      : replaceUsbStatus(state.runtimeConditionalDraft, layer, selectedKey.ledId);
-    const keyResult = await io.setKey(
-      layer,
-      selectedKey.row,
-      selectedKey.col,
-      connectionKeyAction(connectionKind),
-      { history: "invalidate" },
-    );
-    if (!keyResult.ok) {
-      setMessage(`Not installed: ${keyResult.message}`);
-      return;
-    }
-    const ok = stageRules(
-      rules,
-      kind === "ble"
-        ? `The key switches to Bluetooth profile ${slot + 1} and shows its status on ${nameOf(layer)}.`
-        : `The key switches to USB and shows its status on ${nameOf(layer)}.`,
-    );
-    if (ok) {
-      onPick(null);
-      dispatch({ type: "lightingSelect", leds: [] });
-    }
-  };
-
-  const installBatteryBar = () => {
-    if (!selectedBar) return;
-    const rules = replaceBatteryBar(state.runtimeConditionalDraft, {
-      layer,
-      node,
-      leds: selectedBar,
-      style,
-    });
-    if (stageRules(rules, `${nameOf(layer)} has a ${selectedBar.length}-segment battery bar for node ${node}.`)) {
-      onPick(null);
-      dispatch({ type: "lightingSelect", leds: [] });
-    }
-  };
-
   return (
     <div>
       <SectionLabel>Status setup</SectionLabel>
-      <p className="mt-1 text-small leading-relaxed text-faint">
-        Bind connection actions and install their ordered status-light rules together. Presets
-        replace matching rules on the chosen keys, so running them again is safe.
-      </p>
-      <p className="mt-1 text-small leading-relaxed text-faint">
-        For a lighting toggle key, select the key in Keymap and pick a preset on its Lighting
-        tab.
-      </p>
-
       <label className="mt-2 block text-small text-faint">
-        Status layer
-        <select
-          value={layer}
-          onChange={(event) => setChosenLayer(Number(event.target.value))}
-          className={selectClass}
-        >
+        On the layer
+        <select value={layer} onChange={(event) => setChosenLayer(Number(event.target.value))} className={selectClass}>
           {Array.from({ length: numLayers }, (_, index) => (
             <option key={index} value={index}>
               {nameOf(index)}
-              {index === wakeLayer ? " · wakes lighting" : ""}
+              {index === wakeLayer ? " · wakes the lights" : ""}
             </option>
           ))}
         </select>
       </label>
-      <p className="mt-1 text-caption leading-relaxed text-faint">
-        Every rule installed below lights only while this layer is active.
-      </p>
 
-      {glove80Available && predicatesSupported && (
+      {predicatesSupported ? (
         <div className="mt-2 rounded-lg border border-accent-deep/40 bg-accent-dim/15 p-3">
           <div className="text-body font-medium text-ink">Glove80 Magic status cluster</div>
           <p className="mt-1 text-small leading-relaxed text-faint">
-            On {nameOf(layer)}: a battery bar per half, Bluetooth slots 1–3 on the lower left
-            thumb arc, and USB on the upper thumb key. Green is active, blue selected/idle,
-            blinking white advertising, red bonded-idle, and gray empty.
+            A battery bar per half, Bluetooth 1–3 on the lower left thumb arc and USB on the upper thumb key. Running it again
+            replaces it.
           </p>
           <label className="mt-2 block text-small text-faint">
             Battery bars
-            <select
-              value={layout}
-              onChange={(event) => setLayout(event.target.value as Glove80BarLayout)}
-              className={selectClass}
-            >
+            <select value={layout} onChange={(event) => setLayout(event.target.value as Glove80BarLayout)} className={selectClass}>
               {GLOVE80_BAR_LAYOUTS.map((entry) => (
                 <option key={entry.id} value={entry.id}>
                   {entry.label} · {entry.hint}
@@ -255,161 +114,18 @@ export function StatusPresetsPanel({ picker }: {
               ))}
             </select>
           </label>
-          <Button
-            variant="primary"
-            className="mt-2 w-full"
-            disabled={state.lightingBusy}
-            onClick={installGlove80}
-          >
+          <Button variant="primary" className="mt-2 w-full" disabled={state.lightingBusy} onClick={installGlove80}>
             Install complete Glove80 setup on {nameOf(layer)}
           </Button>
         </div>
+      ) : (
+        <p className="mt-2 text-small leading-relaxed text-warn">Update firmware to install Bluetooth and USB status keys.</p>
       )}
 
       {stockMagicAvailable && magicSupported && <StockMagicLayerPanel layer={layer} />}
       {stockMagicAvailable && !magicSupported && (
         <p className="mt-2 text-small leading-relaxed text-warn">
           Update firmware to install the stock Magic layer with layer and lock indicators.
-        </p>
-      )}
-
-      {picker && (
-        <>
-          <div className="mt-3 rounded-lg border border-line-soft bg-well p-3">
-            <div className="text-body font-medium text-ink">Connection key</div>
-            <p className="mt-1 text-small leading-relaxed text-faint">
-              Pick one lit key, then bind its action and status indicator together.
-            </p>
-            <KeyChoice
-              pick={CONNECTION_KEY_PICK}
-              active={pick === CONNECTION_KEY_PICK}
-              keys={selectedKeys}
-              problem={
-                selectedKeys.length > 1 && pick !== BATTERY_BAR_PICK
-                  ? `${selectedKeys.length} keys are chosen; a connection key needs exactly one.`
-                  : undefined
-              }
-              onPick={onPick}
-            />
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <label className="text-small text-faint">
-                Action
-                <select
-                  value={kind}
-                  onChange={(event) => setKind(event.target.value as "ble" | "usb")}
-                  className={selectClass}
-                >
-                  <option value="ble">Bluetooth profile</option>
-                  <option value="usb">USB output</option>
-                </select>
-              </label>
-              {kind === "ble" ? (
-                <label className="text-small text-faint">
-                  Profile
-                  <select
-                    value={slot}
-                    onChange={(event) => setSlot(Number(event.target.value))}
-                    className={selectClass}
-                  >
-                    {Array.from({ length: bundle.caps.num_ble_profiles }, (_, index) => (
-                      <option key={index} value={index}>Slot {index + 1}</option>
-                    ))}
-                  </select>
-                </label>
-              ) : <div />}
-            </div>
-            <Button
-              variant="outline"
-              className="mt-2 w-full"
-              title={selectedKey ? keyHoverTitle(selectedKey) : undefined}
-              disabled={!predicatesSupported || selectedKey === null || state.lightingBusy}
-              onClick={installConnectionKey}
-            >
-              {selectedKey ? `Configure ${keyAddressLabel(selectedKey)}` : "Choose a key first"}
-            </Button>
-          </div>
-
-          <div className="mt-2 rounded-lg border border-line-soft bg-well p-3">
-            <div className="text-body font-medium text-ink">Battery bar</div>
-            <p className="mt-1 text-small leading-relaxed text-faint">
-              Pick {MIN_BAR_SEGMENTS}–{MAX_BAR_SEGMENTS} keys in a column or a row. Along the fill
-              direction each lights at a rising level; charging turns the lit segments blue.
-            </p>
-            <KeyChoice
-              pick={BATTERY_BAR_PICK}
-              active={pick === BATTERY_BAR_PICK}
-              keys={barPreview ?? selectedKeys}
-              chip={(key, index) =>
-                barLevels ? `${keyAddressLabel(key)} ≥${barLevels[index]}%` : keyAddressLabel(key)
-              }
-              problem={
-                selectedKeys.length > 0 && !barSized && pick !== CONNECTION_KEY_PICK
-                  ? `${selectedKeys.length} chosen; a bar needs ${MIN_BAR_SEGMENTS}–${MAX_BAR_SEGMENTS} keys.`
-                  : undefined
-              }
-              onPick={onPick}
-            />
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <label className="text-small text-faint">
-                Battery node
-                <select
-                  value={node}
-                  onChange={(event) => setNode(Number(event.target.value))}
-                  className={selectClass}
-                >
-                  {Array.from({ length: 1 + bundle.caps.num_split_peripherals }, (_, index) => (
-                    <option key={index} value={index}>{index === 0 ? "Central · 0" : `Peripheral · ${index}`}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-small text-faint">
-                Fill direction
-                <select
-                  value={order}
-                  onChange={(event) => setOrder(event.target.value as BarOrder | "auto")}
-                  className={selectClass}
-                >
-                  <option value="auto">
-                    Auto{selectedKeys.length > 0
-                      ? ` · ${BAR_ORDERS.find((entry) => entry.id === barOrder)?.label.toLowerCase()}`
-                      : ""}
-                  </option>
-                  {BAR_ORDERS.map((entry) => (
-                    <option key={entry.id} value={entry.id}>{entry.label}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="col-span-2 text-small text-faint">
-                Style
-                <select
-                  value={style}
-                  onChange={(event) => setStyle(event.target.value as BarStyle)}
-                  className={selectClass}
-                >
-                  {BAR_STYLES.map((entry) => (
-                    <option key={entry.id} value={entry.id}>{entry.label}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <Button
-              variant="outline"
-              className="mt-2 w-full"
-              disabled={selectedBar === null || state.lightingBusy}
-              onClick={installBatteryBar}
-            >
-              {selectedBar
-                ? `Install ${selectedBar.length}-segment node ${node} bar`
-                : `Choose ${MIN_BAR_SEGMENTS}–${MAX_BAR_SEGMENTS} keys first`}
-            </Button>
-          </div>
-        </>
-      )}
-
-      {!predicatesSupported && (
-        <p className="mt-2 text-small leading-relaxed text-warn">
-          This firmware can store battery rules but not connection predicates; update it before
-          installing Bluetooth or USB status keys.
         </p>
       )}
       {message && <p className="mt-2 text-small leading-relaxed text-mute">{message}</p>}

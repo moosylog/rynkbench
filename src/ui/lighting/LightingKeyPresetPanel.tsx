@@ -142,7 +142,7 @@ export function LightingKeyPresetPanel({
       {!wakes && (
         <p className="mt-2 text-small leading-relaxed text-faint">
           The indicator lights while {layerName(state.layerMetadata, layer)} is active. To see it
-          while lighting is off, enable that layer’s wake setting in Lighting mode.
+          while the lights are off, let that layer wake them: RGB settings, Advanced.
         </p>
       )}
       {message && (

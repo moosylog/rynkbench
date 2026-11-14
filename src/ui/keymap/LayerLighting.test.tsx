@@ -75,7 +75,7 @@ describe("layer lighting summary", () => {
       );
       expect(bundle.sceneStatus).toBeNull();
       expect(html).toContain(`fill="${effectColor(compiledScenes[0].effect)}"`);
-      expect(html).toContain("Hide the layer&#x27;s lighting");
+      expect(html).toContain('aria-label="Lights"');
     } finally {
       await session.close();
     }

@@ -28,8 +28,6 @@ import { useComboFocus } from "./keymap/useComboFocus";
 import { KeyEditor } from "./keymap/KeyEditor";
 import { useEditorBeside } from "./keymap/EditorPanel";
 import { PREFERENCES, usePreference } from "./preferences";
-import { LightingMode } from "./lighting/LightingMode";
-import { EffectsMode } from "./effects/EffectsMode";
 import { LiveMode } from "./live/LiveMode";
 import { AdvancedSection } from "./advanced/AdvancedMode";
 import { ProfilesMode } from "./ProfilesMode";
@@ -41,7 +39,6 @@ import { SETTING_KEYS } from "./settings";
 import { InspectorShell, cx } from "./kit";
 import { historyShortcut, keyEditHistoryLabel } from "../model/history";
 import { layerName } from "./layer-names";
-import { firmwareFactsOf, resolveCapabilities } from "../capabilities";
 import { useTerms } from "./terms";
 import { getLocaleId, subscribeLocale } from "./locale";
 import { areaOfSection, areasFor, sectionTerm, type Area, type AreaId, type SectionId } from "./areas";
@@ -140,10 +137,6 @@ function SectionView({ section }: { section: SectionId }) {
       return <AdvancedSection section={section} />;
     case "profiles":
       return <ProfilesMode />;
-    case "lighting":
-      return <LightingMode />;
-    case "effects":
-      return <EffectsMode />;
     case "device":
       return <DeviceMode />;
     case "live":
@@ -178,7 +171,6 @@ export function Workbench({
 
   // The areas and their sections come from what the keyboard and the session
   // offer (src/ui/areas.ts).
-  const capabilities = useMemo(() => resolveCapabilities(firmwareFactsOf(bundle)), [bundle]);
   const areas = useMemo(
     () =>
       areasFor({
@@ -188,10 +180,8 @@ export function Workbench({
         macros: bundle.caps.macro_space_size > 0,
         forks: bundle.caps.max_forks > 0,
         tapProfiles: bundle.morseProfileCapacity > 0,
-        lighting: capabilities.has("lighting.state"),
-        effects: capabilities.has("lighting.extension"),
       }),
-    [bundle, capabilities],
+    [bundle],
   );
   // The Behavior Library lists the behavior sections this keyboard has.
   const libraryKinds = useMemo(() => {

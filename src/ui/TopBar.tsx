@@ -15,7 +15,6 @@ import {
   DeviceIcon,
   InsightsIcon,
   KeymapIcon,
-  LightingIcon,
   MenuIcon,
   PowerIcon,
   RedoIcon,
@@ -53,7 +52,6 @@ function BatteryReadout({ battery, split }: { battery: BatteryStatus; split: boo
 const AREA_ICON: Record<AreaId, typeof KeymapIcon> = {
   layout: KeymapIcon,
   behaviors: CombinatorIcon,
-  lighting: LightingIcon,
   device: DeviceIcon,
   insights: InsightsIcon,
 };

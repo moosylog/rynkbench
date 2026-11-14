@@ -13,11 +13,6 @@ export type StatusRule = RuntimeLightingRule;
  *    the whole bar green at 40%+, yellow at 20%+, red below. */
 export type BarStyle = "bands" | "stock";
 
-export const BAR_STYLES: Array<{ id: BarStyle; label: string }> = [
-  { id: "bands", label: "Equal bands · amber/red low" },
-  { id: "stock", label: "Whole bar · green/yellow/red" },
-];
-
 export const MIN_BAR_SEGMENTS = 3;
 export const MAX_BAR_SEGMENTS = 8;
 
@@ -89,56 +84,6 @@ export function glove80ConnectionKeys(layer = GLOVE80_MAGIC_LAYER): ConnectionKe
     { layer, row: 5, col: 6, led: 5, kind: { type: "ble", slot: 2 } },
     { layer, row: 0, col: 6, led: 0, kind: { type: "usb" } },
   ];
-}
-
-/** Fill direction of a battery bar: the first key lights at 20%, the last at 100%. */
-export type BarOrder = "bottom-up" | "top-down" | "left-right" | "right-left" | "selection";
-
-export const BAR_ORDERS: Array<{ id: BarOrder; label: string }> = [
-  { id: "bottom-up", label: "Bottom to top" },
-  { id: "top-down", label: "Top to bottom" },
-  { id: "left-right", label: "Left to right" },
-  { id: "right-left", label: "Right to left" },
-  { id: "selection", label: "Selection order" },
-];
-
-export interface BarKey {
-  ledId: number;
-  x: number;
-  y: number;
-}
-
-/** Vertical for a column, horizontal for a row — column stagger makes a row's
- *  keys differ in y, so the wider extent decides. */
-export function detectBarOrder(keys: readonly BarKey[]): BarOrder {
-  if (keys.length === 0) return "bottom-up";
-  const xs = keys.map((key) => key.x);
-  const ys = keys.map((key) => key.y);
-  const xSpan = Math.max(...xs) - Math.min(...xs);
-  const ySpan = Math.max(...ys) - Math.min(...ys);
-  return xSpan > ySpan ? "left-right" : "bottom-up";
-}
-
-/** LEDs in 20%→100% order. `keys` is in selection order. */
-export function orderBatteryBar(keys: readonly BarKey[], order: BarOrder): number[] {
-  const sorted = [...keys];
-  switch (order) {
-    case "bottom-up":
-      sorted.sort((a, b) => b.y - a.y || a.x - b.x);
-      break;
-    case "top-down":
-      sorted.sort((a, b) => a.y - b.y || a.x - b.x);
-      break;
-    case "left-right":
-      sorted.sort((a, b) => a.x - b.x || b.y - a.y);
-      break;
-    case "right-left":
-      sorted.sort((a, b) => b.x - a.x || b.y - a.y);
-      break;
-    case "selection":
-      break;
-  }
-  return sorted.map((key) => key.ledId);
 }
 
 const solid = (r: number, g: number, b: number): LightingEffect => ({

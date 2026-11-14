@@ -18,8 +18,8 @@ function readUiSources(dir = "src/ui"): Record<string, string> {
 
 describe("the probing rule itself", () => {
   it("applies to production UI code only", () => {
-    expect(isProbeChecked("src/ui/lighting/LightingMode.tsx")).toBe(true);
-    expect(isProbeChecked("src/ui/lighting/LightingMode.test.tsx")).toBe(false);
+    expect(isProbeChecked("src/ui/lighting/BackgroundPanel.tsx")).toBe(true);
+    expect(isProbeChecked("src/ui/lighting/BackgroundPanel.test.tsx")).toBe(false);
     expect(isProbeChecked("src/ui/state.tsx")).toBe(false);
     expect(isProbeChecked("src/ui/bundle.ts")).toBe(false);
     expect(isProbeChecked("src/session/link-session.ts")).toBe(false);

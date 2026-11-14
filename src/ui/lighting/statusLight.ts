@@ -5,10 +5,11 @@
 //   dark) while it is off;
 // - Battery level: one colour below a level, another above, for either half;
 // - Bluetooth profile: the profile's state (free, paired, chosen, connecting,
-//   in use), in the colours of the Lighting screen's status preset;
+//   in use), in the colours of the Glove80 status preset;
 // - USB: unplugged, plugged in, in use, likewise.
 // Only rules that are exactly one of these are the key's own; any other rule
-// on its LED belongs to the Lighting screen and is never touched. Pure.
+// on its LED belongs to the condition rules (Layout properties) and is never
+// touched. Pure.
 
 import type { LightingEffect, LightingRgb8 } from "../../model/lighting-types";
 import { effectRgb } from "./effect";

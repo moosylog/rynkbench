@@ -8,8 +8,6 @@ const plainRmk: AreaFacts = {
   macros: false,
   forks: false,
   tapProfiles: false,
-  lighting: false,
-  effects: false,
 };
 const everything: AreaFacts = {
   connected: true,
@@ -18,24 +16,14 @@ const everything: AreaFacts = {
   macros: true,
   forks: true,
   tapProfiles: true,
-  lighting: true,
-  effects: true,
 };
 
 const ids = (facts: AreaFacts) => areasFor(facts).map((area) => area.id);
 
 describe("areas", () => {
-  it("shows a plain RMK board everything but Lighting", () => {
+  it("shows a plain RMK board every area; lighting lives on the keys and in Layout properties (ADR 0016)", () => {
     expect(ids(plainRmk)).toEqual(["layout", "behaviors", "device", "insights"]);
     expect(areasFor(plainRmk).find((a) => a.id === "behaviors")?.sections).toEqual(["transforms"]);
-  });
-
-  it("adds Lighting, and Effects inside it, for an RGB board", () => {
-    const lighting = areasFor(everything).find((a) => a.id === "lighting");
-    expect(lighting?.sections).toEqual(["lighting", "effects"]);
-    expect(areasFor({ ...everything, effects: false }).find((a) => a.id === "lighting")?.sections).toEqual([
-      "lighting",
-    ]);
   });
 
   it("offers the Behaviors editors the firmware has, in order", () => {
@@ -51,7 +39,7 @@ describe("areas", () => {
 
   it("drops Device and Live for a file opened without a keyboard", () => {
     const offline = { ...everything, connected: false };
-    expect(ids(offline)).toEqual(["layout", "behaviors", "lighting", "insights"]);
+    expect(ids(offline)).toEqual(["layout", "behaviors", "insights"]);
     expect(areasFor(offline).find((a) => a.id === "insights")?.sections).toEqual(["usage"]);
   });
 

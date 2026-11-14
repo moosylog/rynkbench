@@ -28,14 +28,14 @@ const TABS: { id: PropertiesTab; name: string; help: string }[] = [
   {
     id: "lighting",
     name: "RGB Lighting",
-    help: "The lights as a whole. Each key's own light is set on the key, in its RGB Lighting tab.",
+    help: "The lights as a whole. Each key's own light is set on the key.",
   },
   { id: "effects", name: "RGB Effects", help: "The firmware's effects across the whole keyboard." },
 ];
 
 export function LayoutProperties() {
   const tab = usePropertiesTab();
-  const { bundle } = useWorkbench();
+  const { bundle, dispatch } = useWorkbench();
   const capabilities = useCapabilities();
   const { workspaceName } = useSharedDocumentTransfer();
   const offered: Record<PropertiesTab, boolean> = {
@@ -99,6 +99,18 @@ export function LayoutProperties() {
             <div className="mb-4">
               <h4 className="text-ui font-semibold text-ink">{current.name}</h4>
               <p className="mt-0.5 text-body leading-relaxed text-mute">{current.help}</p>
+              {(current.id === "lighting" || current.id === "effects") && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeProperties();
+                    dispatch({ type: "mode", mode: "keymap" });
+                  }}
+                  className="mt-1 cursor-pointer text-body font-semibold text-accent hover:underline"
+                >
+                  Paint keys on the Keymap →
+                </button>
+              )}
             </div>
             {current.id === "details" && <DetailsSection />}
             {current.id === "options" && (

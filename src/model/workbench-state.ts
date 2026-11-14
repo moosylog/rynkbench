@@ -67,8 +67,6 @@ export type Mode =
   | "forks"
   | "profiles"
   | "transforms"
-  | "lighting"
-  | "effects"
   | "device"
   | "usage"
   | "live";
@@ -319,10 +317,6 @@ export interface WorkbenchState {
   lightingError: string | null;
   /** LED ids to highlight (zone hover). */
   hoverLeds: number[] | null;
-  /** LED ids selected for bulk paint (from zones). */
-  lightingSelection: number[];
-  /** ledId → nonce, bumped on paint for the pop animation. */
-  paintTick: Record<number, number>;
   /** Advanced tables, kept full-length (empty slots included). */
   combos: ComboDefinition[];
   morse: Morse[];
@@ -430,8 +424,7 @@ export type WorkbenchAction =
       runtimeConditional?: RuntimeLightingRule[];
     }
   | { type: "lightingTarget"; target: LightingTarget }
-  /** `target` edits a specific draft without moving Lighting mode's selected
-   *  target; omitted, it edits whatever that target currently is. */
+  /** `target` edits a specific layer's draft; omitted, the current target's. */
   | { type: "paint"; cells: LightingOverlayCell[]; target?: LightingTarget }
   | { type: "erase"; ledIds: number[]; target?: LightingTarget }
   | { type: "draftReset"; target?: LightingTarget }
@@ -454,7 +447,6 @@ export type WorkbenchAction =
     }
   | { type: "extensionParamsLoaded"; effect: number; items: LightingExtensionParam[] }
   | { type: "hoverLeds"; leds: number[] | null }
-  | { type: "lightingSelect"; leds: number[]; mode?: "replace" | "add" | "remove" }
   | { type: "lightingStateSet"; state: LightingState }
   | { type: "wakeLayersSet"; outputMode: LightingOutputModeState }
   | { type: "pointingDraftSet"; config: PointingConfig }

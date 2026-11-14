@@ -3,8 +3,8 @@
 // effect's own parameters. Staged locally and applied in one go with
 // io.setExtensionState; the keyboard's returned state is the source of truth.
 // Effects are on while their value is above zero: that is what the firmware's
-// RGB toggle flips. Used by the Effects screen and Layout properties' RGB
-// Effects tab. Names and ranges all come from the connected firmware.
+// RGB toggle flips. For Layout properties' RGB Effects tab (EffectsSection).
+// Names and ranges all come from the connected firmware.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { LightingExtensionParam, LightingExtensionState } from "../../model/lighting-types";
@@ -13,16 +13,12 @@ import { paramEffects, useWorkbench } from "../state";
 import { useDeviceDraft } from "../device-draft";
 import { same } from "../../model/deep-equal";
 
-/** Which slot an effect fills. */
-export type Slot = "base" | "overlay";
-
 /** Staged parameter values, keyed by the effect whose list they describe. */
 type ParamDrafts = Record<number, number[]>;
 
 /** One effect's parameters as the screens show them. */
 export interface ParamBlock {
   effect: number;
-  slots: Slot[];
   items: LightingExtensionParam[];
   values: number[];
 }
@@ -91,12 +87,6 @@ export function useEffectsDraft() {
   }, [store, staged]);
 
   const hasOverlaySlot = extensionLayers !== null;
-  const assignedFor = (index: number): Slot[] => {
-    const slots: Slot[] = [];
-    if (draft?.effect === index) slots.push("base");
-    if (hasOverlaySlot && overlayDraft === index) slots.push("overlay");
-    return slots;
-  };
 
   // One block per staged effect, where the keyboard advertised parameters and
   // the draft has caught up with them.
@@ -105,7 +95,7 @@ export function useEffectsDraft() {
     const values = paramDrafts[effect];
     if (items === undefined || items.length === 0) return [];
     if (values === undefined || values.length !== items.length) return [];
-    return [{ effect, slots: assignedFor(effect), items, values }];
+    return [{ effect, items, values }];
   });
   const paramWrites: ExtensionParamWrite[] = blocks.flatMap((block) =>
     block.items.flatMap((param, index) =>
@@ -121,7 +111,6 @@ export function useEffectsDraft() {
     overlayDraft,
     setOverlayDraft,
     hasOverlaySlot,
-    assignedFor,
     blocks,
     effects,
     palettes: bundle.extensionPaletteNames,

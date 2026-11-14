@@ -8,7 +8,7 @@
 import type { Mode } from "../model/workbench-state";
 import type { TermId } from "./terms";
 
-export type AreaId = "layout" | "behaviors" | "lighting" | "device" | "insights";
+export type AreaId = "layout" | "behaviors" | "device" | "insights";
 
 /** A section is one screen; the workbench state names the one on show. */
 export type SectionId = Mode;
@@ -22,8 +22,6 @@ export const ALL_SECTIONS: readonly SectionId[] = [
   "forks",
   "profiles",
   "transforms",
-  "lighting",
-  "effects",
   "device",
   "usage",
   "live",
@@ -39,8 +37,6 @@ export interface AreaFacts {
   forks: boolean;
   /** Tap-hold profiles (morse profile slots). */
   tapProfiles: boolean;
-  lighting: boolean;
-  effects: boolean;
 }
 
 export interface Area {
@@ -72,14 +68,6 @@ export function areasFor(facts: AreaFacts): Area[] {
         ["forks", facts.forks],
         ["profiles", facts.tapProfiles],
         ["transforms", true],
-      ]),
-    },
-    {
-      id: "lighting",
-      term: "area.lighting",
-      sections: pick([
-        ["lighting", facts.lighting],
-        ["effects", facts.lighting && facts.effects],
       ]),
     },
     { id: "device", term: "area.device", sections: pick([["device", facts.connected]]) },
