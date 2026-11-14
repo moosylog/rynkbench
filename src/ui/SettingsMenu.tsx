@@ -24,7 +24,7 @@ export function SettingsMenu() {
   const wrap = useRef<HTMLDivElement>(null);
   const theme = useTheme();
   const wording = useWording();
-  const localeId = useSyncExternalStore(subscribeLocale, getLocaleId);
+  const localeId = useSyncExternalStore(subscribeLocale, getLocaleId, getLocaleId);
 
   useEffect(() => {
     if (!open) return;

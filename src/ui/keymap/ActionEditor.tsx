@@ -131,7 +131,7 @@ export function KeycodeBrowser({
 }) {
   // Subscribing keeps the catalog current when the layout selection changes;
   // searchKeycodes caches per locale, so recomputing every render is cheap.
-  useSyncExternalStore(subscribeLocale, getLocaleId);
+  useSyncExternalStore(subscribeLocale, getLocaleId, getLocaleId);
   const found = searchKeycodes(query);
   const groups = modifierPicks
     ? found

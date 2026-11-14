@@ -166,7 +166,7 @@ export function Workbench({
 
   // Key labels everywhere derive from the active OS locale; re-render the
   // whole workbench when the TopBar selector changes it.
-  useSyncExternalStore(subscribeLocale, getLocaleId);
+  useSyncExternalStore(subscribeLocale, getLocaleId, getLocaleId);
 
   // The areas and their sections come from what the keyboard and the session
   // offer (src/ui/areas.ts).
