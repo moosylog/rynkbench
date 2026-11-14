@@ -3,7 +3,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { initSync } from "../../vendor/moergo-config-wasm/moergo_config_wasm";
 import { initSync as initRynkSync } from "../../vendor/rynk-wasm/rynk_wasm";
 import { parseDocument } from "../../config/document";
-import { openOfflineGlove80 } from "../../session/offline/glove80";
+import { offlineGlove80Catalog, openOfflineGlove80 } from "../../session/offline/glove80";
 import { renderInWorkbench } from "../../test/workbench";
 import { openBundle } from "../bundle";
 import { initialWorkbenchState } from "../state";
@@ -14,11 +14,9 @@ beforeAll(() => {
   initRynkSync({ module: readFileSync("src/vendor/rynk-wasm/rynk_wasm_bg.wasm") });
 });
 
-const catalog = { effects: [], palettes: [], params: [] };
-
 /** A real Glove80 layout (Moosy's test file): six macros, two morse entries, seven timing profiles. */
 async function testLayout() {
-  const { snapshot } = parseDocument(readFileSync("src/test/fixtures/glove80-rynkbench.toml", "utf8"), catalog);
+  const { snapshot } = parseDocument(readFileSync("src/test/fixtures/glove80-rynkbench.toml", "utf8"), offlineGlove80Catalog());
   const session = openOfflineGlove80(snapshot);
   const bundle = await openBundle(session);
   return { session, bundle, state: initialWorkbenchState(bundle) };
