@@ -6,10 +6,11 @@ import type { Action } from "../../model/action-types";
 import type { Slot, SlotsOf } from "../../model/key-slots";
 import { DEFAULT_TAP_HOLD_PROFILE } from "../../model/morse";
 import type { ConnectedBundle } from "../../model/workbench-state";
-import { actionDescription, actionLabel } from "../labels";
+
 import { cx } from "../kit";
 import { GripIcon, TrashIcon } from "../icons";
 import { morseProfileSummary } from "../morse-profile";
+import { useKeyText } from "../useKeyText";
 
 const SLOT_NAME: Record<Slot, string> = { tap: "On Tap", hold: "On Hold", doubleTap: "On Double Tap" };
 
@@ -40,6 +41,7 @@ function SlotRow({
   onSelect: () => void;
   onClear: () => void;
 }) {
+  const keyText = useKeyText();
   const empty = value === "No";
   return (
     <div
@@ -62,7 +64,7 @@ function SlotRow({
             empty ? "text-small text-faint" : "font-mono text-small text-ink",
           )}
         >
-          {empty ? "Pick an action →" : actionLabel(value) || actionDescription(value)}
+          {empty ? "Pick an action →" : keyText.label(value) || keyText.describeAction(value)}
         </span>
       </button>
       <button

@@ -6,7 +6,7 @@
 import { useState, useSyncExternalStore } from "react";
 import { comboIsEmpty, comboLayer, comboOutput, comboTriggerCount, comboTwins } from "../../model/combos";
 import { emptyCombo } from "../../model/slots";
-import { keyActionDescription } from "../labels";
+
 import { layerName } from "../layer-names";
 import { showToast } from "../messages/store";
 import { createSetting, SETTING_KEYS } from "../settings";
@@ -16,6 +16,7 @@ import { Button, cx, TextInput } from "../kit";
 import { PlusIcon } from "../icons";
 import { RowMenu, useRowMenu } from "../RowMenu";
 import { ComboCard } from "./ComboCard";
+import { useKeyText } from "../useKeyText";
 
 type View = "cards" | "list";
 const comboView = createSetting<View>(SETTING_KEYS.comboView, (raw) => (raw === "list" ? "list" : "cards"));
@@ -42,6 +43,7 @@ function ViewSwitch({ value }: { value: View }) {
 }
 
 export function ComboList() {
+  const keyText = useKeyText();
   const { bundle, state, dispatch, io } = useWorkbench();
   const term = useTerms();
   const menu = useRowMenu<number>();
@@ -62,7 +64,7 @@ export function ComboList() {
     })
     .filter(
       ({ combo, index }) =>
-        !needle || `c${index} ${keyActionDescription(comboOutput(combo))}`.toLowerCase().includes(needle),
+        !needle || `c${index} ${keyText.describe(comboOutput(combo))}`.toLowerCase().includes(needle),
     );
   const focus = (index: number) => dispatch({ type: "select", selection: { type: "combo", index } });
 

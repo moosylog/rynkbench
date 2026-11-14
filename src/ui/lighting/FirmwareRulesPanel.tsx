@@ -11,9 +11,11 @@ import { firmwareRuleGroups } from "./firmwareRules";
 import { previewActiveLayers } from "./preview";
 import { layersInMask } from "./wakeLayers";
 import { lightingKeyLegend } from "./keyLegend";
+import { useLayerNames } from "../layer-names";
 
 export function FirmwareRulesPanel() {
   const { bundle, state } = useWorkbench();
+  const layerNames = useLayerNames();
   const total = state.compiledScenes.length + state.conditionalScenes.length;
   const activeLayers = useMemo(
     () => previewActiveLayers(state.lightingTarget, state.activeLayers, state.defaultLayer),
@@ -28,14 +30,14 @@ export function FirmwareRulesPanel() {
     for (const key of bundle.model.keys) {
       if (key.ledId !== undefined) {
         const label = lightingKeyLegend(
-          key, state.layers, bundle.caps.num_cols,
+          layerNames, key, state.layers, bundle.caps.num_cols,
           state.lightingTarget, state.activeLayers, state.defaultLayer,
         );
         result.set(key.ledId, keyAddressWithLegend({ ...key, label }));
       }
     }
     return result;
-  }, [bundle.model, bundle.caps.num_cols, state.layers, state.lightingTarget, state.activeLayers, state.defaultLayer]);
+  }, [bundle.model, bundle.caps.num_cols, state.layers, state.lightingTarget, state.activeLayers, state.defaultLayer, layerNames]);
   const nameOf = useCallback(
     (layer: number) => layerName(state.layerMetadata, layer),
     [state.layerMetadata],

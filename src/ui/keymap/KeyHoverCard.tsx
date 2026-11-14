@@ -5,9 +5,10 @@
 import type { KeyView } from "../../model/keyboard";
 import { comboIsPositions, samePosition } from "../../model/combos";
 import { slotsOf } from "../../model/key-slots";
-import { actionDescription, keyActionDescription } from "../labels";
+
 import { keyAddressLabel } from "../key-address";
 import { useWorkbench } from "../state";
+import { useKeyText } from "../useKeyText";
 
 function Part({ word, text }: { word: string; text: string }) {
   return (
@@ -19,6 +20,7 @@ function Part({ word, text }: { word: string; text: string }) {
 }
 
 export function KeyHoverCard({ keyView }: { keyView: KeyView }) {
+  const keyText = useKeyText();
   const { bundle, state } = useWorkbench();
   const action = state.layers[state.uiLayer]?.[keyView.row * bundle.caps.num_cols + keyView.col] ?? "No";
   const slots = slotsOf(action, state.morse);
@@ -36,12 +38,12 @@ export function KeyHoverCard({ keyView }: { keyView: KeyView }) {
       <span className="font-mono text-small font-semibold text-mute">{keyAddressLabel(keyView)}</span>
       {slots.kind === "slots" && (slots.hold !== null || slots.doubleTap !== null) ? (
         <>
-          <Part word="When tapped" text={actionDescription(slots.tap)} />
-          {slots.hold !== null && <Part word="When held" text={actionDescription(slots.hold)} />}
-          {slots.doubleTap !== null && <Part word="When pressed twice" text={actionDescription(slots.doubleTap)} />}
+          <Part word="When tapped" text={keyText.describeAction(slots.tap)} />
+          {slots.hold !== null && <Part word="When held" text={keyText.describeAction(slots.hold)} />}
+          {slots.doubleTap !== null && <Part word="When pressed twice" text={keyText.describeAction(slots.doubleTap)} />}
         </>
       ) : (
-        <span className="text-ui font-semibold text-ink">{keyActionDescription(action)}</span>
+        <span className="text-ui font-semibold text-ink">{keyText.describe(action)}</span>
       )}
       {combos > 0 && (
         <span className="rounded-md border border-line px-1.5 py-0.5 text-small font-semibold text-mute">

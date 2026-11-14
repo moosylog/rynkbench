@@ -10,12 +10,13 @@ import type {
   StateBits,
 } from "../../vendor/rynk-wasm/rynk_wasm";
 import { comboIsEmpty as definitionIsEmpty } from "../../model/combos";
-import { keyActionGlyph } from "../labels";
+
 import { ModGrid } from "../keymap/ActionEditor";
 import type { SlotKind } from "../state";
 import { slotPendingId } from "../state";
 import { WriteStatus } from "../write-status";
 import { cx } from "../kit";
+import { useKeyText } from "../useKeyText";
 
 /* ------------------------------------------------------------------ */
 /* Empty-slot semantics (mirror what fresh firmware reports)           */
@@ -58,7 +59,8 @@ export function ActionSlotButton({
   active: boolean;
   onClick: () => void;
 }) {
-  const glyph = keyActionGlyph(value);
+  const keyText = useKeyText();
+  const glyph = keyText.glyph(value);
   return (
     <button
       type="button"

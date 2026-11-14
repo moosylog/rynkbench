@@ -260,7 +260,7 @@ function LayerList({ onPicked }: { onPicked?: () => void }) {
         <RowMenu
           x={menu.at.x}
           y={menu.at.y}
-          label={`Layer ${layerName(state.layerMetadata, menu.at.id)}`}
+          label={layerName(state.layerMetadata, menu.at.id)}
           items={items(menu.at.id)}
           onAction={(id) => menu.at && act(menu.at.id, id)}
           onClose={menu.close}

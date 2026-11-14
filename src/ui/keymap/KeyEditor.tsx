@@ -6,7 +6,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { Action, KeyAction } from "../../model/action-types";
-import { keyActionDescription } from "../labels";
+
 import { keyFace } from "../keyface/keyFace";
 import { useFaceContext } from "../keyface/useFaceContext";
 import { keyAddressLabel, keyPlaceName } from "../key-address";
@@ -33,8 +33,10 @@ import { LayerLighting } from "./LayerLighting";
 import { PickKey } from "./PickKey";
 import { SlotList } from "./SlotList";
 import { SwitchLayer, type LayerKind } from "./SwitchLayer";
+import { useKeyText } from "../useKeyText";
 
 export function KeyEditor({ size = 310 }: { size?: number }) {
+  const keyText = useKeyText();
   const { bundle, state, dispatch, io } = useWorkbench();
   const faceContext = useFaceContext();
   const capabilities = useCapabilities();
@@ -117,8 +119,8 @@ export function KeyEditor({ size = 310 }: { size?: number }) {
           {slots.kind === "transparent"
             ? "Same as the layer below. Pick an action to give this key its own."
             : slots.kind === "morse"
-              ? `${keyActionDescription(action)}. Edit it under Behaviors → Morse, or pick an action to replace it.`
-              : `${keyActionDescription(action)}. Edit it under Every action, or pick an action to replace it.`}
+              ? `${keyText.describe(action)}. Edit it under Behaviors → Morse, or pick an action to replace it.`
+              : `${keyText.describe(action)}. Edit it under Every action, or pick an action to replace it.`}
         </p>
       )}
 

@@ -3,15 +3,10 @@
 
 import { useMemo, useState, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
-import type {
-  Action,
-  HidKeyCode,
-  KeyAction,
-  ModifierCombination,
-} from "../../vendor/rynk-wasm/rynk_wasm";
+import type { Action, HidKeyCode, KeyAction, ModifierCombination } from "../../model/action-types";
 import { searchKeycodes } from "../hid";
 import { getLocaleId, subscribeLocale } from "../locale";
-import { actionLabel, anyModifier, hidName, modifierSymbols } from "../labels";
+import { anyModifier, hidName, modifierSymbols } from "../labels";
 import { noModifiers } from "../../model/slots";
 import { decodeMacros, macroPreview } from "../../model/macros";
 import { DEFAULT_TAP_HOLD_PROFILE, morsePatternGlyph } from "../../model/morse";
@@ -22,6 +17,7 @@ import { morseProfileSummary } from "../morse-profile";
 import { Button, SectionLabel, Segmented, TextInput, cx } from "../kit";
 import { mergeModifiers, pickedHidAction } from "./actions";
 import { LIGHT_ACTIONS, SYSTEM_ACTIONS } from "./action-catalog";
+import { useKeyText } from "../useKeyText";
 
 type Tab =
   | "keys"
@@ -305,6 +301,7 @@ function TapHoldEditor({
   numLayers: number;
   onCommit: (action: KeyAction) => void;
 }) {
+  const keyText = useKeyText();
   const initial =
     typeof current === "object" && "TapHold" in current ? current.TapHold : null;
   const { state } = useWorkbench();
@@ -328,7 +325,7 @@ function TapHoldEditor({
         {which}
       </span>
       <span className={cx("font-mono text-ui", value === "No" ? "text-faint" : "text-ink")}>
-        {actionLabel(value) || "unset"}
+        {keyText.label(value) || "unset"}
       </span>
     </button>
   );

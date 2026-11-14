@@ -45,9 +45,9 @@ export function FaceRow({
           <svg
             key={item.part}
             x={x + item.dx - item.size / 2}
-            y={y - item.size / 2}
+            y={y - (item.height ?? item.size) / 2}
             width={item.size}
-            height={item.size}
+            height={item.height ?? item.size}
             viewBox={icon.viewBox}
             fill={"fill" in icon ? icon.fill : undefined}
             stroke={"stroke" in icon ? icon.stroke : undefined}

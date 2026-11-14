@@ -7,9 +7,10 @@ import { useEffect, useRef, useState } from "react";
 import type { KeyView } from "../../model/keyboard";
 import { planKeyDrop, type KeyPlace } from "../../model/key-moves";
 import { keyAddressLabel } from "../key-address";
-import { keyActionGlyph } from "../labels";
+
 import { showToast } from "../messages/store";
 import { keyPendingId, useWorkbench } from "../state";
+import { useKeyText } from "../useKeyText";
 
 export interface DragState {
   source: KeyView;
@@ -27,6 +28,7 @@ const copyHeld = (event: { ctrlKey: boolean; metaKey: boolean; altKey: boolean }
   event.ctrlKey || event.metaKey || event.altKey;
 
 export function useKeyMoves() {
+  const keyText = useKeyText();
   const { bundle, state, dispatch, io } = useWorkbench();
   const cols = bundle.caps.num_cols;
   const layer = state.uiLayer;
@@ -64,7 +66,7 @@ export function useKeyMoves() {
   }, [dragging]);
 
   const actionAt = (place: KeyPlace) => state.layers[layer]?.[place.row * cols + place.col] ?? "No";
-  const legend = (place: KeyPlace) => keyActionGlyph(actionAt(place), state.morse).text || "an empty key";
+  const legend = (place: KeyPlace) => keyText.glyph(actionAt(place)).text || "an empty key";
   const busy = (place: KeyPlace) => state.pending[keyPendingId(layer, place.row, place.col)]?.status === "pending";
 
   const drop = async (source: KeyView, destination: KeyView, fromLayer: number, copy: boolean) => {

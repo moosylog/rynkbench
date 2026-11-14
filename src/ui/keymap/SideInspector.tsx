@@ -8,7 +8,6 @@ import type {
   KeyAction,
 } from "../../model/action-types";
 
-import { keyActionGlyph } from "../labels";
 
 import { encoderPendingId, useWorkbench } from "../state";
 import { ActionEditor } from "./ActionEditor";
@@ -20,8 +19,10 @@ import { layerName } from "../layer-names";
 import { Button, SectionLabel, cx } from "../kit";
 
 import { CloseIcon, SpinnerIcon } from "../icons";
+import { useKeyText } from "../useKeyText";
 
 function EncoderInspector({ id }: { id: number }) {
+  const keyText = useKeyText();
   const { bundle, state, io } = useWorkbench();
   const layer = state.uiLayer;
   const encoder = state.encoders[`${layer}:${id}`];
@@ -70,7 +71,7 @@ function EncoderInspector({ id }: { id: number }) {
         {label}
       </span>
       <span className="font-mono text-ui text-ink">
-        {keyActionGlyph(value).text || "unset"}
+        {keyText.glyph(value).text || "unset"}
       </span>
     </button>
   );

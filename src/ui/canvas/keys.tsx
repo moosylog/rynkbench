@@ -356,7 +356,8 @@ function KeyLabelImpl({ view, decor }: { view: KeyView; decor: KeyDecor }) {
     ? cy + shape.rect.h * 0.14
     : cy - block / 2 - (glyph.sub ? legend.subSize * 0.7 : 0);
   const specialInk = decor.special && !decor.fill ? `var(--color-special-${decor.special}-ink)` : undefined;
-  const ink = decor.lit ? "var(--color-pom-ink)" : (specialInk ?? (glyph.dim ? "var(--color-cap-ink-dim)" : "var(--color-cap-ink)"));
+  const plainInk = glyph.layer ? "var(--color-accent)" : glyph.dim ? "var(--color-cap-ink-dim)" : "var(--color-cap-ink)";
+  const ink = decor.lit ? "var(--color-pom-ink)" : (specialInk ?? plainInk);
   const quiet = decor.lit ? "var(--color-pom-ink)" : (specialInk ?? "var(--color-mute)");
   const halo = decor.fill && !decor.lit
     ? { stroke: "var(--color-legend-halo)", strokeWidth: 0.04, paintOrder: "stroke fill" as const, strokeLinejoin: "round" as const }

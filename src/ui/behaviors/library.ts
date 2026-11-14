@@ -9,7 +9,7 @@ import type { Fork, Morse, MorseProfileEntry } from "../../model/action-types";
 import { morsePatternGlyph } from "../../model/morse";
 import { forkIsEmpty, morseIsEmpty } from "../../model/slots";
 import type { Term, TermId, Wording } from "../terms";
-import { actionLabel, keyActionGlyph } from "../labels";
+import { actionLabel, keyActionGlyph, type LayerNames } from "../labels";
 import { morseProfileSummary } from "../morse-profile";
 import type { SiteRef, UsageReport } from "../advanced/usage";
 
@@ -53,16 +53,18 @@ export interface LibraryInput {
   profiles: readonly MorseProfileEntry[];
   /** The app's voice for row names (ui/terms.ts). */
   wording: Wording;
+  /** Layer keys in the details read as their layers' names. */
+  layerNames: LayerNames;
 }
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
-function morseDetail(morse: Morse): string {
-  return morse.actions.map(([pattern, action]) => `${morsePatternGlyph(pattern)} ${actionLabel(action)}`).join(" · ");
+function morseDetail(morse: Morse, names: LayerNames): string {
+  return morse.actions.map(([pattern, action]) => `${morsePatternGlyph(pattern)} ${actionLabel(action, names)}`).join(" · ");
 }
 
-function forkDetail(fork: Fork, morse: readonly Morse[]): string {
-  const glyph = (action: Fork["trigger"]) => keyActionGlyph(action, morse).text || "nothing";
+function forkDetail(fork: Fork, morse: readonly Morse[], names: LayerNames): string {
+  const glyph = (action: Fork["trigger"]) => keyActionGlyph(action, morse, names).text || "nothing";
   return `${glyph(fork.trigger)} → ${glyph(fork.positive_output)}, else ${glyph(fork.negative_output)}`;
 }
 
@@ -86,7 +88,7 @@ export function libraryRows(kind: LibraryKind, input: LibraryInput): LibraryRow[
           kind,
           index: slot.index,
           name: `${one} ${slot.index}`,
-          detail: morseDetail(input.morse[slot.index]),
+          detail: morseDetail(input.morse[slot.index], input.layerNames),
           uses: slot.refs.length,
           places: slot.refSites,
         }));
@@ -94,7 +96,7 @@ export function libraryRows(kind: LibraryKind, input: LibraryInput): LibraryRow[
       return input.forks.flatMap((fork, index) =>
         forkIsEmpty(fork)
           ? []
-          : [{ kind, index, name: `${one} ${index}`, detail: forkDetail(fork, input.morse), uses: null, places: [] }],
+          : [{ kind, index, name: `${one} ${index}`, detail: forkDetail(fork, input.morse, input.layerNames), uses: null, places: [] }],
       );
     case "profiles":
       return input.profiles.map((entry) => ({

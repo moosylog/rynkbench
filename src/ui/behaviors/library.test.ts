@@ -31,6 +31,7 @@ function input(over: Partial<LibraryInput> = {}): LibraryInput {
     forks: [{ trigger: "No", negative_output: "No", positive_output: "No" } as unknown as Fork],
     profiles: [{ index: 3, name: "hrm_pinky", profile: { hold_timeout_ms: 270 } } as never],
     wording: "friendly",
+    layerNames: [],
     ...over,
   };
 }

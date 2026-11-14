@@ -19,6 +19,8 @@ import { LockIndicators } from "./LockIndicators";
 import { useMatrixPoll } from "../matrix-poll";
 import { layersInMask } from "../lighting/wakeLayers";
 import { effectAnim, effectColor } from "../lighting/decor";
+import { useLayerNames } from "../layer-names";
+import { layerRef } from "../labels";
 
 /** Wire HSV (0–255 each) → CSS color. */
 function wireHsvCss(hue: number, saturation: number, value: number): string {
@@ -138,6 +140,7 @@ function LayerStack() {
 
 export function LiveMode() {
   const { bundle, state } = useWorkbench();
+  const layerNames = useLayerNames();
   const capabilities = useCapabilities();
   const cols = bundle.caps.num_cols;
   // Only a firmware that cannot report resolved modifiers needs the matrix
@@ -204,7 +207,7 @@ export function LiveMode() {
       state.defaultLayer,
       key.row * cols + key.col,
     );
-    const glyph = liveKeyActionGlyph(action, shiftActive);
+    const glyph = liveKeyActionGlyph(action, shiftActive, layerNames);
     if (!glyph.text && key.label) return { text: key.label, dim: true };
     return glyph.text ? { ...glyph, dim: true } : undefined;
   };
@@ -330,7 +333,7 @@ export function LiveMode() {
                     <Row label="Wake layers">
                       {wakeLayers.length === 0
                         ? "—"
-                        : `${wakeLayers.map((layer) => `L${layer}`).join(", ")}${state.lightingOutputMode.wake_active ? " · active" : ""}`}
+                        : `${wakeLayers.map((layer) => layerRef(layerNames, layer, `L${layer}`)).join(", ")}${state.lightingOutputMode.wake_active ? " · active" : ""}`}
                     </Row>
                   </>
                 )}

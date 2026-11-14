@@ -37,6 +37,7 @@ import { appendRule, moveRule, newRule, removeRule, replaceRule, retargetLayer, 
 import type { Rule, Rules } from "./rules";
 import { RULES, hasLayerIndicatorConditions, hasLightingFeature } from "../../session/lighting-features";
 import { maskHasLayer, setLayerInMask } from "./wakeLayers";
+import { useLayerNames } from "../layer-names";
 
 const CHARGE_STATES: LightingChargeCondition[] = ["Any", "Charging", "Discharging", "Unknown"];
 const OUTPUT_MODES: LightingOutputMode[] = ["AlwaysOn", "AlwaysOff", "PoweredOnly"];
@@ -100,6 +101,7 @@ function LevelField({
 
 export function ConditionalRulesPanel() {
   const { bundle, state, dispatch, io } = useWorkbench();
+  const layerNames = useLayerNames();
   const ruleTable = useCapability("lighting.rules");
   const [selectedRule, setSelectedRule] = useState<Rule | null>(null);
   const [moveFrom, setMoveFrom] = useState<number | null>(null);
@@ -109,15 +111,12 @@ export function ConditionalRulesPanel() {
     const labels = new Map<number, string>();
     for (const key of bundle.model.keys) {
       if (key.ledId !== undefined) {
-        const label = lightingKeyLegend(
-          key, state.layers, bundle.caps.num_cols,
-          state.lightingTarget, state.activeLayers, state.defaultLayer,
-        );
+        const label = lightingKeyLegend(layerNames, key, state.layers, bundle.caps.num_cols, state.lightingTarget, state.activeLayers, state.defaultLayer);
         labels.set(key.ledId, keyAddressWithLegend({ ...key, label }));
       }
     }
     return labels;
-  }, [bundle.model, bundle.caps.num_cols, state.layers, state.lightingTarget, state.activeLayers, state.defaultLayer]);
+  }, [bundle.model, bundle.caps.num_cols, state.layers, state.lightingTarget, state.activeLayers, state.defaultLayer, layerNames]);
 
   const ledOptions = useMemo(
     () => [...ledLabels.keys()].sort((a, b) => a - b),

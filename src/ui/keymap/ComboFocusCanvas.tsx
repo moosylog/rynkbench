@@ -9,9 +9,10 @@ import { BoardWell, KeyboardCanvas, type KeyDecor } from "../KeyboardCanvas";
 import { Button } from "../kit";
 import { WarningIcon } from "../icons";
 import { keyAddressLabel } from "../key-address";
-import { keyActionDescription } from "../labels";
+
 import { useWorkbench } from "../state";
 import type { ComboFocus } from "./useComboFocus";
+import { useKeyText } from "../useKeyText";
 
 const NEEDS = {
   keys: "Needs at least 2 keys",
@@ -54,6 +55,7 @@ function FocusPill({ focus }: { focus: ComboFocus }) {
 }
 
 export function ComboFocusCanvas({ focus }: { focus: ComboFocus }) {
+  const keyText = useKeyText();
   const { bundle, state } = useWorkbench();
   const cols = bundle.caps.num_cols;
   const actions = state.layers[focus.layer];
@@ -75,7 +77,7 @@ export function ComboFocusCanvas({ focus }: { focus: ComboFocus }) {
     const inCombo = comboHasKey(focus.combo, key, action);
     return {
       fill: inCombo ? "var(--color-accent-fill)" : undefined,
-      ariaLabel: `${keyAddressLabel(key)}: ${keyActionDescription(action)}. ${
+      ariaLabel: `${keyAddressLabel(key)}: ${keyText.describe(action)}. ${
         inCombo ? "In the combo; press Enter to take it out." : "Press Enter to add it to the combo."
       }`,
       ariaKeyShortcuts: "Enter Space Escape",

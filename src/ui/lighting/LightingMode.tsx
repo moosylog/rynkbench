@@ -617,7 +617,7 @@ export function LightingMode() {
             clear={{
               label: `Clear ${isLayerTarget ? "overrides" : "applied"}`,
               title: isLayerTarget
-                ? `Remove Layer ${target}'s runtime overrides and reveal its compiled firmware defaults`
+                ? `Remove ${layerName(state.layerMetadata, target)}'s runtime overrides and reveal its compiled firmware defaults`
                 : "Remove the overlay that is currently applied on the device",
               disabled: state.lightingBusy || appliedCount === 0,
               onClick: () => (isLayerTarget ? clearLayer() : io.clearOverlay()),

@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { KeyView } from "../../model/keyboard";
 import { BoardWell, KeyboardCanvas } from "../KeyboardCanvas";
 import type { KeyDecor } from "../KeyboardCanvas";
-import { keyActionDescription } from "../labels";
+
 import { keyFace, specialKind } from "../keyface/keyFace";
 import { PREFERENCES, usePreference } from "../preferences";
 import { useFaceContext } from "../keyface/useFaceContext";
@@ -46,8 +46,10 @@ import {
 } from "../../model/pointing";
 
 import { useCapabilities } from "../use-capabilities";
+import { useKeyText } from "../useKeyText";
 
 export function KeymapCenter() {
+  const keyText = useKeyText();
   const { bundle, state, dispatch, io } = useWorkbench();
   const face = useFaceContext();
   const highlightSpecial = usePreference(PREFERENCES.highlightSpecialKeys);
@@ -144,8 +146,8 @@ export function KeymapCenter() {
       : " Press Space to pick it up and swap it with another key.";
     return {
       glyph,
-      ariaLabel: `Layer ${state.uiLayer}, row ${key.row}, column ${key.col}: ${
-        action === undefined ? "unavailable" : keyActionDescription(action)
+      ariaLabel: `${keyText.layer(state.uiLayer)}, row ${key.row}, column ${key.col}: ${
+        action === undefined ? "unavailable" : keyText.describe(action)
       }.${keyboardMoveHint}`,
       ariaKeyShortcuts: selected
         ? "Enter Space Escape Control+C Meta+C Control+V Meta+V"
@@ -185,7 +187,7 @@ export function KeymapCenter() {
   const keyMenuItems = (key: KeyView): MenuEntry[] => {
     const bound = layer?.[key.row * cols + key.col] ?? "No";
     return [
-      { heading: `${keyAddressLabel(key)} · ${keyActionDescription(bound)}` },
+      { heading: `${keyAddressLabel(key)} · ${keyText.describe(bound)}` },
       { id: "copy", label: "Copy key", hint: "Ctrl/⌘ C" },
       { id: "paste", label: "Paste", hint: "Ctrl/⌘ V" },
       "-",

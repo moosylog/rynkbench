@@ -4,7 +4,7 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
 import type { Action, Morse, MorseMode, MorseProfile } from "../../vendor/rynk-wasm/rynk_wasm";
-import { actionLabel } from "../labels";
+
 import { SlotPicker } from "../keymap/ActionEditor";
 import { useWorkbench } from "../state";
 import { emptyMorse } from "../../model/slots";
@@ -15,6 +15,7 @@ import { Button, InspectorShell, SectionLabel, TextInput, cx } from "../kit";
 import { CloseIcon, PlusIcon, TrashIcon } from "../icons";
 import { CenterScroll, SlotCard, SlotStatus, morseIsEmpty } from "./bits";
 import { useSlotEditor } from "./use-slot-editor";
+import { useKeyText } from "../useKeyText";
 
 function PatternBuilder({
   onAdd,
@@ -23,6 +24,7 @@ function PatternBuilder({
   onAdd: (pattern: number, action: Action) => void;
   disabled: boolean;
 }) {
+  const keyText = useKeyText();
   const { bundle } = useWorkbench();
   const [elements, setElements] = useState<MorseElement[]>([]);
   const [action, setAction] = useState<Action>("No");
@@ -74,7 +76,7 @@ function PatternBuilder({
       <div className="text-small text-faint">
         Action for this pattern:{" "}
         <span className={cx("font-mono", action === "No" ? "text-faint" : "text-ink")}>
-          {actionLabel(action) || "unset"}
+          {keyText.label(action) || "unset"}
         </span>
       </div>
       <SlotPicker numLayers={bundle.caps.num_layers} onPick={setAction} />
@@ -187,6 +189,7 @@ function ProfileEditor({
 }
 
 export function MorseTab({ nav }: { nav: ReactNode }) {
+  const keyText = useKeyText();
   const { bundle, state, io } = useWorkbench();
   const caps = bundle.caps;
 
@@ -232,7 +235,7 @@ export function MorseTab({ nav }: { nav: ReactNode }) {
                         {morsePatternGlyph(pattern)}
                       </span>
                       <span className="min-w-0 flex-1 truncate text-ink">
-                        {actionLabel(action) || "—"}
+                        {keyText.label(action) || "—"}
                       </span>
                     </div>
                   ))}
@@ -283,7 +286,7 @@ export function MorseTab({ nav }: { nav: ReactNode }) {
                     {morsePatternGlyph(pattern)}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-body text-ink">
-                    {actionLabel(action) || "—"}
+                    {keyText.label(action) || "—"}
                   </span>
                   <button
                     type="button"

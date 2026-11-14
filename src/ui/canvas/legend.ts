@@ -7,6 +7,8 @@
 // GLIDE sizes these in px for its 62 px key and its zoom scales them with the
 // keys, so here they are fractions of the key pitch (GLIDE's is 70 px). Pure.
 
+import { KEY_ICON_DATA } from "../keyface/keyIconData";
+
 const PITCH_PX = 70;
 const SIZE = {
   symbol: 15 / PITCH_PX,
@@ -85,12 +87,22 @@ export interface FaceItem {
   kind: "icon" | "text";
   /** Index into the face's parts. */
   part: number;
-  /** Centre, from the cap's centre, and size (an icon's side, a text's font size), in key units. */
+  /** Centre, from the cap's centre, and size (an icon's width, a text's font size), in key units. */
   dx: number;
   size: number;
+  /** An icon's height, when it is not square (the MoErgo logo). */
+  height?: number;
+}
+
+/** A picture's width over its height (its viewBox). */
+function aspectOf(name: string): number {
+  const box = (KEY_ICON_DATA as Record<string, { viewBox: string } | undefined>)[name]?.viewBox.split(" ").map(Number);
+  return box && box[3] ? box[2] / box[3] : 1;
 }
 
 const CAP = 62 / PITCH_PX;
+/** GLIDE's .kc-wide: a wide picture alone (the MoErgo logo) spans the cap. */
+const WIDE = 1.02 * CAP;
 const FACE = {
   alone: 0.402 * CAP,
   first: 0.356 * CAP,
@@ -107,6 +119,11 @@ export function faceLayout(
   tier: "main" | "small",
 ): FaceItem[] {
   const small = tier === "small";
+  const only = parts.length === 1 && !small ? parts[0] : undefined;
+  if (only && "icon" in only && aspectOf(only.icon) > 1.5) {
+    const width = Math.min(WIDE, capWidth);
+    return [{ kind: "icon", part: 0, dx: 0, size: width, height: width / aspectOf(only.icon) }];
+  }
   const sizes = parts.map((part, i) => {
     if ("text" in part) return small ? SIZE.sub : FACE.text;
     if (small) return FACE.smallIcon;

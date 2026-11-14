@@ -8,6 +8,7 @@ import { layerName } from "../layer-names";
 import { showToast } from "../messages/store";
 import type { WorkbenchAction, WorkbenchState } from "../../model/workbench-state";
 import { emptyHistory, record, redo, stepBetween, undo, type DraftHistory, type Step } from "./draftHistory";
+import { layerNamesOf } from "../layer-names";
 
 let history: DraftHistory = emptyHistory();
 /** The next change to the staged keys is not an edit (a send, a discard, an undo): skip it. */
@@ -47,7 +48,7 @@ export function useDraftHistory(state: WorkbenchState, dispatch: (action: Workbe
     if (!step) return null;
     if (step.length > 1) return `${step.length} keys`;
     const [change] = step;
-    return `${keyActionGlyph(change.to, state.morse).text || "an empty key"} on ${layerName(state.layerMetadata, change.layer)}`;
+    return `${keyActionGlyph(change.to, state.morse, layerNamesOf(state.layerMetadata)).text || "an empty key"} on ${layerName(state.layerMetadata, change.layer)}`;
   };
   const travel = (direction: "undo" | "redo") => {
     const moved = direction === "undo" ? undo(history) : redo(history);

@@ -77,6 +77,11 @@ describe("key faces", () => {
 });
 
 describe("face layout", () => {
+  it("spans the cap with a wide picture alone, as GLIDE's MoErgo logo", () => {
+    const [logo] = faceLayout([{ icon: "magic" }], 1, "main");
+    expect(logo.size).toBeCloseTo(1.02 * (62 / 70));
+    expect(logo.height).toBeCloseTo(logo.size * (650 / 1772));
+  });
   it("centres a row and keeps it inside the cap", () => {
     const row = faceLayout([{ icon: "bluetooth" }, { text: "2" }], 1, "main");
     expect(row[0].dx).toBeLessThan(0);
@@ -115,5 +120,24 @@ describe("special keys", () => {
     expect(specialKind(single({ Modifier: mods("left_shift") }), mac)).toBeUndefined();
     expect(specialKind("No", mac)).toBeUndefined();
     expect(specialKind("Transparent", mac)).toBeUndefined();
+  });
+});
+
+describe("layer keys", () => {
+  const named: FaceContext = { ...mac, layerNames: ["Base", "Lower", undefined, "Magic"] };
+  it("read as their layer's name under GLIDE's layers mark", () => {
+    expect(keyFace(single({ LayerOn: 1 }), [], named)).toMatchObject({ text: "Lower", layer: true, chord: [{ icon: "layers" }] });
+    expect(keyFace(single({ LayerToggleOnly: 0 }), [], named).text).toBe("Base");
+  });
+  it("fall back to the layer number when the layer has no name", () => {
+    expect(keyFace(single({ LayerOn: 2 }), [], named).text).toBe("L2");
+    expect(keyFace(single({ LayerToggle: 2 }), [], named).text).toBe("TG2");
+  });
+  it("show the MoErgo picture for a key to Magic", () => {
+    expect(keyFace(single({ LayerOn: 3 }), [], named).face).toEqual([{ icon: "magic" }]);
+  });
+  it("name the layer a hold switches to, with the layers mark", () => {
+    const lt = { TapHold: [{ Key: { Hid: "Space" } }, { LayerOn: 1 }, 0] } as KeyAction;
+    expect(keyFace(lt, [], named).subFace).toEqual([{ icon: "layers" }, { text: "Lower" }]);
   });
 });

@@ -6,7 +6,7 @@
 import { useEffect, useRef } from "react";
 import type { MutableRefObject } from "react";
 import type { KeyAction } from "../../model/action-types";
-import { keyActionDescription } from "../labels";
+
 import { useWorkbench, type WorkbenchState } from "../state";
 import {
   keyClipboardShortcut,
@@ -16,6 +16,7 @@ import {
   serializeKeyAction,
   type ClipboardBoard,
 } from "./keyManipulation";
+import { useKeyText } from "../useKeyText";
 
 function clipboardBoard(state: WorkbenchState, cols: number): ClipboardBoard {
   return { layers: state.layers, cols, pending: state.pending };
@@ -27,6 +28,7 @@ export function useKeyClipboard(
   latestStateRef: MutableRefObject<WorkbenchState>,
   report: (message: string) => void,
 ): (shortcut: "copy" | "paste", selection: WorkbenchState["selection"]) => boolean {
+  const keyText = useKeyText();
   const { bundle, io } = useWorkbench();
   const cols = bundle.caps.num_cols;
   const localClipboardRef = useRef<KeyAction | null>(null);
@@ -60,7 +62,7 @@ export function useKeyClipboard(
       void navigator.clipboard.writeText(serializeKeyAction(action)).then(
         () =>
           report(
-            `Copied ${keyActionDescription(action)} from Layer ${selectedLayer}, r${row} c${col}.`,
+            `Copied ${keyText.describe(action)} from ${keyText.layer(selectedLayer)}, r${row} c${col}.`,
           ),
         () =>
           report(
@@ -87,7 +89,7 @@ export function useKeyClipboard(
       const result = await io.setKey(selectedLayer, row, col, pasted);
       report(
         result.ok
-          ? `Pasted ${keyActionDescription(pasted)} to Layer ${selectedLayer}, r${row} c${col}.`
+          ? `Pasted ${keyText.describe(pasted)} to ${keyText.layer(selectedLayer)}, r${row} c${col}.`
           : result.guarded
             ? result.message
             : `Paste failed: ${result.message}`,

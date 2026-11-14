@@ -5,7 +5,7 @@
 // labels.ts stays the fallback and what lists and messages print. Pure.
 
 import type { Action, KeyAction, ModifierCombination, Morse } from "../../model/action-types";
-import { characterWithModifiers, hidLabel, keyActionGlyph, type KeyGlyph } from "../labels";
+import { characterWithModifiers, hidLabel, keyActionGlyph, layerOf, type KeyGlyph, type LayerNames } from "../labels";
 import type { Os } from "../preferences";
 import { KEY_ICON_DATA, type KeyIconName } from "./keyIconData";
 import { chordLook, chordText } from "./modifiers";
@@ -20,7 +20,12 @@ export interface FaceContext {
   bleProfiles: number;
   /** Pictures a board gives its own User actions (its profile's `userActions`). */
   userIcons?: ReadonlyMap<number, KeyIconName>;
+  /** The layout's layer names: layer keys read as them. */
+  layerNames?: LayerNames;
 }
+
+/** A key to the layer named Magic shows the MoErgo picture, as GLIDE's Magic key does. */
+const isMagic = (names: LayerNames | undefined, layer: number) => /^magic$/i.test(names?.[layer]?.trim() ?? "");
 
 const icon = (name: KeyIconName): FacePart => ({ icon: name });
 const text = (value: string): FacePart => ({ text: value });
@@ -136,7 +141,7 @@ function modifiersOf(action: Action | undefined): ModifierCombination | undefine
 
 /** keyActionGlyph, with the pictures and per-OS modifiers the canvas draws. */
 export function keyFace(action: KeyAction, morse: readonly Morse[], ctx: FaceContext): KeyGlyph {
-  const glyph = keyActionGlyph(action, morse);
+  const glyph = keyActionGlyph(action, morse, ctx.layerNames);
   // A key that does nothing: GLIDE's faint slash.
   if (action === "No") return { ...glyph, none: true };
   if (typeof action !== "object") return glyph;
@@ -147,8 +152,11 @@ export function keyFace(action: KeyAction, morse: readonly Morse[], ctx: FaceCon
   const out: KeyGlyph = { ...glyph };
   const tapMods = modifiersOf(tap);
   if (tapMods) out.text = chordText(tapMods, ctx.os);
-  const face = actionFace(tap, ctx);
+  const target = layerOf(tap);
+  const face = target !== undefined && isMagic(ctx.layerNames, target) ? [icon("magic")] : actionFace(tap, ctx);
   if (face) out.face = face;
+  // GLIDE's layer key: the layers mark above the layer's name.
+  else if (glyph.layer) out.chord = [icon("layers")];
   const chord = chordFace(tap, ctx);
   if (chord) {
     out.text = chord.key;
@@ -160,6 +168,7 @@ export function keyFace(action: KeyAction, morse: readonly Morse[], ctx: FaceCon
     const subFace = actionFace(hold, ctx);
     if (subFace) out.subFace = subFace;
   }
+  if (!out.subFace && glyph.subLayer && glyph.sub) out.subFace = [icon("layers"), text(glyph.sub)];
   return out;
 }
 

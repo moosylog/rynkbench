@@ -4,7 +4,7 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
 import type { Fork } from "../../vendor/rynk-wasm/rynk_wasm";
-import { keyActionGlyph, modifierSymbols, anyModifier } from "../labels";
+import { modifierSymbols, anyModifier } from "../labels";
 import { ActionEditor, ModGrid } from "../keymap/ActionEditor";
 import { useWorkbench } from "../state";
 import { emptyFork } from "../../model/slots";
@@ -20,6 +20,7 @@ import {
   forkIsEmpty,
 } from "./bits";
 import { useSlotEditor } from "./use-slot-editor";
+import { useKeyText } from "../useKeyText";
 
 function bitsSummary(fork: Fork): string {
   const mods = modifierSymbols(fork.match_any.modifiers);
@@ -34,6 +35,7 @@ function bitsSummary(fork: Fork): string {
 type ForkSlot = "trigger" | "negative" | "positive";
 
 export function ForksTab({ nav }: { nav: ReactNode }) {
+  const keyText = useKeyText();
   const { bundle, state, io } = useWorkbench();
   const caps = bundle.caps;
 
@@ -84,15 +86,15 @@ export function ForksTab({ nav }: { nav: ReactNode }) {
               <SlotCard key={index} selected={index === sel} onClick={() => open(index)}>
                 <div className="flex items-center gap-3">
                   <span className="rounded-md border border-cap-edge bg-cap px-1.5 py-0.5 font-mono text-body text-cap-ink">
-                    {keyActionGlyph(shown.trigger).text || "·"}
+                    {keyText.glyph(shown.trigger).text || "·"}
                   </span>
                   <span className="min-w-0 flex-1 truncate font-mono text-body text-mute">
                     <span className="text-ink">
-                      {keyActionGlyph(shown.negative_output).text || "·"}
+                      {keyText.glyph(shown.negative_output).text || "·"}
                     </span>
                     <span className="mx-1.5 text-faint">⇢</span>
                     <span className="text-accent">
-                      {keyActionGlyph(shown.positive_output).text || "·"}
+                      {keyText.glyph(shown.positive_output).text || "·"}
                     </span>
                   </span>
                   <Chip className="shrink-0">{bitsSummary(shown)}</Chip>

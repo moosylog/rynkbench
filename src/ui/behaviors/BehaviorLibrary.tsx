@@ -26,12 +26,14 @@ import {
   type LibraryKind,
   type LibraryRow,
 } from "./library";
+import { useLayerNames } from "../layer-names";
 
 function useLibraryInput(): LibraryInput {
   const { state } = useWorkbench();
   const usage = useUsageReport();
   const wording = useWording();
-  return { usage, macroOps: state.macroOps, morse: state.morse, forks: state.forks, profiles: state.morseProfiles, wording };
+  const layerNames = useLayerNames();
+  return { usage, macroOps: state.macroOps, morse: state.morse, forks: state.forks, profiles: state.morseProfiles, wording, layerNames };
 }
 
 /** The header row that opens and closes the library. */

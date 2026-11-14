@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import type { Action, KeyAction } from "../../model/action-types";
 import { comboLayer, comboOutput } from "../../model/combos";
 import { planSlotWrites, putSlot, slotsOf, withProfile, type Slot } from "../../model/key-slots";
-import { keyActionDescription } from "../labels";
+
 import { layerName } from "../layer-names";
 import { SectionLabel } from "../kit";
 import { useWorkbench } from "../state";
@@ -19,6 +19,7 @@ import { PickKey } from "./PickKey";
 import { SlotList } from "./SlotList";
 import { SwitchLayer, type LayerKind } from "./SwitchLayer";
 import type { ComboFocus } from "./useComboFocus";
+import { useKeyText } from "../useKeyText";
 
 function LayerChoice({ focus }: { focus: ComboFocus }) {
   const { bundle, state } = useWorkbench();
@@ -43,6 +44,7 @@ function LayerChoice({ focus }: { focus: ComboFocus }) {
 }
 
 export function ComboEditor({ focus, size }: { focus: ComboFocus; size: number }) {
+  const keyText = useKeyText();
   const { bundle, state } = useWorkbench();
   const faceContext = useFaceContext();
   const tabs = useEditorTabs(false);
@@ -92,7 +94,7 @@ export function ComboEditor({ focus, size }: { focus: ComboFocus; size: number }
         />
       ) : (
         <p className="text-body leading-relaxed text-mute">
-          {keyActionDescription(output)}. Edit it under Every action, or pick an action to replace it.
+          {keyText.describe(output)}. Edit it under Every action, or pick an action to replace it.
         </p>
       )}
       <LayerChoice focus={focus} />
