@@ -4,11 +4,10 @@
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { keyActionGlyph } from "../labels";
-import { layerName } from "../layer-names";
+import { layerName, layerNamesOf } from "../layer-names";
 import { showToast } from "../messages/store";
 import type { WorkbenchAction, WorkbenchState } from "../../model/workbench-state";
 import { emptyHistory, record, redo, stepBetween, undo, type DraftHistory, type Step } from "./draftHistory";
-import { layerNamesOf } from "../layer-names";
 
 let history: DraftHistory = emptyHistory();
 /** The next change to the staged keys is not an edit (a send, a discard, an undo): skip it. */

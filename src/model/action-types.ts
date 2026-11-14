@@ -15,10 +15,20 @@ export type {
   KeyAction,
   KeyboardAction,
   KeyCode,
+  /** A held-LED condition a fork can test (Caps Lock …). */
+  LedIndicator,
   LightAction,
+  /** Where a key sits in the matrix. */
+  MatrixPosition,
   ModifierCombination,
   /** A morse (tap-dance) entry a key can be bound to. */
   Morse,
+  /** How a morse entry decides between tap and hold, and its timing. */
+  MorseMode,
+  MorseProfile,
   /** A named tap-hold timing profile in its slot. */
   MorseProfileEntry,
+  MouseButtons,
+  /** The modifier, LED and mouse state a fork matches. */
+  StateBits,
 } from "../vendor/rynk-wasm/rynk_wasm";

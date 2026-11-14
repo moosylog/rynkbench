@@ -33,7 +33,7 @@ describe("layer transaction preflight", () => {
       const write = vi.spyOn(session.keymap, "writeKeys");
       const rename = vi.spyOn(session.keymap, "setLayerMetadata");
       expect(await io.deleteLayer(1)).toEqual({
-        ok: false, message: "layer 1 still has painted lighting; clear it first",
+        ok: false, message: "Lower still has painted lighting; clear it first",
       });
       expect(write).not.toHaveBeenCalled();
       expect(rename).not.toHaveBeenCalled();

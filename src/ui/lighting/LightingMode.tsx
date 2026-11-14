@@ -1,7 +1,7 @@
 // Lighting mode: drag-paint overlay cells on the canvas, stage vs apply.
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { LightingOverlayCell } from "../../vendor/rynk-wasm/rynk_wasm";
+import type { LightingOverlayCell } from "../../model/lighting-types";
 import type { KeyView } from "../../model/keyboard";
 import { BoardWell, KeyboardCanvas } from "../KeyboardCanvas";
 import type { KeyDecor } from "../KeyboardCanvas";
